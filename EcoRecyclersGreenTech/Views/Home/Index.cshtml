@@ -1,0 +1,19 @@
+﻿@{
+    bool logged = ViewBag.UserLoggedIn ?? false;
+}
+
+<h1>Eco Recyclers Green Tech</h1>
+
+@if (logged)
+{
+    <p>Welcome @ViewBag.Email 🎉</p>
+    <p>Welcome @ViewBag.type 🎉</p>
+
+    <a href="/Auth/Logout" class="btn btn-danger">Logout</a>
+    <a href="/Settings" class="btn btn-primary">Settings</a>
+}
+else
+{
+    <a href="/Auth/Login" class="btn btn-success">Login</a>
+    <a href="/Auth/Signup" class="btn btn-info">Signup</a>
+}

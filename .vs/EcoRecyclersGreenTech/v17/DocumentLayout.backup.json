@@ -1,0 +1,106 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Universty\\EcoRecyclersGreenTech\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\views\\auth\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\views\\auth\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\views\\auth\\signup.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\views\\auth\\signup.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\data\\users\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\data\\users\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Signup.cshtml",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Views\\Auth\\Signup.cshtml",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Views\\Auth\\Signup.cshtml",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Views\\Auth\\Signup.cshtml",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Views\\Auth\\Signup.cshtml",
+              "ViewState": "AgIAADwAAAAALjMzMzMbwEcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-28T11:55:42.471Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Login.cshtml",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Views\\Auth\\Login.cshtml",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Views\\Auth\\Login.cshtml",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Views\\Auth\\Login.cshtml",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Views\\Auth\\Login.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-28T11:55:41.7Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Data\\Users\\User.cs",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Data\\Users\\User.cs",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Data\\Users\\User.cs",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Data\\Users\\User.cs",
+              "ViewState": "AgIAAAoAAABgMDMzMzMXwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T11:40:25.847Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAAwAAACAmZmZmZkwwBMAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-27T10:26:59.775Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 896,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+﻿@model EcoRecyclersGreenTech.Models.SignupDataModel
+@{
+    ViewBag.Title = "Signup";
+}
+
+<h2>Create Account</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="post" enctype="multipart/form-data" asp-action="Signup">
+
+    <!-- بيانات المستخدم الأساسية -->
+    <input asp-for="user!.FullName" placeholder="Full Name" class="form-control" required />
+    <span asp-validation-for="user!.FullName" class="text-danger"></span><br />
+
+    <input asp-for="user!.Email" placeholder="Email" type="email" class="form-control" required />
+    <span asp-validation-for="user!.Email" class="text-danger"></span><br />
+
+    <input asp-for="user!.Password" placeholder="Password" type="password" class="form-control" required />
+    <span asp-validation-for="user!.Password" class="text-danger"></span><br />
+
+    <input asp-for="user!.phoneNumber" placeholder="Phone Number" class="form-control" />
+    <span asp-validation-for="user!.phoneNumber" class="text-danger"></span><br />
+
+    <input asp-for="user!.Locaton" placeholder="Location" class="form-control" />
+    <span asp-validation-for="user!.Locaton" class="text-danger"></span><br />
+
+    <!-- اختيار نوع المستخدم -->
+    <label><b>Select User Type:</b></label><br />
+
+    <input type="radio" asp-for="type!.TypeName" value="Individual" onclick="showSection('ind')" required /> Individual <br />
+    <input type="radio" asp-for="type!.TypeName" value="Factory" onclick="showSection('fac')" /> Factory <br />
+    <input type="radio" asp-for="type!.TypeName" value="Craftsman" onclick="showSection('craft')" /> Craftsman <br /><br />
+
+    <!-- Individual section -->
+    <div id="ind" style="display:none">
+        <h4>Individual Info</h4>
+        <input asp-for="individual!.Occupation" placeholder="Occupation" class="form-control" />
+        <span asp-validation-for="individual!.Occupation" class="text-danger"></span>
+    </div>
+
+    <!-- Factory section -->
+    <div id="fac" style="display:none">
+        <h4>Factory Info</h4>
+        <input asp-for="factory!.FactoryName" placeholder="Factory Name" class="form-control" />
+        <span asp-validation-for="factory!.FactoryName" class="text-danger"></span><br />
+
+        <input asp-for="factory!.FactoryImgURL" placeholder="Factory Image URL" class="form-control" />
+        <span asp-validation-for="factory!.FactoryImgURL" class="text-danger"></span><br />
+
+        <input asp-for="factory!.FactoryType" placeholder="Factory Type" class="form-control" />
+        <span asp-validation-for="factory!.FactoryType" class="text-danger"></span><br />
+
+        <textarea asp-for="factory!.Description" placeholder="Description" class="form-control"></textarea>
+        <span asp-validation-for="factory!.Description" class="text-danger"></span>
+    </div>
+
+    <!-- Craftsman section -->
+    <div id="craft" style="display:none">
+        <h4>Craftsman Info</h4>
+        <input asp-for="craftsman!.SkillType" placeholder="Skill Type" class="form-control" />
+        <span asp-validation-for="craftsman!.SkillType" class="text-danger"></span><br />
+
+        <input asp-for="craftsman!.ExperienceYears" placeholder="Experience Years" type="number" class="form-control" />
+        <span asp-validation-for="craftsman!.ExperienceYears" class="text-danger"></span>
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-success">Create Account</button>
+</form>
+
+<script>
+    function showSection(sec) {
+        document.getElementById("ind").style.display = "none";
+        document.getElementById("fac").style.display = "none";
+        document.getElementById("craft").style.display = "none";
+
+        if (document.getElementById(sec)) {
+            document.getElementById(sec).style.display = "block";
+        }
+    }
+</script>

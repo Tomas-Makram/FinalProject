@@ -1,0 +1,15 @@
+﻿@model EcoRecyclersGreenTech.Models.LoginDataModel
+<h2>Login</h2>
+
+<form method="post" enctype="multipart/form-data" asp-action="Login">
+    <input asp-for="username" placeholder="Full Name" class="form-control" required />
+    <span asp-validation-for="username" class="text-danger"></span><br />
+    <input asp-for="password" placeholder="Password" class="form-control" required />
+    <span asp-validation-for="password" class="text-danger"></span><br />
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+@if (ViewBag.Error != null)
+{
+    <p style="color:red">@ViewBag.Error</p>
+}
