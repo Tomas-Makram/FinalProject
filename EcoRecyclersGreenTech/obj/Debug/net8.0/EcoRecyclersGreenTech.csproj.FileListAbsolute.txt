@@ -140,3 +140,7 @@ D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\bin\Debug\net8.0\Micros
 D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
 D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
 D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\obj\Debug\net8.0\EcoRecyclersGreenTech.MvcApplicationPartsAssemblyInfo.cs
+D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\obj\Debug\net8.0\EcoRecyclersGreenTech.sourcelink.json
+D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\bin\Debug\net8.0\NetEscapades.AspNetCore.SecurityHeaders.dll
+D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech\bin\Debug\net8.0\NetEscapades.AspNetCore.SecurityHeaders.TagHelpers.dll

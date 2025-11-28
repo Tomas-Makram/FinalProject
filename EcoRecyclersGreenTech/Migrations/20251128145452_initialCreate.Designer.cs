@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRecyclersGreenTech.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20251128113245_initialCreate")]
+    [Migration("20251128145452_initialCreate")]
     partial class initialCreate
     {
         /// <inheritdoc />
@@ -556,13 +556,14 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HashPassword")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("JoinDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Locaton")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserProfieImgURL")

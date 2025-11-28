@@ -886,6 +886,41 @@
           "lib/netstandard2.0/Mono.TextTemplating.dll": {}
         }
       },
+      "NetEscapades.AspNetCore.SecurityHeaders/1.3.0": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "NetEscapades.AspNetCore.SecurityHeaders.TagHelpers/1.3.0": {
+        "type": "package",
+        "dependencies": {
+          "NetEscapades.AspNetCore.SecurityHeaders": "1.3.0"
+        },
+        "compile": {
+          "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.TagHelpers.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.TagHelpers.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
       "System.CodeDom/4.4.0": {
         "type": "package",
         "compile": {
@@ -2917,6 +2952,37 @@
         "mono.texttemplating.nuspec"
       ]
     },
+    "NetEscapades.AspNetCore.SecurityHeaders/1.3.0": {
+      "sha512": "URbp+l1g4GebDI/4p8ZmBRYT3yTConmu7a+TfsEW+SRJpxMFI03eD+58MT5vAZ4rgqK7+HSWkMD3YpBxz9ZhjA==",
+      "type": "package",
+      "path": "netescapades.aspnetcore.securityheaders/1.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "analyzers/dotnet/cs/NetEscapades.AspNetCore.SecurityHeaders.Analyzers.dll",
+        "icon.png",
+        "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.dll",
+        "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.xml",
+        "netescapades.aspnetcore.securityheaders.1.3.0.nupkg.sha512",
+        "netescapades.aspnetcore.securityheaders.nuspec"
+      ]
+    },
+    "NetEscapades.AspNetCore.SecurityHeaders.TagHelpers/1.3.0": {
+      "sha512": "DzusrVfwoZRTzkC5rhBCI7NrG8fBrkRWB7kQb2Ir7eKoBHw1Cyw2QWaxsMO4MRJhCCBVvVGZmCETgmibnDFvQQ==",
+      "type": "package",
+      "path": "netescapades.aspnetcore.securityheaders.taghelpers/1.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "icon.png",
+        "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.TagHelpers.dll",
+        "lib/netcoreapp3.1/NetEscapades.AspNetCore.SecurityHeaders.TagHelpers.xml",
+        "netescapades.aspnetcore.securityheaders.taghelpers.1.3.0.nupkg.sha512",
+        "netescapades.aspnetcore.securityheaders.taghelpers.nuspec"
+      ]
+    },
     "System.CodeDom/4.4.0": {
       "sha512": "2sCCb7doXEwtYAbqzbF/8UAeDRMNmPaQbU2q50Psg1J9KzumyVVCgKQY8s53WIPTufNT0DpSe9QRvVjOzfDWBA==",
       "type": "package",
@@ -4037,7 +4103,8 @@
       "Microsoft.EntityFrameworkCore >= 8.0.10",
       "Microsoft.EntityFrameworkCore.Design >= 8.0.10",
       "Microsoft.EntityFrameworkCore.SqlServer >= 8.0.10",
-      "Microsoft.EntityFrameworkCore.Tools >= 8.0.10"
+      "Microsoft.EntityFrameworkCore.Tools >= 8.0.10",
+      "NetEscapades.AspNetCore.SecurityHeaders.TagHelpers >= 1.3.0"
     ]
   },
   "packageFolders": {
@@ -4104,6 +4171,10 @@
             "suppressParent": "All",
             "target": "Package",
             "version": "[8.0.10, )"
+          },
+          "NetEscapades.AspNetCore.SecurityHeaders.TagHelpers": {
+            "target": "Package",
+            "version": "[1.3.0, )"
           }
         },
         "imports": [

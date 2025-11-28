@@ -1,14 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using EcoRecyclersGreenTech.Models;
-using Microsoft.AspNetCore.Http;
-using System.Linq;
-using EcoRecyclersGreenTech.Data.Users;
+using EcoRecyclersGreenTech.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcoRecyclersGreenTech.Controllers
 {
-    public class AuthController(DBContext db) : Controller
+    public class AuthController : Controller
     {
-        private readonly DBContext _db = db;
+        private readonly DBContext _db;
+        private readonly PasswordHasher _passwordHasher;
+        private readonly ILogger<AuthController> _logger;
+        public AuthController(DBContext db, ILogger<AuthController> logger)
+        {
+            _db = db;
+            _passwordHasher = new PasswordHasher();
+            _logger = logger;
+        }
 
         [HttpGet]
         public IActionResult Login()
@@ -17,26 +24,50 @@ namespace EcoRecyclersGreenTech.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Login(LoginDataModel login)
         {
-            var user = _db.Users
-                .FirstOrDefault(u =>
-                    (u.Email == login.username ||
-                     u.phoneNumber == login.username ||
-                     u.FullName == login.username) &&
-                    u.Password == login.password);
-
-            if (user != null)
+            try
             {
-                HttpContext.Session.SetString("UserEmail", user.Email!);
-                HttpContext.Session.SetInt32("UserID", user.UserID);
-                HttpContext.Session.SetString("UserName", user.FullName ?? "");
+                if (!ModelState.IsValid)
+                {
+                    ViewBag.Error = "Please check your input";
+                    return View();
+                }
 
-                return RedirectToAction("Index", "Home");
+                var user = _db.Users
+                    .Include(u => u.UserType)
+                    .FirstOrDefault(u =>
+                        u.Email == login.username ||
+                        u.phoneNumber == login.username ||
+                        u.FullName == login.username);
+
+                if (user != null && PasswordHasher.VerifyPassword(login.password!, user.HashPassword!))
+                {
+                    // Secure session information recording
+                    HttpContext.Session.SetString("UserEmail", user.Email!);
+                    HttpContext.Session.SetInt32("UserID", user.UserID);
+                    HttpContext.Session.SetString("UserName", user.FullName ?? "");
+                    HttpContext.Session.SetInt32("UserTypeID", user.UserTypeID);
+
+                    // Log in
+                    _logger.LogInformation($"User {user.Email} logged in successfully.");
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // Recording failed login attempt
+                _logger.LogWarning($"Failed login attempt for username: {login.username}");
+
+                ViewBag.Error = "Invalid login credentials";
+                return View();
             }
-
-            ViewBag.Error = "Invalid login credentials";
-            return View();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during login process");
+                ViewBag.Error = "An error occurred during login";
+                return View();
+            }
         }
 
         [HttpGet]
@@ -46,25 +77,36 @@ namespace EcoRecyclersGreenTech.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Signup(SignupDataModel signup)
         {
+            if (signup == null || signup.user == null || signup.type == null)
+            {
+                ViewBag.Error = "Please check your input data";
+                return View();
+            }
+
             using var transaction = await _db.Database.BeginTransactionAsync();
 
             try
             {
-                // Check email duplication
+                // Check for duplicate emails
                 if (_db.Users.Any(u => u.Email == signup.user.Email))
                 {
-                    ViewBag.Error = "This Account is Used Before";
+                    ViewBag.Error = "This email is already registered";
                     return View();
                 }
 
-                // Default user values
+                // Password hash
+                signup.user.HashPassword = PasswordHasher.HashPassword(signup.user.HashPassword!);
+                Console.WriteLine(signup.user.HashPassword);
+                Console.WriteLine(signup.user.HashPassword);
+                // Set default values
                 signup.user.JoinDate = DateTime.Now;
                 signup.user.Verified = false;
                 signup.user.Blocked = false;
 
-                // Save Additional Type Data First
+                // Save additional type data first
                 int realTypeId = 0;
 
                 switch (signup.type!.TypeName)
@@ -73,55 +115,74 @@ namespace EcoRecyclersGreenTech.Controllers
                         _db.Individuals.Add(signup.individual!);
                         await _db.SaveChangesAsync();
                         realTypeId = signup.individual!.IndividualID;
-                        //signup.type!.TypeName = "Individual";
                         break;
 
                     case "Factory":
                         _db.Factories.Add(signup.factory!);
                         await _db.SaveChangesAsync();
                         realTypeId = signup.factory!.FactoryID;
-                        //signup.type!.TypeName = "Factory";
                         break;
 
                     case "Craftsman":
                         _db.Craftsmen.Add(signup.craftsman!);
                         await _db.SaveChangesAsync();
                         realTypeId = signup.craftsman!.CraftsmanID;
-                        //signup.type!.TypeName = "Craftsman";
                         break;
                 }
 
-                // Now save UserType with correct RealTypeID
+                // Save UserType with the correct RealTypeID
                 signup.type!.RealTypeID = realTypeId;
                 _db.UserTypes.Add(signup.type);
                 await _db.SaveChangesAsync();
 
-                // Connect User with Type
+                // Linking the user to the type
                 signup.user.UserTypeID = signup.type.TypeID;
                 _db.Users.Add(signup.user);
                 await _db.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
-                // Auto login
+                // Secure session recording
                 HttpContext.Session.SetString("UserEmail", signup.user.Email!);
                 HttpContext.Session.SetInt32("UserID", signup.user.UserID);
                 HttpContext.Session.SetString("UserName", signup.user.FullName ?? "");
                 HttpContext.Session.SetInt32("UserTypeID", signup.user.UserTypeID);
+
+                // Successful registration process recorded
+                _logger.LogInformation($"New user registered: {signup.user.Email}");
 
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                ViewBag.Error = "An error occurred: " + ex.Message;
+                _logger.LogError(ex, "Error during user registration");
+                ViewBag.Error = "An error occurred during registration: " + ex.Message;
                 return View();
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
-            HttpContext.Session.Clear();
+            try
+            {
+                var userEmail = HttpContext.Session.GetString("UserEmail");
+
+                // Clear all session data
+                HttpContext.Session.Clear();
+
+                // Recreate the session to prevent Session Fixation attacks
+                HttpContext.Session.CommitAsync();
+
+                _logger.LogInformation($"User {userEmail} logged out successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during logout");
+            }
+
             return RedirectToAction("Index", "Home");
         }
     }

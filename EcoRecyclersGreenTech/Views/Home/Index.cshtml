@@ -9,7 +9,12 @@
     <p>Welcome @ViewBag.Email 🎉</p>
     <p>Welcome @ViewBag.type 🎉</p>
 
-    <a href="/Auth/Logout" class="btn btn-danger">Logout</a>
+    <form asp-controller="Auth" asp-action="Logout" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger">
+            Logout
+        </button>
+    </form>
+
     <a href="/Settings" class="btn btn-primary">Settings</a>
 }
 else
