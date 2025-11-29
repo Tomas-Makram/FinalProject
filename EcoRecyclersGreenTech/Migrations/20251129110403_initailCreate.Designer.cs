@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRecyclersGreenTech.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20251128145452_initialCreate")]
-    partial class initialCreate
+    [Migration("20251129110403_initailCreate")]
+    partial class initailCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -552,6 +552,9 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
 
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");

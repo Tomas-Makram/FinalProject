@@ -1,4 +1,8 @@
 ﻿@model EcoRecyclersGreenTech.Models.LoginDataModel
+@{
+    var nonce = Context.Items["CSPNonce"]?.ToString();
+        ViewBag.Title = "Login";
+}
 <h2>Login</h2>
 
 <form method="post" enctype="multipart/form-data" asp-action="Login">
@@ -11,5 +15,8 @@
 
 @if (ViewBag.Error != null)
 {
-    <p style="color:red">@ViewBag.Error</p>
+    <style nonce="@nonce">
+        .error-message { color: red; }
+    </style>
+    <p class="error-message">@ViewBag.Error</p>
 }

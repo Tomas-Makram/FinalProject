@@ -1,5 +1,7 @@
 ﻿@{
+    var nonce = Context.Items["CSPNonce"]?.ToString();
     bool logged = ViewBag.UserLoggedIn ?? false;
+    ViewBag.Title = "Home";
 }
 
 <h1>Eco Recyclers Green Tech</h1>
@@ -22,3 +24,18 @@ else
     <a href="/Auth/Login" class="btn btn-success">Login</a>
     <a href="/Auth/Signup" class="btn btn-info">Signup</a>
 }
+@* <script nonce="@nonce">
+    console.log("🔥 NONCE Test: Script Executed Successfully!");
+
+        // Nonce test on the page
+        const h = document.createElement("h2");
+        h.innerText = "✅ CSP Nonce is working!";
+        h.style.color = "white";
+        h.style.background = "green";
+        h.style.padding = "15px";
+        h.style.textAlign = "center";
+        h.style.fontSize = "24px";
+
+        document.body.prepend(h);
+</script>
+ *@

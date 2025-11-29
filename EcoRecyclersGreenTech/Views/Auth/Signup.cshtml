@@ -1,5 +1,6 @@
 ﻿@model EcoRecyclersGreenTech.Models.SignupDataModel
 @{
+    var nonce = Context.Items["CSPNonce"]?.ToString();
     ViewBag.Title = "Signup";
 }
 
@@ -72,7 +73,7 @@
     <button type="submit" class="btn btn-success">Create Account</button>
 </form>
 
-<script>
+<script nonce="@nonce">
     function showSection(sec) {
         document.getElementById("ind").style.display = "none";
         document.getElementById("fac").style.display = "none";

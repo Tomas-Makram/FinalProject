@@ -8,7 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 //Adding Hashing and Ciphers
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton(new EncryptionService(builder.Configuration["EncryptionKey"]!)); 
+builder.Services.AddSingleton<IEncryptionKeyService, EncryptionKeyService>();
+builder.Services.AddSingleton<EncryptionService>(sp =>
+{
+    var keyService = sp.GetRequiredService<IEncryptionKeyService>();
+    return new EncryptionService(keyService.GetEncryptionKey());
+});
+
 builder.Services.AddScoped<PasswordHasher>();
 builder.Services.AddSession(options =>
 {
@@ -25,6 +31,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Home/Error";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     });
 
 // Adding Connection Database
@@ -35,8 +45,6 @@ builder.Services.AddDbContext<DBContext>(options =>
 var app = builder.Build();
 
 app.UseMiddleware<EcoRecyclersGreenTech.Services.SecurityHeadersMiddleware>();
-
-app.UseSession();
 
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
@@ -49,6 +57,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

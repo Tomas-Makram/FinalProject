@@ -12,6 +12,8 @@ namespace EcoRecyclersGreenTech.Data.Users
         public string? Email { get; set; }
         public string? phoneNumber { get; set; }
         [Required]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$",
+        ErrorMessage = "Password must include: upper, lower, digit, 8+ length")]
         public string? HashPassword { get; set; }
         public string? Locaton { get; set; }
         //Foren Key
@@ -20,5 +22,8 @@ namespace EcoRecyclersGreenTech.Data.Users
         public DateTime JoinDate { get; set; } = DateTime.Now;
         public bool Verified { get; set; } = false;
         public bool Blocked { get; set; } = false;
+
+        //To Save from Brute Force attacks
+        public int FailedLoginAttempts { get; set; } = 0;
     }
 }

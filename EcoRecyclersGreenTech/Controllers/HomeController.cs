@@ -25,7 +25,7 @@ public class HomeController : Controller
         {
             ViewBag.UserLoggedIn = true;
             ViewBag.Email = email;
-            ViewBag.type = _db.Users.Where(u => u.Email == email).Select(u => u.UserType.TypeName).FirstOrDefault();
+            ViewBag.type = _db.UserTypes.Where(u => u.TypeID == HttpContext.Session.GetInt32("UserTypeID")).Select(u => u.TypeName).FirstOrDefault();
         }
         else
         {
@@ -35,13 +35,11 @@ public class HomeController : Controller
         return View();
     }
 
-
     [Authorize]
     public IActionResult AuthTesting()
     {
         return Json("User authenticated ✔");
     }
-
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

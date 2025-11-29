@@ -6,7 +6,7 @@ namespace EcoRecyclersGreenTech.Services
     public class PasswordHasher
     {
         // Password hash
-        public static string HashPassword(string password)
+        public string HashPassword(string password)
         {
 
             byte[] salt = new byte[128 / 8];
@@ -26,7 +26,7 @@ namespace EcoRecyclersGreenTech.Services
         }
 
         // Password Verifing
-        public static bool VerifyPassword(string password, string storedHash)
+        public bool VerifyPassword(string password, string storedHash)
         {
             try
             {

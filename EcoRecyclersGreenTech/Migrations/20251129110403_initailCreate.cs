@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EcoRecyclersGreenTech.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCreate : Migration
+    public partial class initailCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -96,7 +96,8 @@ namespace EcoRecyclersGreenTech.Migrations
                     UserTypeID = table.Column<int>(type: "int", nullable: false),
                     JoinDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Verified = table.Column<bool>(type: "bit", nullable: false),
-                    Blocked = table.Column<bool>(type: "bit", nullable: false)
+                    Blocked = table.Column<bool>(type: "bit", nullable: false),
+                    FailedLoginAttempts = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -12,51 +12,36 @@ namespace EcoRecyclersGreenTech.Services
             _encryptionKey = encryptionKey;
         }
 
-        // Data encryption
+        //Encryption Data
         public string Encrypt(string plainText)
         {
-            using (Aes aes = Aes.Create())
+            using var aes = Aes.Create();
+
+            aes.Key = Convert.FromBase64String(_encryptionKey);
+            aes.IV = new byte[16];
+
+            using var ms = new MemoryStream();
+            using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+            using (var sw = new StreamWriter(cs))
             {
-                aes.Key = Encoding.UTF8.GetBytes(_encryptionKey);
-                aes.IV = new byte[16];
-
-                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-                    {
-                        using (StreamWriter sw = new StreamWriter(cs))
-                        {
-                            sw.Write(plainText);
-                        }
-                    }
-                    return Convert.ToBase64String(ms.ToArray());
-                }
+                sw.Write(plainText);
             }
+
+            return Convert.ToBase64String(ms.ToArray());
         }
 
-        // Decryption
+        //Decryption Data
         public string Decrypt(string cipherText)
         {
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = Encoding.UTF8.GetBytes(_encryptionKey);
-                aes.IV = new byte[16];
+            using var aes = Aes.Create();
+            aes.Key = Convert.FromBase64String(_encryptionKey);
+            aes.IV = new byte[16];
 
-                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-
-                using (MemoryStream ms = new MemoryStream(Convert.FromBase64String(cipherText)))
-                {
-                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                    {
-                        using (StreamReader sr = new StreamReader(cs))
-                        {
-                            return sr.ReadToEnd();
-                        }
-                    }
-                }
-            }
+            var cipherBytes = Convert.FromBase64String(cipherText);
+            using var ms = new MemoryStream(cipherBytes);
+            using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+            using var sr = new StreamReader(cs);
+            return sr.ReadToEnd();
         }
     }
 }
