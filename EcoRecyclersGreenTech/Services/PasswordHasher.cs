@@ -1,54 +1,33 @@
-﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using System.Security.Cryptography;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace EcoRecyclersGreenTech.Services
 {
-    public class PasswordHasher
+    public interface PasswordHasher
     {
-        // Password hash
-        public string HashPassword(string password)
+        string HashPassword(string password);
+        bool VerifyPassword(string password, string hashedPassword);
+    }
+
+    public class PasswordHasherService : PasswordHasher
+    {
+        private readonly PasswordHasher<object> _passwordHasher;
+
+        public PasswordHasherService()
         {
-
-            byte[] salt = new byte[128 / 8];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(salt);
-            }
-
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: password,
-                salt: salt,
-                prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 10000,
-                numBytesRequested: 256 / 8));
-
-            return $"{Convert.ToBase64String(salt)}.{hashed}";
+            _passwordHasher = new PasswordHasher<object>();
         }
 
-        // Password Verifing
-        public bool VerifyPassword(string password, string storedHash)
+        //Hashing Password (Encryption Password in one way)
+        public string HashPassword(string password)
         {
-            try
-            {
-                var parts = storedHash.Split('.');
-                if (parts.Length != 2) return false;
+            return _passwordHasher.HashPassword(null!, password);
+        }
 
-                var salt = Convert.FromBase64String(parts[0]);
-                var storedSubHash = parts[1];
-
-                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: password,
-                    salt: salt,
-                    prf: KeyDerivationPrf.HMACSHA256,
-                    iterationCount: 10000,
-                    numBytesRequested: 256 / 8));
-
-                return hashed == storedSubHash;
-            }
-            catch
-            {
-                return false;
-            }
+        //Check if Password is Valid or not
+        public bool VerifyPassword(string password, string hashedPassword)
+        {
+            var result = _passwordHasher.VerifyHashedPassword(null!, hashedPassword, password);
+            return result == PasswordVerificationResult.Success;
         }
     }
 }

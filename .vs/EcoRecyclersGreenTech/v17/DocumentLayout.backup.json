@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "D:\\Universty\\EcoRecyclersGreenTech\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     }
@@ -14,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,13 +34,39 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Program.cs",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Program.cs",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Program.cs",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Program.cs",
+              "ViewState": "AgIAAAoAAABAZmZmZmYkwBsAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-30T15:11:09.582Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAALsAAAAAb2ZmZiYuwMsAAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-30T14:02:52.832Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "appsettings.json",
               "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\appsettings.json",
               "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\appsettings.json",
               "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\appsettings.json",
               "RelativeToolTip": "EcoRecyclersGreenTech\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAUAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAADAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
               "WhenOpened": "2025-11-30T13:39:41.918Z",
               "EditorCaption": ""

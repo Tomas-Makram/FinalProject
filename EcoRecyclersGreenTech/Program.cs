@@ -4,22 +4,17 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using EcoRecyclersGreenTech.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
+using EcoRecyclersGreenTech.Data.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-//Adding Hashing and Ciphers
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<IEncryptionKeyService, EncryptionKeyService>();
-builder.Services.AddSingleton<EncryptionService>(sp =>
-{
-    var keyService = sp.GetRequiredService<IEncryptionKeyService>();
-    var keySecret = keyService.GetEncryptionKey();
-    Console.WriteLine(keySecret.ToString());
-    return new EncryptionService(keySecret);
-});
 
-builder.Services.AddScoped<PasswordHasher>();
+// Password Hasher
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+// Add Session Security
 builder.Services.AddSession(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -27,20 +22,33 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.IdleTimeout = TimeSpan.FromMinutes(30);
 });
-builder.Services.AddDataProtection();
 
-// Adding Authentication
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
-{
-    options.LoginPath = "/Auth/Login";
-    options.AccessDeniedPath = "/Home/Error";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-});
+// Data Protection Configuration
+var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "data-protection-keys");
+Directory.CreateDirectory(keysFolder);
 
-// Adding Connection Database
+builder.Services.AddDataProtection()
+    .SetApplicationName("EcoRecyclersGreenTech")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder));
+
+// Authentication Cookies
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.AccessDeniedPath = "/Home/Error";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    });
+
+// Register Custom Services
+builder.Services.AddScoped<IDataCiphers, DataCiphers>();
+builder.Services.AddScoped<PasswordHasher, PasswordHasherService>();
+
+
+// Database Connection
 builder.Services.AddDbContext<DBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Connection"))
 );
@@ -58,19 +66,16 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseSession();
 
+// Routing Secure
 app.Use(async (context, next) =>
 {
     bool sessionEmpty = !context.Session.GetInt32("UserID").HasValue;
 
     if (sessionEmpty)
     {
-        // Clear Session
         context.Session.Clear();
-
-        // Sign out Authentication Cookie
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     }
 
@@ -80,7 +85,8 @@ app.Use(async (context, next) =>
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<EcoRecyclersGreenTech.Services.SecurityHeadersMiddleware>();
+// Middleware Security (Routing)
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 app.MapControllerRoute(
     name: "default",

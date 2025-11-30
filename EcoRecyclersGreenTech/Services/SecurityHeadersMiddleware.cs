@@ -41,8 +41,7 @@ namespace EcoRecyclersGreenTech.Services
             var path = context.Request.Path.Value?.ToLower();
             if (context.User?.Identity != null && context.User.Identity.IsAuthenticated)
             {
-                if (path != null &&
-                   (path.StartsWith("/auth/login") || path.StartsWith("/auth/signup")))
+                if (path != null && (path.StartsWith("/auth/login") || path.StartsWith("/auth/signup")))
                 {
                     context.Response.Redirect("/home/index");
                     return;

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
-using EcoRecyclersGreenTech.Data.Users;
 
 namespace EcoRecyclersGreenTech.Controllers
 {
@@ -13,13 +12,14 @@ namespace EcoRecyclersGreenTech.Controllers
     {
         private readonly DBContext _db;
         private readonly PasswordHasher _passwordHasher;
-        private readonly EncryptionService _encryptionService;
+        private readonly IDataCiphers _dataProtection;
         private readonly ILogger<AuthController> _logger;
-        public AuthController(DBContext db, PasswordHasher hasher, EncryptionService chipher, ILogger<AuthController> logger)
+
+        public AuthController(DBContext db, PasswordHasher passwordHasher, IDataCiphers dataProtection, ILogger<AuthController> logger)
         {
             _db = db;
-            _passwordHasher = hasher;
-            _encryptionService = chipher;
+            _passwordHasher = passwordHasher;
+            _dataProtection = dataProtection;
             _logger = logger;
         }
 
@@ -36,100 +36,120 @@ namespace EcoRecyclersGreenTech.Controllers
                 return View();
             }
 
-            // Encrypting email or phone number for database search
-            string encryptedInput = _encryptionService.Encrypt(login.username!);
-
-            // User search
-            var user = _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefault(u =>
-                    u.Email == encryptedInput ||
-                    u.phoneNumber == encryptedInput);
-
-            // Random delay if the user is not found
-            if (user == null)
+            try
             {
-                var rand = new Random();
-                await Task.Delay(rand.Next(800, 1500));
+                // Search all users with decryption for comparison
+                var users = _db.Users
+                    .Include(u => u.UserType)
+                    .ToList();
 
-                ViewBag.Error = "Invalid login credentials";
-                _logger.LogWarning($"Failed login attempt for non-existing username: {login.username}");
-                return View();
-            }
-
-            // Checking for a ban
-            if (user.Blocked)
-            {
-                ViewBag.Error = "Your account is blocked. Contact support.";
-                _logger.LogWarning($"Blocked account login attempt: {login.username}");
-                return View();
-            }
-
-            // Password verification
-            if (_passwordHasher.VerifyPassword(login.password!, user.HashPassword!))
-            {
-                // Regenerate Session ID (Session Fixation protection)
-                await HttpContext.Session.CommitAsync();
-
-                // Decryption before recording the session
-                string decryptedEmail = _encryptionService.Decrypt(user.Email!);
-                string? decryptedPhone = user.phoneNumber != null ? _encryptionService.Decrypt(user.phoneNumber) : null;
-
-                // Securely recording data during the session
-                HttpContext.Session.SetString("UserEmail", decryptedEmail);
-                HttpContext.Session.SetInt32("UserID", user.UserID);
-                HttpContext.Session.SetString("UserName", user.FullName ?? "");
-                HttpContext.Session.SetInt32("UserTypeID", user.UserTypeID);
-                HttpContext.Session.SetString("PhoneNumber", decryptedPhone ?? "");
-
-                // Setting up claims for authentication
-                var claims = new List<Claim>
+                var user = users.FirstOrDefault(u =>
                 {
-                    new Claim(ClaimTypes.Name, decryptedEmail),
-                    new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString())
-                };
+                    try
+                    {
+                        string decryptedEmail = _dataProtection.Decrypt(u.Email!);
+                        string? decryptedPhone = u.phoneNumber != null ?
+                            _dataProtection.Decrypt(u.phoneNumber) : null;
 
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties
+                        return decryptedEmail == login.username ||
+                               decryptedPhone == login.username;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
+
+                if (user == null)
                 {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30),
-                    AllowRefresh = true
-                };
-
-                // Log in using Authentication
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties
-                );
-
-                // Reset failed login attempts
-                user.FailedLoginAttempts = 0;
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation($"User {decryptedEmail} logged in successfully.");
-                return RedirectToAction("Index", "Home");
-            }
-            else
-            {
-                // Increase FailedLoginAttempts and block after a specified number
-                user.FailedLoginAttempts++;
-                _logger.LogWarning($"Failed login attempt {user.FailedLoginAttempts} for user: {user.Email}");
-
-                if (user.FailedLoginAttempts >= 20)
-                {
-                    user.Blocked = true;
-                    _logger.LogWarning($"User {user.Email} is blocked due to too many failed login attempts.");
+                    var rand = new Random();
+                    await Task.Delay(rand.Next(800, 1500));
+                    ViewBag.Error = "Invalid login credentials";
+                    _logger.LogWarning($"Failed login attempt for: {login.username}");
+                    return View();
                 }
 
-                await _db.SaveChangesAsync();
+                // Checking the block
+                if (user.Blocked)
+                {
+                    ViewBag.Error = "Your account is blocked. Contact support.";
+                    _logger.LogWarning($"Blocked account login attempt: {login.username}");
+                    return View();
+                }
 
-                // Random delay before replying to prevent Brute Force
-                var rand = new Random();
-                await Task.Delay(rand.Next(800, 1500));
+                // Password verification
+                if (_passwordHasher.VerifyPassword(login.password!, user.HashPassword!))
+                {
+                    // Recreate Session ID for protection
+                    await HttpContext.Session.CommitAsync();
 
-                ViewBag.Error = "Invalid login credentials";
+                    // Decrypt data to saving the session
+                    string decryptedEmail = _dataProtection.Decrypt(user.Email!);
+                    string? decryptedPhone = user.phoneNumber != null ?
+                        _dataProtection.Decrypt(user.phoneNumber) : null;
+
+                    // Save data in session
+                    HttpContext.Session.SetString("UserEmail", decryptedEmail);
+                    HttpContext.Session.SetInt32("UserID", user.UserID);
+                    HttpContext.Session.SetString("UserName", user.FullName ?? "");
+                    HttpContext.Session.SetInt32("UserTypeID", user.UserTypeID);
+                    HttpContext.Session.SetString("PhoneNumber", decryptedPhone ?? "");
+
+                    // Setting up Claims for authentication
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, decryptedEmail),
+                        new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString())
+                    };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30),
+                        AllowRefresh = true
+                    };
+
+                    // Log in using Authentication
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(claimsIdentity),
+                        authProperties
+                    );
+
+                    // Reset failed login attempts
+                    user.FailedLoginAttempts = 0;
+                    await _db.SaveChangesAsync();
+
+                    _logger.LogInformation($"User {decryptedEmail} logged in successfully.");
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    // Increase in failed attempts
+                    user.FailedLoginAttempts++;
+                    _logger.LogWarning($"Failed login attempt {user.FailedLoginAttempts} for user: {user.Email}");
+
+                    if (user.FailedLoginAttempts >= 20)
+                    {
+                        user.Blocked = true;
+                        _logger.LogWarning($"User {user.Email} is blocked due to too many failed login attempts.");
+                    }
+
+                    await _db.SaveChangesAsync();
+
+                    // Random delay to prevent Brute Force attacks
+                    var rand = new Random();
+                    await Task.Delay(rand.Next(800, 1500));
+
+                    ViewBag.Error = "Invalid login credentials";
+                    return View();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during login process");
+                ViewBag.Error = "An error occurred during login. Please try again.";
                 return View();
             }
         }
@@ -151,19 +171,33 @@ namespace EcoRecyclersGreenTech.Controllers
 
             try
             {
-                // Encrypt email and phone number before saving
-                signup.user.Email = _encryptionService.Encrypt(signup.user.Email!);
-                if (!string.IsNullOrEmpty(signup.user.phoneNumber))
-                    signup.user.phoneNumber = _encryptionService.Encrypt(signup.user.phoneNumber!);
+                // Email verification is using by email
+                var allUsers = _db.Users.ToList();
+                bool emailExists = allUsers.Any(u =>
+                {
+                    try
+                    {
+                        string decryptedEmail = _dataProtection.Decrypt(u.Email!);
+                        return decryptedEmail == signup.user.Email;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
 
-                // Check for pre-encrypted email
-                if (_db.Users.Any(u => u.Email == signup.user.Email))
+                if (emailExists)
                 {
                     ViewBag.Error = "This email is already registered";
                     return View();
                 }
 
-                // Password hash
+                // Email encryption and storage
+                signup.user.Email = _dataProtection.Encrypt(signup.user.Email!);
+                if (!string.IsNullOrEmpty(signup.user.phoneNumber))
+                    signup.user.phoneNumber = _dataProtection.Encrypt(signup.user.phoneNumber!);
+
+                // Password hash using built-in password hasher
                 signup.user.HashPassword = _passwordHasher.HashPassword(signup.user.HashPassword!);
 
                 // Set default values
@@ -208,8 +242,8 @@ namespace EcoRecyclersGreenTech.Controllers
                 await transaction.CommitAsync();
 
                 // Securely recording data during the session
-                string decryptedEmail = _encryptionService.Decrypt(signup.user.Email!);
-                string? decryptedPhone = signup.user.phoneNumber != null ? _encryptionService.Decrypt(signup.user.phoneNumber) : null;
+                string decryptedEmail = _dataProtection.Decrypt(signup.user.Email!);
+                string? decryptedPhone = signup.user.phoneNumber != null ? _dataProtection.Decrypt(signup.user.phoneNumber) : null;
 
                 HttpContext.Session.SetString("UserEmail", decryptedEmail);
                 HttpContext.Session.SetInt32("UserID", signup.user.UserID);
@@ -234,12 +268,12 @@ namespace EcoRecyclersGreenTech.Controllers
 
                 // Log in using Authentication
                 await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+                    CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties
                 );
 
-                _logger.LogInformation($"New user registered: {signup.user.Email}");
+                _logger.LogInformation($"New user registered: {decryptedEmail}");
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)

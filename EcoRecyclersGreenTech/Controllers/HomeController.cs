@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using EcoRecyclersGreenTech.Models;
 using Microsoft.AspNetCore.Authorization;
-using EcoRecyclersGreenTech.Data.Users;
 
 namespace EcoRecyclersGreenTech.Controllers;
 

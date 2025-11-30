@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EcoRecyclersGreenTech")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+84c51004a2b2118ee271db7d74f41d0a94cdd4c7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93bfd43c6607f55bd70c3f734d729d385110de4a")]
 [assembly: System.Reflection.AssemblyProductAttribute("EcoRecyclersGreenTech")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EcoRecyclersGreenTech")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
