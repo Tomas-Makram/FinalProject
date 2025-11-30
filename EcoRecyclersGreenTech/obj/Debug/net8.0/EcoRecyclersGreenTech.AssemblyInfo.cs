@@ -11,10 +11,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("bab598d4-ce6a-4ac7-95f1-ffdfc8bda4e5")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("EcoRecyclersGreenTech")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b18ee76fa35127853e360dac902b65cc3b7a1f66")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+84c51004a2b2118ee271db7d74f41d0a94cdd4c7")]
 [assembly: System.Reflection.AssemblyProductAttribute("EcoRecyclersGreenTech")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EcoRecyclersGreenTech")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

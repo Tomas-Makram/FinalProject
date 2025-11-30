@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using EcoRecyclersGreenTech.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,9 @@ builder.Services.AddSingleton<IEncryptionKeyService, EncryptionKeyService>();
 builder.Services.AddSingleton<EncryptionService>(sp =>
 {
     var keyService = sp.GetRequiredService<IEncryptionKeyService>();
-    return new EncryptionService(keyService.GetEncryptionKey());
+    var keySecret = keyService.GetEncryptionKey();
+    Console.WriteLine(keySecret.ToString());
+    return new EncryptionService(keySecret);
 });
 
 builder.Services.AddScoped<PasswordHasher>();
@@ -26,16 +30,15 @@ builder.Services.AddSession(options =>
 builder.Services.AddDataProtection();
 
 // Adding Authentication
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Auth/Login";
-        options.AccessDeniedPath = "/Home/Error";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    });
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+{
+    options.LoginPath = "/Auth/Login";
+    options.AccessDeniedPath = "/Home/Error";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+});
 
 // Adding Connection Database
 builder.Services.AddDbContext<DBContext>(options =>
@@ -43,8 +46,6 @@ builder.Services.AddDbContext<DBContext>(options =>
 );
 
 var app = builder.Build();
-
-app.UseMiddleware<EcoRecyclersGreenTech.Services.SecurityHeadersMiddleware>();
 
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
@@ -60,8 +61,26 @@ app.UseRouting();
 
 app.UseSession();
 
+app.Use(async (context, next) =>
+{
+    bool sessionEmpty = !context.Session.GetInt32("UserID").HasValue;
+
+    if (sessionEmpty)
+    {
+        // Clear Session
+        context.Session.Clear();
+
+        // Sign out Authentication Cookie
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    }
+
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<EcoRecyclersGreenTech.Services.SecurityHeadersMiddleware>();
 
 app.MapControllerRoute(
     name: "default",

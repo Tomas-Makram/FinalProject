@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoRecyclersGreenTech.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20251129110403_initailCreate")]
-    partial class initailCreate
+    [Migration("20251130112439_initialCreate")]
+    partial class initialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

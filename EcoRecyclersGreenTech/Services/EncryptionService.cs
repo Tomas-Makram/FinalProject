@@ -5,20 +5,21 @@ namespace EcoRecyclersGreenTech.Services
 {
     public class EncryptionService
     {
-        private readonly string _encryptionKey;
+        private readonly byte[] _key;
+        private readonly byte[] _fixedIV;
 
-        public EncryptionService(string encryptionKey)
+        public EncryptionService(string base64Key)
         {
-            _encryptionKey = encryptionKey;
+            _key = Convert.FromBase64String(base64Key);
+
+            _fixedIV = _key.Take(16).ToArray();
         }
 
-        //Encryption Data
         public string Encrypt(string plainText)
         {
             using var aes = Aes.Create();
-
-            aes.Key = Convert.FromBase64String(_encryptionKey);
-            aes.IV = new byte[16];
+            aes.Key = _key;
+            aes.IV = _fixedIV;
 
             using var ms = new MemoryStream();
             using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
@@ -30,17 +31,18 @@ namespace EcoRecyclersGreenTech.Services
             return Convert.ToBase64String(ms.ToArray());
         }
 
-        //Decryption Data
         public string Decrypt(string cipherText)
         {
-            using var aes = Aes.Create();
-            aes.Key = Convert.FromBase64String(_encryptionKey);
-            aes.IV = new byte[16];
-
             var cipherBytes = Convert.FromBase64String(cipherText);
+
+            using var aes = Aes.Create();
+            aes.Key = _key;
+            aes.IV = _fixedIV;
+
             using var ms = new MemoryStream(cipherBytes);
             using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
             using var sr = new StreamReader(cs);
+
             return sr.ReadToEnd();
         }
     }
