@@ -3,9 +3,6 @@ using EcoRecyclersGreenTech.Data.Orders;
 using EcoRecyclersGreenTech.Data.Settings;
 using EcoRecyclersGreenTech.Data.Stores;
 using EcoRecyclersGreenTech.Data.Users;
-using EcoRecyclersGreenTech.Models;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace EcoRecyclersGreenTech.Models
 {
@@ -48,15 +45,59 @@ namespace EcoRecyclersGreenTech.Models
             base.OnModelCreating(modelBuilder);
 
             // ===== UserType 1 - M Users =====
+            // UserType 1 - M Users
             modelBuilder.Entity<User>()
                 .HasOne(u => u.UserType)
                 .WithMany(t => t.Users)
                 .HasForeignKey(u => u.UserTypeID)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<UserType>()
-                .Property(u => u.RealTypeID)
-                .IsRequired(false);
+            // Individual 1-1
+            modelBuilder.Entity<Individual>()
+                .HasIndex(x => x.UserID).IsUnique();
+
+            modelBuilder.Entity<Individual>()
+                .HasOne(x => x.User)
+                .WithOne(u => u.IndividualProfile)
+                .HasForeignKey<Individual>(x => x.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Factory 1-1
+            modelBuilder.Entity<Factory>()
+                .HasIndex(x => x.UserID).IsUnique();
+
+            modelBuilder.Entity<Factory>()
+                .HasOne(x => x.User)
+                .WithOne(u => u.FactoryProfile)
+                .HasForeignKey<Factory>(x => x.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Craftsman 1-1
+            modelBuilder.Entity<Craftsman>()
+                .HasIndex(x => x.UserID).IsUnique();
+
+            modelBuilder.Entity<Craftsman>()
+                .HasOne(x => x.User)
+                .WithOne(u => u.CraftsmanProfile)
+                .HasForeignKey<Craftsman>(x => x.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Admin 1-1
+            modelBuilder.Entity<Admin>()
+                .HasIndex(x => x.UserID).IsUnique();
+
+            modelBuilder.Entity<Admin>()
+                .HasOne(x => x.User)
+                .WithOne(u => u.AdminProfile)
+                .HasForeignKey<Admin>(x => x.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserType>().HasData(
+                new UserType { TypeID = (int)UserTypeEnum.Individual, TypeName = "Individual" },
+                new UserType { TypeID = (int)UserTypeEnum.Factory, TypeName = "Factory" },
+                new UserType { TypeID = (int)UserTypeEnum.Craftsman, TypeName = "Craftsman" },
+                new UserType { TypeID = (int)UserTypeEnum.Admin, TypeName = "Admin" }
+            );
 
             // ===== RentalStore -> Owner(User) =====
             modelBuilder.Entity<RentalStore>()

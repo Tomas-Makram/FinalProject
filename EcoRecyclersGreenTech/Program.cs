@@ -6,10 +6,37 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using EcoRecyclersGreenTech.Data.Users;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHttpContextAccessor();
+
+// Add services to send Emails
+builder.Services.AddTransient<IEmailSender, MailService>();
+
+// Add services to Emails Templates
+builder.Services.AddScoped<IEmailTemplateService, MailService>();
+
+// Added service for Dark/Light Mode (Theme)
+builder.Services.AddSingleton<IThemeService, ThemeService>();
+
+// Added service for Upload Images
+builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
+
+// Added Service for send otp
+builder.Services.AddScoped<IOtpService, OtpService>();
+
+// Added Service Location
+builder.Services.AddHttpClient<ILocationService, LocationService>();
+
+// Register services
+builder.Services.AddScoped<IFactoryStoreService, FactoryStoreService>();
+
+// AI Search 
+builder.Services.AddScoped<IFilterAIService, FilterAIService>();
 
 // Password Hasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -45,7 +72,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 // Register Custom Services
 builder.Services.AddScoped<IDataCiphers, DataCiphers>();
-builder.Services.AddScoped<PasswordHasher, PasswordHasherService>();
+builder.Services.AddScoped<DataHasher, PasswordHasherService>();
 
 
 // Database Connection

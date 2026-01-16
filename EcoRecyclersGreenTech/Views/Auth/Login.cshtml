@@ -1,22 +1,192 @@
-﻿@model EcoRecyclersGreenTech.Models.LoginDataModel
+﻿@model EcoRecyclersGreenTech.Models.Auth.LoginModel
 @{
     var nonce = Context.Items["CSPNonce"]?.ToString();
-        ViewBag.Title = "Login";
+    ViewData["Title"] = "Login";
 }
-<h2>Login</h2>
 
-<form method="post" enctype="multipart/form-data" asp-action="Login">
-    <input asp-for="username" placeholder="Full Name" class="form-control" required />
-    <span asp-validation-for="username" class="text-danger"></span><br />
-    <input asp-for="password" placeholder="Password" class="form-control" required />
-    <span asp-validation-for="password" class="text-danger"></span><br />
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="h4 mb-0 text-center"><i class="fas fa-sign-in-alt me-2"></i>Login to Your Account</h3>
+                </div>
 
-@if (ViewBag.Error != null)
-{
+                <div class="card-body p-4">
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>@ViewBag.Error
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form method="post" enctype="multipart/form-data" asp-controller="Auth" asp-action="Login" id="loginForm" class="needs-validation" novalidate>
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input asp-for="username" class="form-control" placeholder="Username or Email" required />
+                                <label asp-for="username"><i class="fas fa-user me-2"></i>Username or Email</label>
+                                <span asp-validation-for="username" class="text-danger small mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-floating position-relative">
+                                <input asp-for="password" type="password" class="form-control" id="password" placeholder="Password" required />
+                                <label asp-for="password"><i class="fas fa-lock me-2"></i>Password</label>
+                                <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 end-0 translate-middle-y me-2" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <span asp-validation-for="password" class="text-danger small mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label small" for="rememberMe">
+                                    Remember me
+                                </label>
+                            </div>
+                            <div>
+                                <a asp-controller="Auth" asp-action="ForgetPassword" class="text-primary text-decoration-none small">
+                                    <i class="fas fa-key me-1"></i>Forgot Password?
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg py-2">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="mb-0 text-muted small">
+                                Don't have an account?
+                                <a asp-controller="Auth" asp-action="Signup" class="text-primary text-decoration-none fw-semibold ms-1">
+                                    Sign up here
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-footer bg-light text-center py-3">
+                    <p class="mb-0 small text-muted">
+                        © @DateTime.Now.Year EcoRecyclers GreenTech. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script nonce="@nonce">
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('loginForm');
+            const togglePasswordBtn = document.getElementById('togglePassword');
+            const passwordField = document.getElementById('password');
+
+            // Toggle password visibility
+            togglePasswordBtn.addEventListener('click', function () {
+                const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordField.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+
+            // Form validation
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+
+            // Focus on username field
+            const usernameField = document.querySelector('input[name="username"]');
+            if (usernameField) {
+                setTimeout(() => {
+                    usernameField.focus();
+                }, 300);
+            }
+        });
+    </script>
+
     <style nonce="@nonce">
-        .error-message { color: red; }
+        .card {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+            padding: 20px;
+        }
+
+        .form-floating {
+            margin-bottom: 1.25rem;
+        }
+
+            .form-floating.position-relative input {
+                padding-right: 45px;
+            }
+
+        .btn-outline-secondary {
+            border-color: #ced4da;
+            background-color: transparent;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+        }
+
+            .btn-outline-secondary:hover {
+                background-color: #e9ecef;
+                border-color: #adb5bd;
+            }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .btn-primary:hover {
+                background-color: #0b5ed7;
+                border-color: #0a58ca;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+            }
+
+            .btn-primary:active {
+                transform: translateY(0);
+            }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        a.text-primary:hover {
+            text-decoration: underline !important;
+            color: #0a58ca !important;
+        }
+
+        @@media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+        }
     </style>
-    <p class="error-message">@ViewBag.Error</p>
 }

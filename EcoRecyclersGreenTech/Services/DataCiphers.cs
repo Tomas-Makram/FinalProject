@@ -8,6 +8,7 @@ namespace EcoRecyclersGreenTech.Services
         string Decrypt(string cipherText);
     }
 
+    // [Header] + [IV] + [Encrypted Data] + [Footer]
     public class DataCiphers : IDataCiphers
     {
         private readonly IDataProtector _protector;

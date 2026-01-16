@@ -1,0 +1,718 @@
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.RentalModel
+@using EcoRecyclersGreenTech.Data.Stores
+
+@{
+    ViewData["Title"] = "Add New Rental";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    // default Cairo if empty
+    decimal defaultLat = 30.0444m, defaultLng = 31.2357m;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Rentals">Rentals</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add New Rental</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient border-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-plus-circle-fill fs-1 text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1 text-white">Add New Rental</h2>
+                            <p class="text-white-50 mb-0">Fill in the details below to list your rental property</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="AddRental" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+
+                    <div class="card-body p-4 p-md-5">
+
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Please fix the errors below
+                        </div>
+
+                        <div class="row g-4">
+
+                            <!-- ✅ LOCATION PICKER (FULL) -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-geo-alt-fill me-2 text-success"></i>
+                                            Location
+                                        </h5>
+
+                                        <div class="p-3 rounded" style="border:1px solid #e9ecef;background:#fff">
+                                            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <button type="button" class="btn btn-success" id="btnUseMyLocation">
+                                                        <i class="bi bi-geo-alt me-1"></i> Use GPS
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary" id="btnClearLocation">
+                                                        <i class="bi bi-x-circle me-1"></i> Clear
+                                                    </button>
+                                                </div>
+
+                                                <div class="small text-muted" id="locationStatus">
+                                                    Search for a place (Arabic/English), then select a result or click the map.
+                                                </div>
+                                            </div>
+
+                                            <!-- Hidden coords -->
+                                            <input asp-for="Latitude" type="hidden" id="Latitude" />
+                                            <input asp-for="Longitude" type="hidden" id="Longitude" />
+
+                                            <!-- Location (Required) -->
+                                            <div class="row g-3 mt-2">
+                                                <div class="col-12">
+                                                    <div class="form-floating">
+                                                        <input asp-for="Location" class="form-control" id="Location" placeholder="Cairo, Giza..." required />
+                                                        <label asp-for="Location"><i class="bi bi-geo-alt me-1"></i>Location *</label>
+                                                        <span asp-validation-for="Location" class="text-danger small"></span>
+                                                    </div>
+                                                    <div class="form-text">Type address/city or pick it from the map.</div>
+                                                </div>
+
+                                                <!-- Search -->
+                                                <div class="col-12">
+                                                    <label class="form-label small fw-semibold text-success mb-1">Search Place</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="txtPlaceSearch"
+                                                               placeholder="Type place name (e.g., Cairo, أسيوط, شارع ...)" autocomplete="off" />
+                                                        <button class="btn btn-success" type="button" id="btnPlaceSearch">
+                                                            <i class="fas fa-search me-1"></i> Search
+                                                        </button>
+                                                    </div>
+                                                    <div class="form-text small" id="searchStatus">Type to see suggestions, or press Search.</div>
+
+                                                    <div class="mt-2" id="searchResultsWrap" style="display:none;">
+                                                        <div class="small fw-semibold text-success mb-1">Results</div>
+                                                        <div class="list-group" id="searchResults"></div>
+                                                    </div>
+
+                                                    <div class="alert alert-warning mt-2 py-2" id="searchError" style="display:none;">
+                                                        <div class="small" id="searchErrorText"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Map -->
+                                                <div class="col-12">
+                                                    <div id="map" style="height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;"></div>
+
+                                                    <div class="mt-2 p-2 rounded" style="background:#f8f9fa;border:1px solid #e9ecef">
+                                                        <div class="small fw-semibold text-success mb-1">Selected Location</div>
+                                                        <div class="small text-muted" id="selectedDetails">
+                                                            No location selected yet. Search and pick a result, or click the map.
+                                                        </div>
+                                                        <div class="small text-muted mt-1" id="selectedCoords"></div>
+                                                    </div>
+
+                                                    <div class="small text-muted mt-2">
+                                                        Tip: Click on the map or drag the pin to set the exact spot.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ✅ END LOCATION -->
+
+                            <!-- Availability -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-calendar-event me-2 text-success"></i>
+                                            Availability
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="AvailableFrom" type="date" class="form-control" required />
+                                                    <label asp-for="AvailableFrom"><i class="bi bi-calendar-check me-1"></i>Available From *</label>
+                                                    <span asp-validation-for="AvailableFrom" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="AvailableUntil" type="date" class="form-control" />
+                                                    <label asp-for="AvailableUntil"><i class="bi bi-calendar-x me-1"></i>Available Until</label>
+                                                    <span asp-validation-for="AvailableUntil" class="text-danger small"></span>
+                                                    <div class="form-text">Optional end date</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                                            Basic Information
+                                        </h5>
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Area" type="number" class="form-control" placeholder="100" min="1" step="0.01" required />
+                                                    <label asp-for="Area"><i class="bi bi-aspect-ratio me-1"></i>Area (m²) *</label>
+                                                    <span asp-validation-for="Area" class="text-danger small"></span>
+                                                    <div class="form-text">Total area size</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <select asp-for="Condition"
+                                                            asp-items="Html.GetEnumSelectList<RentalCondition>()"
+                                                            class="form-select" required>
+                                                        <option value="">Select Type *</option>
+                                                    </select>
+                                                    <label asp-for="Condition"><i class="bi bi-building me-1"></i>Rental Type *</label>
+                                                    <span asp-validation-for="Condition" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="PricePerMonth" type="number" class="form-control" placeholder="0.00" step="0.01" min="0.01" required />
+                                                    <label asp-for="PricePerMonth"><i class="bi bi-cash-stack me-1"></i>Price / Month *</label>
+                                                    <span asp-validation-for="PricePerMonth" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Utilities -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>
+                                            Utilities & Options
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch">
+                                                    <input asp-for="IsFurnished" class="form-check-input" type="checkbox" role="switch" id="IsFurnished" />
+                                                    <label class="form-check-label" for="IsFurnished">
+                                                        <i class="bi bi-house-check me-1"></i>Furnished
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch">
+                                                    <input asp-for="HasElectricity" class="form-check-input" type="checkbox" role="switch" id="HasElectricity" />
+                                                    <label class="form-check-label" for="HasElectricity">
+                                                        <i class="bi bi-lightning me-1"></i>Electricity
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch">
+                                                    <input asp-for="HasWater" class="form-check-input" type="checkbox" role="switch" id="HasWater" />
+                                                    <label class="form-check-label" for="HasWater">
+                                                        <i class="bi bi-droplet me-1"></i>Water
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ✅ Images -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-images me-2 text-primary"></i>
+                                            Rental Images
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label small fw-semibold">Image 1</label>
+                                                <input asp-for="RentalImage1" type="file" class="form-control" accept="image/*" id="RentalImage1" />
+                                                <span asp-validation-for="RentalImage1" class="text-danger small"></span>
+
+                                                <div class="mt-2">
+                                                    <img id="previewRental1" src="" alt="Preview 1"
+                                                         style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label small fw-semibold">Image 2</label>
+                                                <input asp-for="RentalImage2" type="file" class="form-control" accept="image/*" id="RentalImage2" />
+                                                <span asp-validation-for="RentalImage2" class="text-danger small"></span>
+
+                                                <div class="mt-2">
+                                                    <img id="previewRental2" src="" alt="Preview 2"
+                                                         style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label small fw-semibold">Image 3</label>
+                                                <input asp-for="RentalImage3" type="file" class="form-control" accept="image/*" id="RentalImage3" />
+                                                <span asp-validation-for="RentalImage3" class="text-danger small"></span>
+
+                                                <div class="mt-2">
+                                                    <img id="previewRental3" src="" alt="Preview 3"
+                                                         style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-text mt-2">
+                                            You can upload up to 3 images. (Optional)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-card-text me-2 text-info"></i>
+                                            Description
+                                        </h5>
+
+                                        <div class="form-floating">
+                                            <textarea asp-for="Description" class="form-control"
+                                                      placeholder="Describe your rental..."
+                                                      style="height: 140px" required></textarea>
+                                            <label asp-for="Description">Description *</label>
+                                            <span asp-validation-for="Description" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="card-footer bg-light border-0 py-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Fields marked with * are required
+                            </small>
+
+                            <div class="d-flex gap-2">
+                                <a asp-action="Rentals" class="btn btn-outline-secondary px-4">
+                                    <i class="bi bi-arrow-left me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Rental
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script nonce="@nonce" src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <script nonce="@nonce">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Bootstrap validation (مرة واحدة)
+        const form = document.querySelector('form.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                form.classList.add('was-validated');
+
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+                }
+            }, false);
+        }
+
+        // ✅ Preview helper
+        function bindPreview(inputId, imgId) {
+            const input = document.getElementById(inputId);
+            const img = document.getElementById(imgId);
+            if (!input || !img) return;
+
+            input.addEventListener('change', function () {
+                const f = input.files && input.files[0];
+                if (!f) { img.style.display = 'none'; img.src = ''; return; }
+
+                const url = URL.createObjectURL(f);
+                img.src = url;
+                img.style.display = 'block';
+            });
+        }
+        bindPreview('RentalImage1', 'previewRental1');
+        bindPreview('RentalImage2', 'previewRental2');
+        bindPreview('RentalImage3', 'previewRental3');
+
+        // =========================
+        // ✅ Location Picker Logic
+        // =========================
+        const btnUseMyLocation = document.getElementById('btnUseMyLocation');
+        const btnClearLocation = document.getElementById('btnClearLocation');
+        const locationStatus = document.getElementById('locationStatus');
+
+        const latInput = document.getElementById('Latitude');
+        const lngInput = document.getElementById('Longitude');
+        const locationInput = document.getElementById('Location');
+
+        const txtPlaceSearch = document.getElementById('txtPlaceSearch');
+        const btnPlaceSearch = document.getElementById('btnPlaceSearch');
+        const searchStatus = document.getElementById('searchStatus');
+        const searchResultsWrap = document.getElementById('searchResultsWrap');
+        const searchResults = document.getElementById('searchResults');
+
+        const searchError = document.getElementById('searchError');
+        const searchErrorText = document.getElementById('searchErrorText');
+
+        const selectedDetails = document.getElementById('selectedDetails');
+        const selectedCoords = document.getElementById('selectedCoords');
+
+        function setUiError(msg) {
+            searchErrorText.textContent = msg;
+            searchError.style.display = 'block';
+        }
+        function clearUiError() {
+            searchError.style.display = 'none';
+            searchErrorText.textContent = '';
+        }
+        function escapeHtml(str) {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        // default Cairo
+        const defaultLat = @defaultLat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        const defaultLng = @defaultLng.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        const map = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 12);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        let marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+        function setLatLng(lat, lng, zoom, statusMsg, shouldReverse = true) {
+            latInput.value = String(lat);
+            lngInput.value = String(lng);
+
+            marker.setLatLng([lat, lng]);
+            map.setView([lat, lng], zoom ?? map.getZoom());
+
+            selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+            if (statusMsg) locationStatus.textContent = statusMsg;
+
+            if (shouldReverse) reverseGeocodeDebounced(lat, lng);
+        }
+
+        function clearLocation() {
+            latInput.value = '';
+            lngInput.value = '';
+            selectedDetails.textContent = 'No location selected yet. Search and pick a result, or click the map.';
+            selectedCoords.textContent = '';
+            locationStatus.textContent = 'Location cleared. Use Search or click the map.';
+        }
+
+        // Click map
+        map.on('click', function (e) {
+            clearUiError();
+            setLatLng(e.latlng.lat, e.latlng.lng, map.getZoom(), 'Selected by clicking the map.', true);
+        });
+
+        // Drag pin
+        marker.on('dragend', function () {
+            clearUiError();
+            const p = marker.getLatLng();
+            setLatLng(p.lat, p.lng, map.getZoom(), 'Selected by dragging the pin.', true);
+        });
+
+        // Reverse Geocode Debounce
+        let reverseTimer = null;
+        function reverseGeocodeDebounced(lat, lng) {
+            if (reverseTimer) clearTimeout(reverseTimer);
+            reverseTimer = setTimeout(() => reverseGeocode(lat, lng), 400);
+        }
+
+        async function reverseGeocode(lat, lng) {
+            try {
+                selectedDetails.textContent = 'Loading location details...';
+                locationStatus.textContent = 'Loading address from server...';
+
+                const url = `@Url.Action("ReverseGeocode", "Factory")?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+                const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const data = await res.json();
+                const display = (data && data.address) ? data.address : 'Unknown place';
+
+                selectedDetails.textContent = display;
+
+                if (display && display !== 'Unknown place') {
+                    locationInput.value = display.length > 250 ? display.substring(0, 250) : display;
+                }
+
+                locationStatus.textContent = 'Address loaded successfully.';
+            } catch (err) {
+                console.error('ReverseGeocode failed:', err);
+                selectedDetails.textContent = 'Could not load address details. You can still submit coordinates.';
+                locationStatus.textContent = 'Saved coordinates, but address lookup failed.';
+            }
+        }
+
+        function renderResults(items) {
+            searchResults.innerHTML = '';
+            if (!items || items.length === 0) {
+                searchResultsWrap.style.display = 'none';
+                return;
+            }
+
+            searchResultsWrap.style.display = 'block';
+
+            for (const item of items) {
+                const lat = parseFloat(item.lat);
+                const lng = parseFloat(item.lon);
+                const display = item.display_name || 'Unknown';
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-group-item list-group-item-action';
+                btn.innerHTML = `
+                    <div class="fw-semibold small">${escapeHtml(display)}</div>
+                    <div class="text-muted small">Lat: ${lat.toFixed(5)} , Lng: ${lng.toFixed(5)}</div>
+                `;
+
+                btn.addEventListener('click', function () {
+                    clearUiError();
+                    setLatLng(lat, lng, 16, 'Selected from search results.', false);
+
+                    selectedDetails.textContent = display;
+                    selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+
+                    locationInput.value = display.length > 250 ? display.substring(0, 250) : display;
+
+                    searchResultsWrap.style.display = 'none';
+                    searchStatus.textContent = 'Location selected. You can refine by dragging the pin or clicking the map.';
+                });
+
+                searchResults.appendChild(btn);
+            }
+        }
+
+        async function doSearch(query) {
+            clearUiError();
+
+            const q = (query || '').trim();
+            if (!q) {
+                searchStatus.textContent = 'Type a place name then click Search.';
+                searchResultsWrap.style.display = 'none';
+                return;
+            }
+
+            searchStatus.textContent = 'Searching...';
+            btnPlaceSearch.disabled = true;
+            searchResultsWrap.style.display = 'none';
+            searchResults.innerHTML = '';
+
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&limit=8&addressdetails=1`;
+                const res = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json', 'Accept-Language': 'en,ar' }
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    searchStatus.textContent = 'No results. Try adding city/governorate.';
+                    renderResults([]);
+                    return;
+                }
+
+                searchStatus.textContent = `Found ${data.length} results. Click one to select.`;
+                renderResults(data);
+            } catch (err) {
+                console.error(err);
+                searchStatus.textContent = 'Search failed.';
+                renderResults([]);
+                setUiError(
+                    'Search request blocked (CORS/CSP) or rate-limited. ' +
+                    'If CSP is strict: add connect-src for https://nominatim.openstreetmap.org OR route search through backend.'
+                );
+            } finally {
+                btnPlaceSearch.disabled = false;
+            }
+        }
+
+        btnPlaceSearch.addEventListener('click', () => doSearch(txtPlaceSearch.value));
+
+        txtPlaceSearch.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doSearch(txtPlaceSearch.value);
+            }
+        });
+
+        let searchTimer = null;
+        txtPlaceSearch.addEventListener('input', function () {
+            clearUiError();
+            const v = (txtPlaceSearch.value || '').trim();
+
+            if (searchTimer) clearTimeout(searchTimer);
+            if (!v || v.length < 3) {
+                searchResultsWrap.style.display = 'none';
+                searchStatus.textContent = 'Type at least 3 characters for suggestions, or press Search.';
+                return;
+            }
+
+            searchStatus.textContent = 'Loading suggestions...';
+            searchTimer = setTimeout(() => doSearch(v), 500);
+        });
+
+        // GPS
+        btnUseMyLocation.addEventListener('click', function () {
+            clearUiError();
+
+            if (!navigator.geolocation) {
+                locationStatus.textContent = 'GPS not supported. Use Search or click the map.';
+                return;
+            }
+
+            btnUseMyLocation.disabled = true;
+            locationStatus.textContent = 'Detecting GPS location...';
+            selectedDetails.textContent = 'Waiting for GPS...';
+            selectedCoords.textContent = '';
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    try {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+
+                        latInput.value = String(lat);
+                        lngInput.value = String(lng);
+
+                        marker.setLatLng([lat, lng]);
+                        map.setView([lat, lng], 17);
+
+                        selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+                        locationStatus.textContent = 'GPS captured. Loading address...';
+
+                        await reverseGeocode(lat, lng);
+
+                        searchResultsWrap.style.display = 'none';
+                        searchStatus.textContent = 'GPS selected. You can refine by dragging the pin or clicking the map.';
+                    } finally {
+                        btnUseMyLocation.disabled = false;
+                    }
+                },
+                (error) => {
+                    btnUseMyLocation.disabled = false;
+
+                    if (error?.code === 1) locationStatus.textContent = 'Permission denied. Allow location and try again.';
+                    else if (error?.code === 2) locationStatus.textContent = 'Position unavailable. Try again or use Search.';
+                    else if (error?.code === 3) locationStatus.textContent = 'GPS timed out. Try again or use Search.';
+                    else locationStatus.textContent = 'Could not use GPS. Use Search or click the map.';
+
+                    selectedDetails.textContent = 'No location selected yet. Search and pick a result, or click the map.';
+                    selectedCoords.textContent = '';
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        });
+
+        // Clear
+        btnClearLocation.addEventListener('click', function () {
+            clearUiError();
+            clearLocation();
+            searchResultsWrap.style.display = 'none';
+            searchStatus.textContent = 'Type a place name to search.';
+        });
+
+        // Fix render
+        setTimeout(() => map.invalidateSize(), 350);
+    });
+    </script>
+
+    <style nonce="@nonce">
+        .card { border-radius: 12px; overflow: hidden; }
+
+        .card-header.bg-gradient {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        }
+
+        .bg-light-subtle {
+            background-color: rgba(248, 249, 250, 0.5) !important;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        #searchResults .list-group-item { cursor: pointer; }
+    </style>
+}

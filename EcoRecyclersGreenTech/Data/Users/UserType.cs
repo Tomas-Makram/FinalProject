@@ -8,8 +8,6 @@ namespace EcoRecyclersGreenTech.Data.Users
         [Key]
         public int TypeID { get; set; }
 
-        public int? RealTypeID { get; set; }
-
         public string TypeName { get; set; } = null!;
 
         public ICollection<User> Users { get; set; } = new List<User>();

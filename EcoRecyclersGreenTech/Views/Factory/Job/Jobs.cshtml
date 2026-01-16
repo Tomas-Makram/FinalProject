@@ -1,0 +1,386 @@
+﻿@using EcoRecyclersGreenTech.Data.Stores
+@model List<EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel>
+
+@{
+    ViewData["Title"] = "Manage Jobs";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var userName = ViewBag.UserName as string ?? "User";
+    var userType = ViewBag.UserType as string ?? (ViewBag.Type as string ?? "Factory");
+    var isVerified = ViewBag.IsVerified as bool? ?? false;
+
+    var nowUtc = DateTime.UtcNow;
+}
+
+<div class="container-fluid py-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-briefcase-fill fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h2 mb-1 fw-bold">Manage Jobs</h1>
+                    <p class="text-muted mb-0">Add, edit, view orders, or remove job postings</p>
+                    <small class="text-muted">Welcome, @userName (@userType)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-end">
+            <div class="d-flex gap-2 justify-content-end align-items-center">
+                @if (isVerified)
+                {
+                    <span class="badge bg-success rounded-pill p-2">
+                        <i class="bi bi-shield-check me-1"></i>Verified
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark rounded-pill p-2">
+                        <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                    </span>
+                }
+
+                <a asp-action="AddJob" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add New
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search jobs...">
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Job Status</label>
+                    <select id="jobStatusFilter" class="form-select">
+                        <option value="">All</option>
+                        <option value="available">Available</option>
+                        <option value="inactive">Deleted (Inactive)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1">Time Status</label>
+                    <select id="timeStatusFilter" class="form-select">
+                        <option value="">All</option>
+                        <option value="active">Active (Not Expired)</option>
+                        <option value="expired">Expired</option>
+                        <option value="noexpiry">No Expiry</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-1">Sort</label>
+                    <select id="sortFilter" class="form-select">
+                        <option value="expiry_soon">Expiry: Soonest</option>
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="salary_low">Salary: Low to High</option>
+                        <option value="salary_high">Salary: High to Low</option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Clear
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row" id="jobsGrid">
+            @foreach (var job in Model)
+            {
+                var title = !string.IsNullOrWhiteSpace(job.JobType) ? job.JobType : (job.Name ?? "Job");
+                var salary = job.JobSalary.HasValue ? job.JobSalary.Value : job.Price;
+
+                var locText =
+                    !string.IsNullOrWhiteSpace(job.JobLocation) ? job.JobLocation :
+                    (!string.IsNullOrWhiteSpace(job.Name) ? job.Name : "Location");
+
+                var expiry = job.JobExpiryDate;
+
+                var statusText = (job.Status ?? "").Trim();
+                var statusLower = statusText.ToLowerInvariant();
+
+                // ✅ Deleted = not available
+                var isDeleted = statusLower != "available";
+                var isExpired = expiry.HasValue && expiry.Value <= nowUtc;
+
+                var timeState = !expiry.HasValue ? "noexpiry" : (isExpired ? "expired" : "active");
+                var jobState = isDeleted ? "inactive" : "available";
+
+                var hasCoords = job.JobLatitude.HasValue && job.JobLongitude.HasValue;
+                var mapsUrl = hasCoords
+                    ? $"https://www.google.com/maps?q={job.JobLatitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{job.JobLongitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                    : null;
+
+                // ✅ badge style
+                string badgeClass = isDeleted ? "bg-secondary"
+                                  : isExpired ? "bg-danger"
+                                  : "bg-success";
+
+                string badgeText = isDeleted ? "Deleted"
+                                 : isExpired ? "Expired"
+                                 : "Active";
+
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 job-card"
+                     data-salary="@salary"
+                     data-date="@job.CreatedAt.Ticks"
+                     data-expiry="@(expiry.HasValue ? expiry.Value.ToString("O") : "")"
+                     data-jobstatus="@jobState"
+                     data-timestatus="@timeState">
+
+                    <div class="card shadow-sm border-0 h-100 job-card-hover @(isDeleted ? "job-deleted" : (isExpired ? "job-expired" : "job-active"))">
+
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center position-relative" style="height: 180px;">
+                            <i class="bi bi-briefcase fs-1 text-muted"></i>
+
+                            <span class="position-absolute top-0 start-0 m-2 badge @badgeClass">
+                                <i class="bi bi-info-circle me-1"></i>@badgeText
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate mb-2">@title</h5>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-muted small">Salary</div>
+                                    <div class="fw-bold text-success">$@salary.ToString("N2")</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Work Hours</div>
+                                    <div class="fw-bold">@(job.WorkHours.HasValue ? job.WorkHours.Value.ToString() : "—")</div>
+                                </div>
+                            </div>
+
+                            <div class="text-muted small">
+                                <i class="bi bi-calendar3 me-1"></i>@job.CreatedAt.ToString("MMM dd, yyyy")
+                            </div>
+
+                            <div class="mt-2 small text-muted">
+                                <i class="bi bi-geo-alt me-1"></i><span>@locText</span>
+                            </div>
+
+                            @if (hasCoords)
+                            {
+                                <div class="mt-1 small text-muted">
+                                    <i class="bi bi-crosshair me-1"></i>
+                                    Lat: @job.JobLatitude.Value.ToString("0.000000"),
+                                    Lng: @job.JobLongitude.Value.ToString("0.000000")
+                                </div>
+                                <div class="mt-1">
+                                    <a class="small text-decoration-none" href="@mapsUrl" target="_blank" rel="noopener">
+                                        <i class="bi bi-map me-1"></i> View on map
+                                    </a>
+                                </div>
+                            }
+
+                            @if (expiry.HasValue)
+                            {
+                                <div class="mt-2 small text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Expires: @expiry.Value.ToString("MMM dd, yyyy HH:mm")
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mt-2 small text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    No expiry
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top">
+                            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                <a asp-action="JobDetails" asp-route-id="@job.Id" class="btn btn-sm btn-outline-dark">
+                                    <i class="bi bi-receipt me-1"></i>Orders
+                                </a>
+
+                                @* ✅ اخفاء Edit لو Deleted *@
+                                @if (!isDeleted)
+                                {
+                                    <a asp-action="EditJob" asp-route-id="@job.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil me-1"></i>Edit
+                                    </a>
+                                }
+
+                                <form asp-action="DeleteJob" asp-controller="Factory" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@job.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="small text-muted mt-2">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Delete will remove job from public listing (orders remain visible for users).
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-briefcase fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="h4 text-muted mb-3">No Jobs Found</h3>
+            <p class="text-muted mb-4">You haven't added any jobs yet.</p>
+            <div class="d-flex justify-content-center">
+                <a asp-action="AddJob" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Add First Job
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<style nonce="@nonce">
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        border: 1px solid #e9ecef;
+    }
+    .job-card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.09);
+    }
+
+    /* ✅ colored borders for quick recognition */
+    .job-active { border-left: 6px solid rgba(25,135,84,0.65); }
+    .job-expired { border-left: 6px solid rgba(220,53,69,0.65); }
+    .job-deleted { border-left: 6px solid rgba(108,117,125,0.8); }
+
+    #searchInput:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.20);
+        border-color: #86b7fe;
+    }
+</style>
+
+<script nonce="@nonce">
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const sortFilter = document.getElementById('sortFilter');
+    const jobStatusFilter = document.getElementById('jobStatusFilter');
+    const timeStatusFilter = document.getElementById('timeStatusFilter');
+    const clearFilters = document.getElementById('clearFilters');
+
+    function getCards() { return Array.from(document.querySelectorAll('.job-card')); }
+
+    function expiryTicks(card) {
+        const e = card.dataset.expiry;
+        if (!e) return Number.MAX_SAFE_INTEGER;
+        const d = new Date(e).getTime();
+        return isNaN(d) ? Number.MAX_SAFE_INTEGER : d;
+    }
+
+    function filterAndSort() {
+        const term = (searchInput.value || '').toLowerCase().trim();
+        const sortBy = sortFilter.value;
+        const js = (jobStatusFilter.value || '').trim(); // available/inactive
+        const ts = (timeStatusFilter.value || '').trim(); // active/expired/noexpiry
+
+        let cards = getCards();
+
+        if (term) {
+            cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
+        }
+
+        if (js) {
+            cards = cards.filter(c => (c.dataset.jobstatus || '') === js);
+        }
+
+        if (ts) {
+            cards = cards.filter(c => (c.dataset.timestatus || '') === ts);
+        }
+
+        cards.sort((a, b) => {
+            const da = parseInt(a.dataset.date || '0');
+            const db = parseInt(b.dataset.date || '0');
+            const sa = parseFloat(a.dataset.salary || '0');
+            const sb = parseFloat(b.dataset.salary || '0');
+
+            switch (sortBy) {
+                case 'expiry_soon': return expiryTicks(a) - expiryTicks(b);
+                case 'newest': return db - da;
+                case 'oldest': return da - db;
+                case 'salary_low': return sa - sb;
+                case 'salary_high': return sb - sa;
+                default: return 0;
+            }
+        });
+
+        const grid = document.getElementById('jobsGrid');
+        if (!grid) return;
+
+        getCards().forEach(c => c.style.display = 'none');
+        cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
+    }
+
+    searchInput?.addEventListener('input', filterAndSort);
+    sortFilter?.addEventListener('change', filterAndSort);
+    jobStatusFilter?.addEventListener('change', filterAndSort);
+    timeStatusFilter?.addEventListener('change', filterAndSort);
+
+    clearFilters?.addEventListener('click', function () {
+        searchInput.value = '';
+        sortFilter.value = 'expiry_soon';
+        jobStatusFilter.value = '';
+        timeStatusFilter.value = '';
+        filterAndSort();
+        searchInput.focus();
+    });
+
+    filterAndSort();
+});
+</script>

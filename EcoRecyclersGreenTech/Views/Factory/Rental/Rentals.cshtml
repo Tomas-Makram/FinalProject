@@ -1,0 +1,407 @@
+﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+@{
+    ViewData["Title"] = "Manage Rentals";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var userName = ViewBag.UserName as string ?? "User";
+    var userType = ViewBag.UserType as string ?? (ViewBag.Type as string ?? "Factory");
+    var isVerified = ViewBag.IsVerified as bool? ?? false;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-building fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h2 mb-1 fw-bold">Manage Rentals</h1>
+                    <p class="text-muted mb-0">Add, edit, or remove your rental properties</p>
+                    <small class="text-muted">Welcome, @userName (@userType)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-end">
+            <div class="d-flex gap-2 justify-content-end align-items-center">
+                @if (isVerified)
+                {
+                    <span class="badge bg-success rounded-pill p-2">
+                        <i class="bi bi-shield-check me-1"></i>Verified
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark rounded-pill p-2">
+                        <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                    </span>
+                }
+
+                <a asp-action="AddRental" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add New
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search rentals...">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <select id="sortFilter" class="form-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Clear
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row" id="rentalsGrid">
+            @foreach (var rental in Model)
+            {
+                var conditionText = rental.RentalCondition ?? "—";
+                var locationText = rental.RentalAddress ?? rental.Name ?? "Location";
+                var statusText = rental.Status ?? "";
+
+                var hasCoords = rental.RentalLatitude.HasValue && rental.RentalLongitude.HasValue;
+                var mapsUrl = hasCoords
+                    ? $"https://www.google.com/maps?q={rental.RentalLatitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{rental.RentalLongitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                    : null;
+
+                // ✅ Images
+                var imgs = (rental.ImageUrls ?? new List<string>())
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim())
+                    .Distinct()
+                    .ToList();
+
+                if (imgs.Count == 0 && !string.IsNullOrWhiteSpace(rental.ImageUrl))
+                {
+                    imgs.Add(rental.ImageUrl!.Trim());
+                }
+
+                var hasImages = imgs.Count > 0;
+                var carouselId = $"rentalCarousel_{rental.Id}";
+
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 rental-card"
+                     data-price="@rental.Price"
+                     data-date="@rental.CreatedAt.Ticks">
+
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="position-relative">
+
+                            @* ✅ Image area *@
+                            @if (hasImages && imgs.Count > 1)
+                            {
+                                <div id="@carouselId" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        @for (int i = 0; i < imgs.Count; i++)
+                                        {
+                                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                <img src="@imgs[i]" class="d-block w-100"
+                                                     style="height:200px;object-fit:cover;"
+                                                     alt="Rental image @(i + 1)" />
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            }
+                            else if (hasImages && imgs.Count == 1)
+                            {
+                                <img src="@imgs[0]" class="card-img-top"
+                                     style="height:200px;object-fit:cover;" alt="Rental image" />
+                            }
+                            else
+                            {
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="bi bi-building fs-1 text-muted"></i>
+                                </div>
+                            }
+
+                            @if (rental.IsVerifiedSeller)
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Verified
+                                </span>
+                            }
+
+                            @if (hasImages)
+                            {
+                                <span class="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75">
+                                    <i class="bi bi-image me-1"></i>@imgs.Count
+                                </span>
+                            }
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate mb-2">@locationText</h5>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-muted small">Price / Month</div>
+                                    <div class="fw-bold text-success">$@rental.Price.ToString("N2")</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Condition</div>
+                                    <div class="fw-bold">@conditionText</div>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(statusText))
+                            {
+                                <div class="mb-3">
+                                    <span class="badge @GetStatusValidationClass(statusText) rounded-pill px-3 py-2">
+                                        <i class="bi @GetStatusIcon(statusText) me-1"></i>@statusText
+                                    </span>
+                                </div>
+                            }
+
+                            <div class="text-muted small">
+                                <i class="bi bi-calendar3 me-1"></i>@rental.CreatedAt.ToString("MMM dd, yyyy")
+                            </div>
+
+                            <div class="text-muted small mt-1">
+                                <i class="bi bi-person-badge me-1"></i>@(rental.SellerName ?? "Seller")
+                            </div>
+
+                            <!-- ✅ تفاصيل المكان تحت كل Rental -->
+                            @if (!string.IsNullOrWhiteSpace(rental.RentalAddress))
+                            {
+                                <div class="mt-2 small text-muted">
+                                    <i class="bi bi-geo-alt me-1"></i>
+                                    <span>@rental.RentalAddress</span>
+                                </div>
+                            }
+
+                            @if (hasCoords)
+                            {
+                                <div class="mt-1 small text-muted">
+                                    <i class="bi bi-crosshair me-1"></i>
+                                    <span>
+                                        Lat: @rental.RentalLatitude.Value.ToString("0.000000"),
+                                        Lng: @rental.RentalLongitude.Value.ToString("0.000000")
+                                    </span>
+                                </div>
+
+                                <div class="mt-1">
+                                    <a class="small text-decoration-none" href="@mapsUrl" target="_blank" rel="noopener">
+                                        <i class="bi bi-map me-1"></i> View on map
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mt-1 small text-muted">
+                                    <i class="bi bi-info-circle me-1"></i> Coordinates not set
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top">
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                <a asp-action="EditRental" asp-route-id="@rental.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+
+                                <form asp-action="DeleteRental" asp-controller="Factory" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@rental.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-building fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="h4 text-muted mb-3">No Rentals Found</h3>
+            <p class="text-muted mb-4">You haven't added any rentals yet.</p>
+            <div class="d-flex justify-content-center">
+                <a asp-action="AddRental" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Add First Rental
+                </a>
+            </div>
+        </div>
+    }
+
+</div>
+
+@functions {
+    string GetStatusValidationClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "available" => "bg-success",
+            "soldout" or "sold out" => "bg-danger",
+            "reserved" => "bg-warning text-dark",
+            "inactive" => "bg-secondary",
+            "pending" => "bg-info",
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "draft" => "bg-secondary",
+            _ => "bg-primary"
+        };
+    }
+
+    string GetStatusIcon(string status)
+    {
+        return status.ToLower() switch
+        {
+            "available" => "bi-check-circle-fill",
+            "soldout" or "sold out" => "bi-x-circle-fill",
+            "reserved" => "bi-clock-fill",
+            "inactive" => "bi-ban-fill",
+            "pending" => "bi-hourglass-split",
+            "approved" => "bi-check-circle-fill",
+            "rejected" => "bi-x-circle-fill",
+            "draft" => "bi-pencil-fill",
+            _ => "bi-info-circle-fill"
+        };
+    }
+}
+
+<style nonce="@nonce">
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    #searchInput:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-color: #86b7fe;
+    }
+</style>
+
+<script nonce="@nonce">
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const sortFilter = document.getElementById('sortFilter');
+    const clearFilters = document.getElementById('clearFilters');
+
+    function getCards() {
+        return Array.from(document.querySelectorAll('.rental-card'));
+    }
+
+    function filterAndSort() {
+        const term = (searchInput.value || '').toLowerCase();
+        const sortBy = sortFilter.value;
+
+        let cards = getCards();
+
+        if (term) {
+            cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
+        }
+
+        cards.sort((a, b) => {
+            const da = parseInt(a.dataset.date || '0');
+            const db = parseInt(b.dataset.date || '0');
+            const pa = parseFloat(a.dataset.price || '0');
+            const pb = parseFloat(b.dataset.price || '0');
+
+            switch (sortBy) {
+                case 'newest': return db - da;
+                case 'oldest': return da - db;
+                case 'price_low': return pa - pb;
+                case 'price_high': return pb - pa;
+                default: return 0;
+            }
+        });
+
+        const grid = document.getElementById('rentalsGrid');
+        if (!grid) return;
+
+        getCards().forEach(c => c.style.display = 'none');
+        cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
+    }
+
+    searchInput?.addEventListener('input', filterAndSort);
+    sortFilter?.addEventListener('change', filterAndSort);
+
+    clearFilters?.addEventListener('click', function () {
+        searchInput.value = '';
+        sortFilter.value = 'newest';
+        filterAndSort();
+        searchInput.focus();
+    });
+
+    filterAndSort();
+});
+</script>

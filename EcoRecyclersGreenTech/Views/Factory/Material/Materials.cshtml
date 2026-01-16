@@ -1,0 +1,334 @@
+﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+@{
+    ViewData["Title"] = "Manage Materials";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var userName = ViewBag.UserName as string ?? "User";
+    var userType = ViewBag.UserType as string ?? "Factory";
+    var isVerified = ViewBag.IsVerified as bool? ?? false;
+
+    // مش لازم تجيب التوكن هنا طالما هتستخدم @Html.AntiForgeryToken()
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-box-seam fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h2 mb-1 fw-bold">Manage Materials</h1>
+                    <p class="text-muted mb-0">Add, edit, or remove your materials from the marketplace</p>
+                    <small class="text-muted">Welcome, @userName (@userType)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-end">
+            <div class="d-flex gap-2 justify-content-end align-items-center">
+                @if (isVerified)
+                {
+                    <span class="badge bg-success rounded-pill p-2">
+                        <i class="bi bi-shield-check me-1"></i>Verified
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark rounded-pill p-2">
+                        <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                    </span>
+                }
+
+                <a asp-action="AddMaterial" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Add New
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search materials...">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <select id="sortFilter" class="form-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="quantity_low">Quantity: Low to High</option>
+                        <option value="quantity_high">Quantity: High to Low</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row" id="materialsGrid">
+            @foreach (var material in Model)
+            {
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 material-card"
+                     data-price="@material.Price"
+                     data-quantity="@material.AvailableQuantity"
+                     data-date="@material.CreatedAt.Ticks">
+
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="position-relative">
+                            @if (!string.IsNullOrWhiteSpace(material.ImageUrl))
+                            {
+                                <img src="@material.ImageUrl" class="card-img-top material-img" alt="@material.Name">
+                            }
+                            else
+                            {
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                                </div>
+                            }
+
+                            @if (material.IsVerifiedSeller)
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Verified
+                                </span>
+                            }
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate mb-2">@material.Name</h5>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-muted small">Price</div>
+                                    <div class="fw-bold text-success">$@material.Price.ToString("N2")</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Stock</div>
+                                    <div class="fw-bold">@material.AvailableQuantity @material.Unit</div>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(material.Status))
+                            {
+                                <div class="mb-3">
+                                    <span class="badge @GetStatusValidationClass(material.Status) rounded-pill px-3 py-2">
+                                        <i class="bi @GetStatusIcon(material.Status) me-1"></i>@material.Status
+                                    </span>
+                                </div>
+                            }
+
+                            <div class="text-muted small">
+                                <i class="bi bi-calendar3 me-1"></i>@material.CreatedAt.ToString("MMM dd, yyyy")
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top">
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+
+                                <a asp-action="EditMaterial" asp-route-id="@material.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+
+                                <form asp-action="DeleteMaterial" asp-controller="Factory" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@material.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </form>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-box-seam fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="h4 text-muted mb-3">No Materials Found</h3>
+            <p class="text-muted mb-4">You haven't added any materials yet.</p>
+            <div class="d-flex justify-content-center">
+                <a asp-action="AddMaterial" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Add First Material
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusValidationClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "available" => "bg-success",
+            "soldout" or "sold out" => "bg-danger",
+            "reserved" => "bg-warning text-dark",
+            "inactive" => "bg-secondary",
+            "pending" => "bg-info",
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "draft" => "bg-secondary",
+            _ => "bg-primary"
+        };
+    }
+
+    string GetStatusIcon(string status)
+    {
+        return status.ToLower() switch
+        {
+            "available" => "bi-check-circle-fill",
+            "soldout" or "sold out" => "bi-x-circle-fill",
+            "reserved" => "bi-clock-fill",
+            "inactive" => "bi-ban-fill",
+            "pending" => "bi-hourglass-split",
+            "approved" => "bi-check-circle-fill",
+            "rejected" => "bi-x-circle-fill",
+            "draft" => "bi-pencil-fill",
+            _ => "bi-info-circle-fill"
+        };
+    }
+}
+
+<style nonce="@nonce">
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+    .material-img {
+        height: 200px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    #searchInput:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-color: #86b7fe;
+    }
+</style>
+
+<!-- JS هنا فقط للفلترة/الترتيب (مش للإرسال) -->
+<script nonce="@nonce">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const searchInput = document.getElementById('searchInput');
+        const sortFilter = document.getElementById('sortFilter');
+        const clearFilters = document.getElementById('clearFilters');
+
+        function getCards() {
+            return Array.from(document.querySelectorAll('.material-card'));
+        }
+
+        function filterAndSortMaterials() {
+            const term = (searchInput.value || '').toLowerCase();
+            const sortBy = sortFilter.value;
+
+            let cards = getCards();
+
+            if (term) {
+                cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
+            }
+
+            cards.sort((a, b) => {
+                const da = parseInt(a.dataset.date || '0');
+                const db = parseInt(b.dataset.date || '0');
+                const pa = parseFloat(a.dataset.price || '0');
+                const pb = parseFloat(b.dataset.price || '0');
+                const qa = parseInt(a.dataset.quantity || '0');
+                const qb = parseInt(b.dataset.quantity || '0');
+
+                switch (sortBy) {
+                    case 'newest': return db - da;
+                    case 'oldest': return da - db;
+                    case 'price_low': return pa - pb;
+                    case 'price_high': return pb - pa;
+                    case 'quantity_low': return qa - qb;
+                    case 'quantity_high': return qb - qa;
+                    default: return 0;
+                }
+            });
+
+            const grid = document.getElementById('materialsGrid');
+            if (!grid) return;
+
+            getCards().forEach(c => c.style.display = 'none');
+            cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
+        }
+
+        searchInput?.addEventListener('input', filterAndSortMaterials);
+        sortFilter?.addEventListener('change', filterAndSortMaterials);
+
+        clearFilters?.addEventListener('click', function () {
+            searchInput.value = '';
+            sortFilter.value = 'newest';
+            filterAndSortMaterials();
+            searchInput.focus();
+        });
+
+        // init
+        filterAndSortMaterials();
+    });
+</script>

@@ -1,0 +1,1016 @@
+﻿@model EcoRecyclersGreenTech.Models.Home.SettingModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+@{
+    ViewData["Title"] = "Settings";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var defaultProfileImage = "https://ui-avatars.com/api/?name=" +
+        Uri.EscapeDataString(Model.Profile.FullName ?? "User") +
+        "&background=2ecc71&color=fff&size=150&bold=true&font-size=0.5";
+    var profileImageSrc = !string.IsNullOrWhiteSpace(Model.Profile.ProfileImageUrl) ? Model.Profile.ProfileImageUrl : defaultProfileImage;
+
+    var userType = (Model.Account.UserTypeName ?? "").Trim();
+    var isAdmin = string.Equals(userType, "Admin", StringComparison.OrdinalIgnoreCase);
+    var isCraftsman = string.Equals(userType, "Craftsman", StringComparison.OrdinalIgnoreCase);
+    var isIndividual = string.Equals(userType, "Individual", StringComparison.OrdinalIgnoreCase);
+    var isFactory = string.Equals(userType, "Factory", StringComparison.OrdinalIgnoreCase);
+
+    // Ensure exactly 3 factory slots
+    var slots = new List<string?> { null, null, null };
+    if (Model.UserTypeDetails.FactoryImages != null)
+    {
+        for (int i = 0; i < Math.Min(3, Model.UserTypeDetails.FactoryImages.Count); i++)
+            slots[i] = Model.UserTypeDetails.FactoryImages[i];
+    }
+}
+
+<div class="container py-4">
+
+    <!-- Alerts -->
+    @foreach (var key in new[] { "SuccessMessage", "InfoMessage", "WarningMessage", "ErrorMessage", "PasswordError", "OtpError" })
+    {
+        if (TempData[key] != null)
+        {
+            var cls = key switch
+            {
+                "SuccessMessage" => "success",
+                "InfoMessage" => "info",
+                "WarningMessage" => "warning",
+                "ErrorMessage" => "danger",
+                "PasswordError" => "warning",
+                "OtpError" => "danger",
+                _ => "info"
+            };
+            <div class="alert alert-@cls alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>@TempData[key]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+    }
+
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center p-4">
+
+                    <div class="position-relative mb-3">
+                        <img src="@profileImageSrc"
+                             alt="Profile"
+                             class="rounded-circle img-fluid"
+                             style="width:150px;height:150px;object-fit:cover;"
+                             id="profileImagePreview">
+
+                        <div class="position-absolute bottom-0 end-0">
+                            @if (Model.Account.Verified)
+                            {
+                                <span class="badge bg-success rounded-pill p-2"><i class="bi bi-check-circle"></i></span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning rounded-pill p-2"><i class="bi bi-exclamation-circle"></i></span>
+                            }
+                        </div>
+                    </div>
+
+                    <h4 class="fw-bold mb-1">@Model.Profile.FullName</h4>
+
+                    <div class="mb-3">
+                        <span class="badge bg-primary px-3 py-2 rounded-pill">
+                            <i class="bi bi-person-badge me-1"></i>@Model.Account.UserTypeName
+                        </span>
+                    </div>
+
+                    <div class="d-grid gap-2 mb-4">
+                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </button>
+
+                        @if (!Model.Account.Verified && !Model.Account.Blocked)
+                        {
+                            <form method="post" asp-action="StartVerification" asp-controller="Home">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-outline-warning w-100" type="submit">
+                                    <i class="bi bi-shield-exclamation me-2"></i>Verify Account
+                                </button>
+                            </form>
+                        }
+
+                        <a href="/Home" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Home
+                        </a>
+                    </div>
+
+                    <div class="border-top pt-3 text-start">
+                        <small class="text-muted d-block"><i class="bi bi-envelope me-2"></i>Email</small>
+                        <div class="fw-semibold text-truncate">@Model.Profile.Email</div>
+
+                        <small class="text-muted d-block mt-2"><i class="bi bi-calendar me-2"></i>Member Since</small>
+                        <div class="fw-semibold">@Model.Profile.JoinDate.ToString("MMMM yyyy")</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Main -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-gradient border-0 py-3">
+                    <h3 class="card-title mb-0 text-dark">
+                        <i class="bi bi-gear-fill me-2"></i>Account Settings
+                    </h3>
+                    <p class="text-dark-50 mb-0 small">Manage your profile and account information</p>
+                </div>
+
+                <form asp-action="Setting" asp-controller="Home" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <div class="border-bottom">
+                        <ul class="nav nav-pills px-3 pt-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile" type="button">
+                                    <i class="bi bi-person-circle me-2"></i>Profile
+                                </button>
+                            </li>
+
+                            @if (isAdmin)
+                            {
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admin" type="button">
+                                        <i class="bi bi-shield-lock me-2"></i>Admin
+                                    </button>
+                                </li>
+                            }
+                            @if (isCraftsman)
+                            {
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#craftsman" type="button">
+                                        <i class="bi bi-tools me-2"></i>Craftsman
+                                    </button>
+                                </li>
+                            }
+                            @if (isIndividual)
+                            {
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#individual" type="button">
+                                        <i class="bi bi-person-badge me-2"></i>Individual
+                                    </button>
+                                </li>
+                            }
+                            @if (isFactory)
+                            {
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#factory" type="button">
+                                        <i class="bi bi-building me-2"></i>Factory
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <div class="tab-content">
+
+                            <!-- PROFILE -->
+                            <div class="tab-pane fade show active" id="profile">
+                                <div class="row g-4">
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="BasicInfo.FullName" class="form-control" placeholder="Full Name">
+                                            <label asp-for="BasicInfo.FullName"><i class="bi bi-person me-1"></i>Full Name</label>
+                                            <span asp-validation-for="BasicInfo.FullName" class="invalid-feedback"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="BasicInfo.Email" type="email" class="form-control" placeholder="Email">
+                                            <label asp-for="BasicInfo.Email"><i class="bi bi-envelope me-1"></i>Email</label>
+                                            <span asp-validation-for="BasicInfo.Email" class="invalid-feedback"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="BasicInfo.PhoneNumber" class="form-control" placeholder="Phone">
+                                            <label asp-for="BasicInfo.PhoneNumber"><i class="bi bi-phone me-1"></i>Phone</label>
+                                            <span asp-validation-for="BasicInfo.PhoneNumber" class="invalid-feedback"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="BasicInfo.Location" class="form-control" placeholder="Location">
+                                            <label asp-for="BasicInfo.Location"><i class="bi bi-geo-alt me-1"></i>Location</label>
+                                            <span asp-validation-for="BasicInfo.Location" class="invalid-feedback"></span>
+                                            <div class="form-text small">This is an address hint. The map saves coordinates.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ✅ LOCATION MAP -->
+                                    <div class="col-12">
+                                        <div class="card border bg-transparent">
+                                            <div class="card-body">
+                                                <h6 class="card-title mb-3">
+                                                    <i class="bi bi-geo-alt-fill me-2"></i>Location on Map
+                                                </h6>
+
+                                                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <button type="button" class="btn btn-success" id="btnUseMyLocation_Settings">
+                                                            <i class="bi bi-geo-alt me-1"></i> Use GPS
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary" id="btnClearLocation_Settings">
+                                                            <i class="bi bi-x-circle me-1"></i> Clear
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="small text-muted" id="locationStatus_Settings">
+                                                        Click map or drag the pin.
+                                                    </div>
+                                                </div>
+
+                                                <!-- hidden inputs (not in SettingModel) -->
+                                                <input type="hidden" id="Latitude_Settings" name="Latitude"
+                                                       value="@(Model.Profile.Latitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                <input type="hidden" id="Longitude_Settings" name="Longitude"
+                                                       value="@(Model.Profile.Longitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+
+                                                <div id="map_settings" style="height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;"></div>
+
+                                                <div class="mt-2 p-2 rounded" style="background:#f8f9fa;border:1px solid #e9ecef">
+                                                    <div class="small fw-semibold text-success mb-1">Selected Location</div>
+                                                    <div class="small text-muted" id="selectedDetails_Settings">
+                                                        @(string.IsNullOrWhiteSpace(Model.Profile.Address) ? "No location details yet." : Model.Profile.Address)
+                                                    </div>
+                                                    <div class="small text-muted mt-1" id="selectedCoords_Settings"></div>
+                                                </div>
+
+                                                <div class="small text-muted mt-2">
+                                                    Tip: You can refine by clicking map or dragging the pin.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- ✅ END LOCATION MAP -->
+
+                                    <!-- Profile Image -->
+                                    <div class="col-12">
+                                        <div class="card bg-transparent border">
+                                            <div class="card-body">
+                                                <h6 class="card-title mb-3"><i class="bi bi-image me-2"></i>Profile Image</h6>
+
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="position-relative">
+                                                        <img src="@profileImageSrc" class="rounded-circle border"
+                                                             style="width:90px;height:90px;object-fit:cover;"
+                                                             id="profilePreview">
+
+                                                        <label for="profileImageInput"
+                                                               class="position-absolute bottom-0 end-0 btn btn-sm btn-primary rounded-circle">
+                                                            <i class="bi bi-camera"></i>
+                                                        </label>
+                                                    </div>
+
+                                                    <div class="flex-grow-1">
+                                                        <input asp-for="ProfileImage.ProfileImageFile" type="file"
+                                                               class="form-control d-none"
+                                                               id="profileImageInput"
+                                                               accept=".jpg,.jpeg,.png,.gif,.webp">
+                                                        <div class="form-text">Max: 5MB — JPG/PNG/GIF/WebP</div>
+                                                        <span asp-validation-for="ProfileImage.ProfileImageFile" class="text-danger small"></span>
+
+                                                        <input asp-for="ProfileImage.DeleteProfileImage" id="deleteProfileImage" type="checkbox" class="d-none" />
+                                                    </div>
+
+                                                    <button type="button"
+                                                            class="btn btn-outline-danger profile-delete-btn"
+                                                    @(string.IsNullOrWhiteSpace(Model.Profile.ProfileImageUrl) ? "disabled" : "")>
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+
+                                                <div class="small text-muted mt-2">
+                                                    Delete will apply after Save.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- ADMIN -->
+                            @if (isAdmin)
+                            {
+                                <div class="tab-pane fade" id="admin">
+                                    <div class="form-floating">
+                                        <input asp-for="TypeSpecific.AdminType" class="form-control" placeholder="Admin Type">
+                                        <label asp-for="TypeSpecific.AdminType"><i class="bi bi-person-gear me-1"></i>Admin Type</label>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- CRAFTSMAN -->
+                            @if (isCraftsman)
+                            {
+                                <div class="tab-pane fade" id="craftsman">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input asp-for="TypeSpecific.SkillType" class="form-control" placeholder="Skill Type">
+                                                <label asp-for="TypeSpecific.SkillType"><i class="bi bi-hammer me-1"></i>Skill Type</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input asp-for="TypeSpecific.ExperienceYears" type="number" class="form-control" placeholder="Years" min="0" max="100">
+                                                <label asp-for="TypeSpecific.ExperienceYears"><i class="bi bi-calendar-check me-1"></i>Experience Years</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- INDIVIDUAL -->
+                            @if (isIndividual)
+                            {
+                                <div class="tab-pane fade" id="individual">
+                                    <div class="form-floating">
+                                        <input asp-for="TypeSpecific.Occupation" class="form-control" placeholder="Occupation">
+                                        <label asp-for="TypeSpecific.Occupation"><i class="bi bi-briefcase me-1"></i>Occupation</label>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- FACTORY -->
+                            @if (isFactory)
+                            {
+                                <div class="tab-pane fade" id="factory">
+                                    <div class="row g-3">
+
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input asp-for="TypeSpecific.FactoryName" class="form-control" placeholder="Factory Name">
+                                                <label asp-for="TypeSpecific.FactoryName"><i class="bi bi-building me-1"></i>Factory Name</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input asp-for="TypeSpecific.FactoryType" class="form-control" placeholder="Factory Type">
+                                                <label asp-for="TypeSpecific.FactoryType"><i class="bi bi-tags me-1"></i>Factory Type</label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Factory Images -->
+                                        <div class="col-12">
+                                            <div class="card border bg-transparent">
+                                                <div class="card-body">
+                                                    <h6 class="card-title mb-3">
+                                                        <i class="bi bi-images me-2"></i>Factory Images
+                                                    </h6>
+
+                                                    <div class="row g-3">
+                                                        @for (int slot = 1; slot <= 3; slot++)
+                                                        {
+                                                            var url = slots[slot - 1];
+                                                            var hasImage = !string.IsNullOrWhiteSpace(url);
+
+                                                            <div class="col-md-4">
+                                                                <div class="factory-img-card border rounded-3 overflow-hidden position-relative">
+                                                                    <div class="factory-img-wrapper position-relative">
+
+                                                                        @if (hasImage)
+                                                                        {
+                                                                            <img id="factoryPreview_@slot" src="@url" class="w-100 factory-img" alt="Factory Image @slot" />
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <div class="factory-placeholder d-flex flex-column justify-content-center align-items-center" id="factoryPlaceholder_@slot">
+                                                                                <i class="bi bi-image fs-1 mb-2 text-muted"></i>
+                                                                                <div class="small text-muted">Empty slot #@slot</div>
+                                                                            </div>
+                                                                            <img id="factoryPreview_@slot" src="" class="w-100 factory-img d-none" alt="Factory Image @slot" />
+                                                                        }
+
+                                                                        <label class="factory-edit-icon" for="factoryFile_@slot" title="Choose image">
+                                                                            <i class="bi bi-camera-fill"></i>
+                                                                        </label>
+
+                                                                        <button type="button"
+                                                                                class="btn btn-sm btn-danger factory-delete-btn"
+                                                                                data-slot="@slot"
+                                                                                title="Delete (apply after Save)"
+                                                                        @(hasImage ? "" : "disabled")>
+                                                                            <i class="bi bi-trash"></i>
+                                                                        </button>
+                                                                    </div>
+
+                                                                    @if (slot == 1)
+                                                                    {
+                                                                        <input asp-for="FactoryImages.Slot1File" id="factoryFile_1" type="file" class="d-none factory-file" data-slot="1" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                        <input asp-for="FactoryImages.DeleteSlot1" id="deleteSlot_1" type="checkbox" class="d-none" />
+                                                                    }
+                                                                    @if (slot == 2)
+                                                                    {
+                                                                        <input asp-for="FactoryImages.Slot2File" id="factoryFile_2" type="file" class="d-none factory-file" data-slot="2" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                        <input asp-for="FactoryImages.DeleteSlot2" id="deleteSlot_2" type="checkbox" class="d-none" />
+                                                                    }
+                                                                    @if (slot == 3)
+                                                                    {
+                                                                        <input asp-for="FactoryImages.Slot3File" id="factoryFile_3" type="file" class="d-none factory-file" data-slot="3" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                        <input asp-for="FactoryImages.DeleteSlot3" id="deleteSlot_3" type="checkbox" class="d-none" />
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+
+                                                    <div class="alert alert-info border-0 small mt-3 mb-0">
+                                                        <i class="bi bi-info-circle me-1"></i>
+                                                        Delete hides the image immediately, but is applied only after Save.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="form-floating">
+                                                <textarea asp-for="TypeSpecific.Description" class="form-control" placeholder="Description" style="height:150px;"></textarea>
+                                                <label asp-for="TypeSpecific.Description"><i class="bi bi-card-text me-1"></i>Description</label>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-light border-0">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="reset" class="btn btn-outline-danger px-4" onclick="location.reload()">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary px-4" id="saveBtn">
+                                <i class="bi bi-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient border-0">
+                <h5 class="modal-title text-white"><i class="bi bi-key-fill me-2"></i>Change Password</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="changePasswordForm" method="post" asp-action="ChangePassword" asp-controller="Home">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body p-4">
+                    <div class="mb-4 form-floating">
+                        <input type="password" class="form-control" asp-for="PasswordChange.CurrentPassword" placeholder="Current" required>
+                        <label asp-for="PasswordChange.CurrentPassword"></label>
+                    </div>
+                    <div class="mb-4 form-floating">
+                        <input type="password" class="form-control" asp-for="PasswordChange.NewPassword" placeholder="New" required>
+                        <label asp-for="PasswordChange.NewPassword"></label>
+                    </div>
+                    <div class="mb-4 form-floating">
+                        <input type="password" class="form-control" asp-for="PasswordChange.ConfirmNewPassword" placeholder="Confirm" required>
+                        <label asp-for="PasswordChange.ConfirmNewPassword"></label>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Change</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- OTP Verification Modal -->
+<div class="modal fade" id="verifyAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+
+            <div class="modal-header bg-gradient border-0">
+                <h5 class="modal-title text-white"><i class="bi bi-shield-check me-2"></i>Verify Your Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="verifyOtpForm" method="post" asp-action="VerifyOtp" asp-controller="Home">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="VerifyOtp.OtpCode" id="otpCodeInput" />
+
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 bg-light-info mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Enter the 6-digit code sent to: <strong>@Model.Profile.Email</strong>
+                    </div>
+
+                    <div class="mb-3 d-flex justify-content-between">
+                        <small class="text-muted">Attempts: <span id="attemptsCount">--</span></small>
+                        <small class="text-muted">Expire: <span id="expiryTime">--:--</span></small>
+                    </div>
+
+                    <div class="otp-input-group d-flex justify-content-center gap-2 mb-3">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <input type="text" maxlength="1"
+                                   class="form-control form-control-lg text-center otp-digit"
+                                   autocomplete="off" inputmode="numeric" pattern="[0-9]">
+                        }
+                    </div>
+
+                    <span asp-validation-for="VerifyOtp.OtpCode" class="text-danger small" id="otpValidation"></span>
+                </div>
+
+                <div class="modal-footer border-0 bg-light">
+                    <div class="w-100 d-flex justify-content-between align-items-center">
+
+                        <form id="resendOtpForm" method="post" asp-action="ResendOtp" asp-controller="Home" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-secondary" id="resendOtpBtn">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                <span id="resendText">Resend Code</span>
+                                <span id="resendCountdown" class="badge bg-light text-dark ms-2 d-none">00:00</span>
+                            </button>
+                        </form>
+
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="verifyBtn" disabled>Verify</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .otp-input-group input {
+        width: 55px;
+        height: 65px;
+        font-size: 1.75rem;
+        font-weight: bold;
+        border: 2px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+
+    .otp-input-group input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25);
+        transform: translateY(-2px);
+    }
+
+    .otp-input-group input.filled {
+        border-color: #198754;
+        background-color: rgba(25,135,84,0.05);
+    }
+
+    .factory-img-card { background: #fff; transition: all .2s ease; }
+    .factory-img-wrapper { height: 170px; background: #f8f9fa; overflow: hidden; position: relative; }
+    .factory-img { height: 170px; width: 100%; object-fit: cover; display: block; }
+    .factory-placeholder { height: 170px; width: 100%; }
+
+    .factory-edit-icon {
+        position: absolute; right: 10px; bottom: 10px;
+        width: 42px; height: 42px; border-radius: 999px;
+        background: rgba(13,110,253,.95); color: #fff;
+        display: grid; place-items: center;
+        cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.18);
+        z-index: 5;
+    }
+
+    .factory-delete-btn {
+        position: absolute; left: 10px; bottom: 10px;
+        z-index: 6; border-radius: 999px;
+        width: 42px; height: 42px; display: grid; place-items: center;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    }
+
+    .hidden-by-delete { display: none !important; }
+</style>
+
+@section Scripts {
+    <!-- ✅ Leaflet -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script nonce="@nonce" src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <script nonce="@nonce">
+        (function () {
+            'use strict';
+
+            function formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // Bootstrap validation
+            document.querySelectorAll('.needs-validation').forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            // Save button loading
+            const mainForm = document.querySelector('form.needs-validation');
+            if (mainForm) {
+                mainForm.addEventListener('submit', function () {
+                    const btn = document.getElementById('saveBtn');
+                    if (btn) { btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...'; btn.disabled = true; }
+                });
+            }
+
+            // -------- Profile image: preview + delete-hide ----------
+            const profileImageInput = document.getElementById('profileImageInput');
+            const profilePreview = document.getElementById('profilePreview');
+            const profileImagePreview = document.getElementById('profileImagePreview');
+            const deleteProfileImage = document.getElementById('deleteProfileImage');
+
+            if (profileImageInput && profilePreview && profileImagePreview) {
+                profileImageInput.addEventListener('change', function () {
+                    const file = this.files[0];
+                    if (!file) return;
+
+                    if (file.size > 5 * 1024 * 1024) { alert('File size exceeds 5MB.'); this.value = ''; return; }
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) { alert('Invalid file type.'); this.value = ''; return; }
+
+                    if (deleteProfileImage) deleteProfileImage.checked = false;
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        profilePreview.src = e.target.result;
+                        profileImagePreview.src = e.target.result;
+
+                        profilePreview.classList.remove('hidden-by-delete');
+                        profileImagePreview.classList.remove('hidden-by-delete');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            document.querySelectorAll('.profile-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    if (!deleteProfileImage) return;
+
+                    deleteProfileImage.checked = !deleteProfileImage.checked;
+
+                    if (deleteProfileImage.checked) {
+                        if (profilePreview) profilePreview.classList.add('hidden-by-delete');
+                        if (profileImagePreview) profileImagePreview.classList.add('hidden-by-delete');
+                        if (profileImageInput) profileImageInput.value = '';
+                    } else {
+                        if (profilePreview) profilePreview.classList.remove('hidden-by-delete');
+                        if (profileImagePreview) profileImagePreview.classList.remove('hidden-by-delete');
+                    }
+                });
+            });
+
+            // -------- Factory: file preview + delete-hide ----------
+            document.querySelectorAll('.factory-file').forEach(function (input) {
+                input.addEventListener('change', function () {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+
+                    if (file.size > 5 * 1024 * 1024) { alert('File size exceeds 5MB.'); this.value = ''; return; }
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) { alert('Invalid file type.'); this.value = ''; return; }
+
+                    const slot = this.getAttribute('data-slot');
+                    const preview = document.getElementById('factoryPreview_' + slot);
+                    const placeholder = document.getElementById('factoryPlaceholder_' + slot);
+                    const del = document.getElementById('deleteSlot_' + slot);
+
+                    if (del) del.checked = false;
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (placeholder) placeholder.classList.add('d-none');
+                        if (preview) {
+                            preview.src = e.target.result;
+                            preview.classList.remove('d-none');
+                            preview.classList.remove('hidden-by-delete');
+                        }
+
+                        const delBtn = document.querySelector('.factory-delete-btn[data-slot="' + slot + '"]');
+                        if (delBtn) delBtn.removeAttribute('disabled');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            document.querySelectorAll('.factory-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const slot = this.getAttribute('data-slot');
+                    const del = document.getElementById('deleteSlot_' + slot);
+                    const preview = document.getElementById('factoryPreview_' + slot);
+                    const placeholder = document.getElementById('factoryPlaceholder_' + slot);
+                    const fileInput = document.getElementById('factoryFile_' + slot);
+
+                    if (!del) return;
+
+                    del.checked = !del.checked;
+
+                    if (del.checked) {
+                        if (preview) preview.classList.add('hidden-by-delete');
+                        if (placeholder) placeholder.classList.remove('d-none');
+                        if (fileInput) fileInput.value = '';
+                    } else {
+                        if (preview && preview.src) {
+                            preview.classList.remove('hidden-by-delete');
+                            if (placeholder) placeholder.classList.add('d-none');
+                        }
+                    }
+                });
+            });
+
+            // =========================
+            // ✅ Settings Location Map (Click/Drag/GPS/Clear)
+            // =========================
+            function initSettingsMap() {
+                const mapEl = document.getElementById('map_settings');
+                if (!mapEl || !window.L) return;
+
+                const latInput = document.getElementById('Latitude_Settings');
+                const lngInput = document.getElementById('Longitude_Settings');
+
+                const btnUseMyLocation = document.getElementById('btnUseMyLocation_Settings');
+                const btnClearLocation = document.getElementById('btnClearLocation_Settings');
+                const statusEl = document.getElementById('locationStatus_Settings');
+
+                const detailsEl = document.getElementById('selectedDetails_Settings');
+                const coordsEl = document.getElementById('selectedCoords_Settings');
+
+                const addressHintInput = document.querySelector('[name="BasicInfo.Location"]');
+
+                const defaultLat = 30.0444, defaultLng = 31.2357;
+                const initialLat = latInput.value ? parseFloat(latInput.value) : defaultLat;
+                const initialLng = lngInput.value ? parseFloat(lngInput.value) : defaultLng;
+                const initialZoom = (latInput.value && lngInput.value) ? 15 : 12;
+
+                const map = L.map('map_settings', { zoomControl: true }).setView([initialLat, initialLng], initialZoom);
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap &copy; CARTO'
+                }).addTo(map);
+
+                let marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+
+                if (latInput.value && lngInput.value && coordsEl) {
+                    coordsEl.textContent = `Lat: ${parseFloat(latInput.value).toFixed(6)} , Lng: ${parseFloat(lngInput.value).toFixed(6)}`;
+                }
+
+                function setLatLng(lat, lng, zoom, msg, doReverse = true) {
+                    latInput.value = String(lat);
+                    lngInput.value = String(lng);
+
+                    marker.setLatLng([lat, lng]);
+                    map.setView([lat, lng], zoom ?? map.getZoom());
+
+                    if (coordsEl) coordsEl.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+                    if (statusEl && msg) statusEl.textContent = msg;
+
+                    if (doReverse) reverseGeocodeServer(lat, lng);
+                }
+
+                function clearLocation() {
+                    latInput.value = '';
+                    lngInput.value = '';
+                    if (coordsEl) coordsEl.textContent = '';
+                    if (detailsEl) detailsEl.textContent = 'No location selected.';
+                    if (statusEl) statusEl.textContent = 'Location cleared. Use GPS or click the map.';
+                    if (addressHintInput) addressHintInput.value = '';
+                }
+
+                map.on('click', function (e) {
+                    setLatLng(e.latlng.lat, e.latlng.lng, map.getZoom(), 'Selected by clicking the map.', true);
+                });
+
+                marker.on('dragend', function () {
+                    const p = marker.getLatLng();
+                    setLatLng(p.lat, p.lng, map.getZoom(), 'Selected by dragging the pin.', true);
+                });
+
+                if (btnUseMyLocation) {
+                    btnUseMyLocation.addEventListener('click', function () {
+                        if (!navigator.geolocation) {
+                            if (statusEl) statusEl.textContent = 'GPS not supported. Click the map instead.';
+                            return;
+                        }
+                        if (statusEl) statusEl.textContent = 'Detecting GPS location...';
+
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                setLatLng(pos.coords.latitude, pos.coords.longitude, 17, 'GPS location saved.', true);
+                            },
+                            () => {
+                                if (statusEl) statusEl.textContent = 'Could not use GPS. Click the map instead.';
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        );
+                    });
+                }
+
+                if (btnClearLocation) {
+                    btnClearLocation.addEventListener('click', function () {
+                        clearLocation();
+                    });
+                }
+
+                let rgTimer = null;
+
+                function reverseGeocodeServer(lat, lng) {
+                    if (rgTimer) clearTimeout(rgTimer);
+
+                    rgTimer = setTimeout(async () => {
+                        try {
+                            if (detailsEl) detailsEl.textContent = 'Loading location details...';
+
+                            const url = `@Url.Action("ReverseGeocode", "Home")?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+                            const res = await fetch(url, { method: 'GET', credentials: 'same-origin' });
+                            if (!res.ok) throw new Error('Reverse failed');
+
+                            const data = await res.json();
+                            const address = data && data.address ? data.address : null;
+
+                            // ✅ 1) يظهر تحت Selected Location
+                            if (detailsEl) detailsEl.textContent = address || 'Unknown place';
+
+                            // ✅ 2) يتحط في خانة Address (BasicInfo.Location)
+                            if (addressHintInput && address) {
+                                addressHintInput.value = address.length > 200 ? address.substring(0, 200) : address;
+                            }
+
+                        } catch {
+                            if (detailsEl) detailsEl.textContent = 'Could not load details (you can still save coordinates).';
+                        }
+                    }, 350);
+                }
+
+                setTimeout(() => map.invalidateSize(), 350);
+            }
+
+            // -------- OTP stuff (unchanged) ----------
+            function setupOtpInputs() {
+                const otpDigits = document.querySelectorAll('.otp-digit');
+                const otpCodeInput = document.getElementById('otpCodeInput');
+                const verifyBtn = document.getElementById('verifyBtn');
+
+                if (!otpDigits.length || !otpCodeInput || !verifyBtn) return;
+
+                function updateOtpCode() {
+                    const code = Array.from(otpDigits).map(d => d.value).join('');
+                    otpCodeInput.value = code;
+                }
+
+                otpDigits.forEach((digit, index) => {
+                    digit.addEventListener('input', function (e) {
+                        const v = e.target.value;
+                        if (!/^\d*$/.test(v)) { e.target.value = ''; return; }
+                        if (v.length === 1 && index < otpDigits.length - 1) otpDigits[index + 1].focus();
+                        digit.classList.toggle('filled', v.length === 1);
+                        updateOtpCode();
+                    });
+
+                    digit.addEventListener('keydown', function (e) {
+                        if (e.key === 'Backspace' && digit.value === '' && index > 0) {
+                            otpDigits[index - 1].focus();
+                            otpDigits[index - 1].value = '';
+                            otpDigits[index - 1].classList.remove('filled');
+                            updateOtpCode();
+                        }
+                    });
+
+                    digit.addEventListener('paste', function (e) {
+                        e.preventDefault();
+                        const pasted = e.clipboardData.getData('text');
+                        if (/^\d{6}$/.test(pasted)) {
+                            pasted.split('').forEach((ch, i) => {
+                                if (otpDigits[i]) {
+                                    otpDigits[i].value = ch;
+                                    otpDigits[i].classList.add('filled');
+                                }
+                            });
+                            otpDigits[5].focus();
+                            updateOtpCode();
+                        }
+                    });
+                });
+
+                updateOtpCode();
+            }
+
+            let otpPollTimer = null;
+
+            async function pollOtpStatus() {
+                try {
+                    const res = await fetch('@Url.Action("GetOtpStatus", "Home")', { method: 'GET', credentials: 'same-origin' });
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    const attemptsEl = document.getElementById('attemptsCount');
+                    const expiryEl = document.getElementById('expiryTime');
+                    const resendBtn = document.getElementById('resendOtpBtn');
+                    const resendCountdown = document.getElementById('resendCountdown');
+                    const resendText = document.getElementById('resendText');
+                    const verifyBtn = document.getElementById('verifyBtn');
+                    const otpDigits = document.querySelectorAll('.otp-digit');
+                    const otpCodeInput = document.getElementById('otpCodeInput');
+
+                    if (attemptsEl) attemptsEl.textContent = data.remainingAttempts ?? '--';
+
+                    if (expiryEl) {
+                        const sec = data.expirySeconds ?? 0;
+                        expiryEl.textContent = sec > 0 ? formatTime(sec) : 'Expired';
+                    }
+
+                    const cd = data.resendCooldownSeconds ?? 0;
+                    const canResend = !!data.canResendOtp;
+
+                    if (resendBtn && resendCountdown && resendText) {
+                        if (!canResend) {
+                            resendBtn.disabled = true;
+                            resendCountdown.classList.remove('d-none');
+                            resendCountdown.textContent = formatTime(cd);
+                            resendText.textContent = 'Wait';
+                        } else {
+                            resendBtn.disabled = false;
+                            resendCountdown.classList.add('d-none');
+                            resendText.textContent = 'Resend Code';
+                        }
+                    }
+
+                    if (verifyBtn && otpCodeInput) {
+                        const codeOk = otpCodeInput.value && otpCodeInput.value.length === 6;
+                        const canVerifyNow = codeOk && data.hasActiveOtp && (data.remainingAttempts > 0) && !data.verified && !data.blocked;
+                        verifyBtn.disabled = !canVerifyNow;
+                    }
+
+                    if (otpDigits && otpDigits.length) {
+                        otpDigits.forEach(d => d.disabled = !!data.blocked || !!data.verified);
+                    }
+                } catch { }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                setupOtpInputs();
+                initSettingsMap();
+
+                const openOtp = '@(TempData["OpenVerifyModal"]?.ToString() ?? "")';
+                if (openOtp === "true") {
+                    var otpModal = new bootstrap.Modal(document.getElementById('verifyAccountModal'));
+                    otpModal.show();
+                }
+
+                const otpModalEl = document.getElementById('verifyAccountModal');
+                if (otpModalEl) {
+                    otpModalEl.addEventListener('shown.bs.modal', function () {
+                        pollOtpStatus();
+                        if (otpPollTimer) clearInterval(otpPollTimer);
+                        otpPollTimer = setInterval(pollOtpStatus, 1000);
+                    });
+                    otpModalEl.addEventListener('hidden.bs.modal', function () {
+                        if (otpPollTimer) clearInterval(otpPollTimer);
+                        otpPollTimer = null;
+                    });
+                }
+
+                const pwdErr = '@(TempData["PasswordError"]?.ToString() ?? "")';
+                if (pwdErr) {
+                    var pwdModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+                    pwdModal.show();
+                }
+            });
+
+        })();
+    </script>
+}

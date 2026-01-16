@@ -18,24 +18,112 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = D:\Universty\EcoRecyclersGreenTech\EcoRecyclersGreenTech
 build_property._RazorSourceGeneratorDebug = 
 
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Auth/ForgetPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxGb3JnZXRQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Auth/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Auth/ResetPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxSZXNldFBhc3N3b3JkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Auth/Signup.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxTaWdudXAuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Auction/AddAuction.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxBdWN0aW9uXEFkZEF1Y3Rpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Auction/Auctions.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxBdWN0aW9uXEF1Y3Rpb25zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Auction/EditAuction.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxBdWN0aW9uXEVkaXRBdWN0aW9uLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Job/AddJob.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxKb2JcQWRkSm9iLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Job/EditJob.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxKb2JcRWRpdEpvYi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Job/JobDetails.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxKb2JcSm9iRGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Job/Jobs.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxKb2JcSm9icy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Machine/AddMachine.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxNYWNoaW5lXEFkZE1hY2hpbmUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Machine/EditMachine.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxNYWNoaW5lXEVkaXRNYWNoaW5lLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Machine/Machines.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxNYWNoaW5lXE1hY2hpbmVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Material/AddMaterial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxNYXRlcmlhbFxBZGRNYXRlcmlhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Material/EditMaterial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxNYXRlcmlhbFxFZGl0TWF0ZXJpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Material/Materials.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxNYXRlcmlhbFxNYXRlcmlhbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Rental/AddRental.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxSZW50YWxcQWRkUmVudGFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Rental/EditRental.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxSZW50YWxcRWRpdFJlbnRhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Factory/Rental/Rentals.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRmFjdG9yeVxSZW50YWxcUmVudGFscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Shared/Error.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Home/Setting.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxTZXR0aW5nLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Shared/_ValidationScriptsPartial.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Individual/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSW5kaXZpZHVhbFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Individual/JobDetails.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSW5kaXZpZHVhbFxKb2JEZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Individual/MyJobs.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSW5kaXZpZHVhbFxNeUpvYnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/Universty/EcoRecyclersGreenTech/EcoRecyclersGreenTech/Views/_ViewImports.cshtml]

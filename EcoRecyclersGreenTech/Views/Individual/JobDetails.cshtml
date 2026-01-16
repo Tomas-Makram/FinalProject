@@ -1,0 +1,316 @@
+﻿@model EcoRecyclersGreenTech.Models.IndividualStore.IndividualJobDetailsVM
+
+@{
+    ViewData["Title"] = "Job Details";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var hasCoords = Model.Latitude.HasValue && Model.Longitude.HasValue;
+    var mapsUrl = hasCoords
+        ? $"https://www.google.com/maps?q={Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+        : null;
+
+    var salary = (Model.Salary ?? 0);
+}
+
+<div class="container py-4">
+
+    @* Alerts *@
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning">@TempData["Warning"]</div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            @* ===== Header Card ===== *@
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header header-gradient border-0 py-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 text-white">
+                                <i class="bi bi-briefcase-fill fs-1"></i>
+                            </div>
+                            <div>
+                                <h2 class="mb-1 text-white">@((Model.JobType ?? "Job"))</h2>
+                                <div class="text-white-50">
+                                    Posted by <span class="fw-semibold text-white">@((Model.FactoryName ?? "Factory"))</span>
+
+                                    @if (Model.FactoryVerified)
+                                    {
+                                        <span class="badge bg-success ms-2">
+                                            <i class="bi bi-check-circle me-1"></i>Verified
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-white">
+                            <span class="badge bg-dark fs-6">
+                                <i class="bi bi-people me-1"></i>
+                                Joined: @Model.JoinedCount
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row g-3">
+
+                        @* ===== Job Info ===== *@
+                        <div class="col-12">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-info-circle me-2 text-primary"></i>Job Info
+                                </h4>
+
+                                @if (Model.ExpiryDate.HasValue)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Expires: @Model.ExpiryDate.Value.ToString("MMM dd, yyyy HH:mm")
+                                    </span>
+                                }
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded border bg-light h-100">
+                                        <div class="small text-muted">Salary</div>
+                                        <div class="fw-bold text-success fs-5">$@salary.ToString("N2")</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded border bg-light h-100">
+                                        <div class="small text-muted">Work Hours</div>
+                                        <div class="fw-bold fs-5">@(Model.WorkHours?.ToString() ?? "—")</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="p-3 rounded border bg-light h-100">
+                                        <div class="small text-muted">Posted At</div>
+                                        <div class="fw-bold fs-6">@Model.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(Model.ExperienceLevel))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded border bg-light h-100">
+                                            <div class="small text-muted">Experience Level</div>
+                                            <div class="fw-semibold">@Model.ExperienceLevel</div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(Model.EmploymentType))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded border bg-light h-100">
+                                            <div class="small text-muted">Employment Type</div>
+                                            <div class="fw-semibold">@Model.EmploymentType</div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="col-12">
+                                    <div class="p-3 rounded border bg-light">
+                                        <div class="small text-muted">Location</div>
+                                        <div class="fw-semibold">
+                                            <i class="bi bi-geo-alt me-1"></i>@(Model.Location ?? "—")
+                                        </div>
+
+                                        @if (hasCoords)
+                                        {
+                                            <div class="small text-muted mt-1">
+                                                Lat: @Model.Latitude.Value.ToString("0.000000"),
+                                                Lng: @Model.Longitude.Value.ToString("0.000000")
+                                            </div>
+                                            <div class="mt-2">
+                                                <a class="btn btn-sm btn-outline-primary" href="@mapsUrl" target="_blank" rel="noopener">
+                                                    <i class="bi bi-map me-1"></i>Open in Google Maps
+                                                </a>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(Model.RequiredSkills))
+                                {
+                                    <div class="col-12">
+                                        <div class="p-3 rounded border bg-white">
+                                            <div class="small text-muted">Required Skills</div>
+                                            <div class="fw-semibold">@Model.RequiredSkills</div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="col-12">
+                                    <div class="p-3 rounded border bg-white">
+                                        <div class="small text-muted mb-2">Description</div>
+                                        <div style="white-space: pre-wrap;">@((Model.Description ?? "—"))</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-3" />
+
+                        @* ===== Factory Info ===== *@
+                        <div class="col-12">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-building me-2 text-primary"></i>Factory Info
+                                </h4>
+
+                                @if (Model.FactoryVerified)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-shield-check me-1"></i>Verified Factory
+                                    </span>
+                                }
+                            </div>
+
+                            <div class="row g-3">
+                                @* Factory Images in the Factory section *@
+                                @if (Model.FactoryImageUrls != null && Model.FactoryImageUrls.Any())
+                                {
+                                    <div class="col-12">
+                                        <div class="p-3 rounded border bg-white">
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <div class="fw-semibold">
+                                                    <i class="bi bi-images me-2"></i>Factory Images
+                                                </div>
+                                                <div class="small text-muted">Count: @Model.FactoryImageUrls.Count</div>
+                                            </div>
+
+                                            <div id="factoryCarousel" class="carousel slide" data-bs-ride="carousel">
+                                                <div class="carousel-inner">
+                                                    @{
+                                                        var i = 0;
+                                                        foreach (var url in Model.FactoryImageUrls)
+                                                        {
+                                                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                                <img src="@url" class="d-block w-100 factory-img"
+                                                                     alt="Factory Image" />
+                                                            </div>
+                                                            i++;
+                                                        }
+                                                    }
+                                                </div>
+
+                                                <button class="carousel-control-prev" type="button" data-bs-target="#factoryCarousel" data-bs-slide="prev">
+                                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                    <span class="visually-hidden">Previous</span>
+                                                </button>
+
+                                                <button class="carousel-control-next" type="button" data-bs-target="#factoryCarousel" data-bs-slide="next">
+                                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                    <span class="visually-hidden">Next</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded border bg-light h-100">
+                                        <div class="small text-muted">Name</div>
+                                        <div class="fw-semibold">@((Model.FactoryName ?? "—"))</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="p-3 rounded border bg-light h-100">
+                                        <div class="small text-muted">Address</div>
+                                        <div class="fw-semibold">@((Model.FactoryAddress ?? "—"))</div>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(Model.FactoryType))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded border bg-light h-100">
+                                            <div class="small text-muted">Type</div>
+                                            <div class="fw-semibold">@Model.FactoryType</div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(Model.FactoryDescription))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded border bg-light h-100">
+                                            <div class="small text-muted">Description</div>
+                                            <div class="fw-semibold">@Model.FactoryDescription</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <hr class="my-3" />
+
+                        @* ===== Actions ===== *@
+                        <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
+                            <a asp-action="Index" asp-controller="Individual" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Jobs
+                            </a>
+
+                            @if (!Model.IsJoined)
+                            {
+                                <form asp-action="Join" asp-controller="Individual" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="jobId" value="@Model.JobID" />
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-person-plus me-2"></i>Join Job
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="Unjoin" asp-controller="Individual" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="jobId" value="@Model.JobID" />
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="bi bi-person-dash me-2"></i>Remove Registration
+                                    </button>
+                                </form>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    .header-gradient {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    }
+
+    .factory-img {
+        max-height: 420px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .card {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+</style>

@@ -1,0 +1,328 @@
+﻿@model EcoRecyclersGreenTech.Models.IndividualStore.IndividualJobsIndexVM
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Browse Jobs";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+    var nowUtc = DateTime.UtcNow;
+}
+
+<div class="container-fluid py-4">
+
+    @* Alerts *@
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning">@TempData["Warning"]</div>
+    }
+
+    @* Expiring soon *@
+    @if (Model.ExpiringSoonCount > 0)
+    {
+        <div class="alert alert-warning d-flex align-items-start gap-2">
+            <i class="bi bi-exclamation-triangle fs-5"></i>
+            <div>
+                <div class="fw-semibold">تنبيه: يوجد وظائف ستنتهي خلال أسبوع</div>
+                <div class="small text-muted">
+                    @string.Join(" • ", Model.ExpiringSoonTitles)
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Header *@
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-briefcase fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h2 mb-1 fw-bold">Browse Jobs</h1>
+                    <p class="text-muted mb-0">Jobs from verified factories</p>
+
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        Your saved location:
+                        <span class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.UserAddress) ? Model.UserAddress : "No address saved")</span>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.MyOccupation))
+                    {
+                        <div class="small text-muted mt-1">
+                            <i class="bi bi-person-workspace me-1"></i>
+                            Your occupation:
+                            <span class="fw-semibold">@Model.MyOccupation</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-end">
+            <div class="d-flex gap-2 justify-content-end">
+                <a asp-action="MyJobs" asp-controller="Individual" class="btn btn-outline-primary">
+                    <i class="bi bi-list-check me-2"></i>My Joined Jobs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @* Filters *@
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index" asp-controller="Individual" class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">Search</label>
+                    <input name="Q" value="@Model.Filter.Q" class="form-control"
+                           placeholder="Job type, skills, description..." />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Min Salary</label>
+                    <input name="MinSalary" value="@(Model.Filter.MinSalary?.ToString(CultureInfo.InvariantCulture) ?? "")"
+                           type="number" step="1" min="0" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Max Salary</label>
+                    <input name="MaxSalary" value="@(Model.Filter.MaxSalary?.ToString(CultureInfo.InvariantCulture) ?? "")"
+                           type="number" step="1" min="0" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">Experience Level</label>
+                    <input name="ExperienceLevel" value="@Model.Filter.ExperienceLevel"
+                           class="form-control" placeholder="e.g., Junior, Senior..." />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">Location (contains)</label>
+                    <input name="Location" value="@Model.Filter.Location"
+                           class="form-control" placeholder="Cairo, Giza..." />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Max Distance (km)</label>
+                    <input name="MaxKm" value="@(Model.Filter.MaxKm?.ToString(CultureInfo.InvariantCulture) ?? "")"
+                           type="number" min="1" step="1" class="form-control"
+                           placeholder="uses saved GPS" />
+                    <small class="text-muted">Uses your profile GPS</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Sort</label>
+                    <select class="form-select" name="SortBy">
+                        <option value="newest" selected="@(Model.Filter.SortBy == "newest")">Newest</option>
+                        <option value="salary" selected="@(Model.Filter.SortBy == "salary")">Salary</option>
+                        <option value="expiry" selected="@(Model.Filter.SortBy == "expiry")">Expiry</option>
+                        <option value="distance" selected="@(Model.Filter.SortBy == "distance")">Distance</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1">
+                    <label class="form-label small text-muted">Dir</label>
+                    <select class="form-select" name="SortDir">
+                        <option value="desc" selected="@(Model.Filter.SortDir == "desc")">Desc</option>
+                        <option value="asc" selected="@(Model.Filter.SortDir == "asc")">Asc</option>
+                    </select>
+                </div>
+
+                @* ✅ AI checkbox — بدون hidden (ده اللي كان بيبوظ الموضوع) *@
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">AI Search (Auto)</label>
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="UseSmartOccupationFilter"
+                               value="true"
+                               @(Model.Filter.UseSmartOccupationFilter ? "checked" : "") />
+                        <label class="form-check-label">
+                            بحث ذكي حسب الوظيفة (Occupation) المسجلة في حسابي
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        النظام سيستخدم Occupation المخزن في حسابك ويطابقه مع وصف الوظائف تلقائياً.
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">AI Threshold</label>
+                    <input name="SmartThreshold"
+                           value="@(Model.Filter.SmartThreshold.ToString(CultureInfo.InvariantCulture))"
+                           type="number" step="0.01" min="0" max="1"
+                           class="form-control" />
+                    <small class="text-muted">مثال: 0.12 - 0.25</small>
+                </div>
+
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-funnel me-2"></i>Apply
+                    </button>
+                </div>
+
+                <div class="col-md-2">
+                    <a asp-action="Index" asp-controller="Individual" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Clear
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    @* Grid *@
+    @if (Model.Jobs != null && Model.Jobs.Any())
+    {
+        <div class="row">
+            @foreach (var job in Model.Jobs)
+            {
+                var title = !string.IsNullOrWhiteSpace(job.JobType) ? job.JobType : "Job";
+                var salary = job.Salary ?? 0;
+
+                var statusClass = "";
+                var badgeText = "";
+
+                if (job.ExpiryDate.HasValue)
+                {
+                    var daysLeft = (job.ExpiryDate.Value.Date - nowUtc.Date).TotalDays;
+
+                    if (daysLeft <= 2 && daysLeft > 0)
+                    {
+                        statusClass = "job-2days";
+                        badgeText = "Ends in 2 days";
+                    }
+                    else if (daysLeft <= 7 && daysLeft > 0)
+                    {
+                        statusClass = "job-7days";
+                        badgeText = "Ends in 7 days";
+                    }
+                }
+
+                var showMatch = Model.Filter.UseSmartOccupationFilter && job.MatchScore.HasValue;
+                var matchPct = showMatch ? (int)Math.Round(job.MatchScore!.Value * 100) : 0;
+
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100 job-card @statusClass">
+                        <div class="card-img-top position-relative job-cover d-flex align-items-center justify-content-center bg-light"
+                             style="height: 180px;">
+
+                            @if (!string.IsNullOrWhiteSpace(job.FactoryProfileImgUrl))
+                            {
+                                <img src="@job.FactoryProfileImgUrl"
+                                     alt="Factory Profile"
+                                     class="w-100 h-100"
+                                     style="object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div class="text-center">
+                                    <i class="bi bi-briefcase fs-1 text-muted"></i>
+                                    <div class="small text-muted mt-1">No Profile Image</div>
+                                </div>
+                            }
+
+                            @if (job.FactoryVerified)
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Verified
+                                </span>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(badgeText))
+                            {
+                                <span class="position-absolute top-0 start-0 m-2 badge bg-dark">
+                                    @badgeText
+                                </span>
+                            }
+
+                            @if (showMatch)
+                            {
+                                <span class="position-absolute bottom-0 start-0 m-2 badge bg-primary">
+                                    <i class="bi bi-stars me-1"></i>@matchPct% match
+                                </span>
+                            }
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate mb-2">@title</h5>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-muted small">Salary</div>
+                                    <div class="fw-bold text-success">$@salary.ToString("N2")</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Work Hours</div>
+                                    <div class="fw-bold">@(job.WorkHours.HasValue ? job.WorkHours.Value.ToString() : "—")</div>
+                                </div>
+                            </div>
+
+                            <div class="text-muted small">
+                                <i class="bi bi-building me-1"></i>@(job.FactoryName ?? "Factory")
+                            </div>
+
+                            <div class="text-muted small mt-1">
+                                <i class="bi bi-geo-alt me-1"></i>@(job.Location ?? "—")
+                            </div>
+
+                            @if (job.ExpiryDate.HasValue)
+                            {
+                                <div class="text-muted small mt-2">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Expires: @job.ExpiryDate.Value.ToString("MMM dd, yyyy HH:mm")
+                                </div>
+                            }
+
+                            <div class="text-muted small mt-1">
+                                <i class="bi bi-calendar3 me-1"></i>@job.CreatedAt.ToString("MMM dd, yyyy")
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top">
+                            <a asp-action="JobDetails"
+                               asp-controller="Individual"
+                               asp-route-id="@job.JobID"
+                               class="btn btn-primary w-100">
+                                <i class="bi bi-eye me-2"></i>View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-briefcase fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="h4 text-muted mb-3">No Jobs Found</h3>
+            <p class="text-muted mb-4">Try adjusting filters.</p>
+        </div>
+    }
+</div>
+
+<style nonce="@nonce">
+    .job-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        border: 1px solid #e9ecef;
+    }
+    .job-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.10);
+    }
+    .job-7days { border: 2px solid #ffc107 !important; }
+    .job-2days { border: 2px solid #198754 !important; }
+</style>

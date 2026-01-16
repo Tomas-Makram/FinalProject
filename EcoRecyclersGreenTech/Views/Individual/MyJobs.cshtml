@@ -1,0 +1,415 @@
+﻿@model List<EcoRecyclersGreenTech.Models.IndividualStore.MyJoinedJobVM>
+
+@{
+    ViewData["Title"] = "My Joined Jobs";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+    var nowUtc = DateTime.UtcNow.Date;
+
+    var greenDays = 2;
+    var yellowDays = 7;
+}
+
+<div class="container py-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">My Joined Jobs</h2>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Index" asp-controller="Individual" class="btn btn-outline-primary">
+                <i class="bi bi-briefcase me-2"></i>Browse Jobs
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+    @if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+    @if (TempData["Warning"] != null) { <div class="alert alert-warning">@TempData["Warning"]</div> }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">You have not joined any jobs yet.</div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Search</label>
+                        <input id="jobSearch" class="form-control" placeholder="Job / Factory / Location..." />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Color Status</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All</option>
+                            <option value="deleted">Deleted by Factory</option>
+                            <option value="expired">Expired</option>
+                            <option value="green">Ending very soon (≤ @greenDays days)</option>
+                            <option value="yellow">Ending soon (≤ @yellowDays days)</option>
+                            <option value="gray">Far / No expiry</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Job State</label>
+                        <select id="jobStateFilter" class="form-select">
+                            <option value="">All</option>
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            <option value="deleted">Deleted</option>
+                            <option value="noexpiry">No Expiry</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Order Status</label>
+                        <select id="orderStatusFilter" class="form-select">
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="inprogress">InProgress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 d-grid mt-2">
+                        <button id="clearFilter" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Clear
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="jobsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="min-width:300px;">Job</th>
+                            <th style="min-width:220px;">Factory</th>
+                            <th>Salary</th>
+                            <th style="min-width:200px;">Location</th>
+                            <th style="min-width:220px;">Expiry</th>
+                            <th style="min-width:200px;">Order Status</th>
+                            <th class="text-end" style="min-width:240px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var x in Model)
+                        {
+                            string rowClass;
+                            string statusKey;
+                            string statusBadge;
+                            string statusIcon;
+
+                            if (x.IsDeletedByFactory)
+                            {
+                                rowClass = "row-deleted";
+                                statusKey = "deleted";
+                                statusBadge = "Deleted";
+                                statusIcon = "bi bi-trash3";
+                            }
+                            else if (x.ExpiryDate.HasValue)
+                            {
+                                var daysLeft = (x.ExpiryDate.Value.Date - nowUtc).TotalDays;
+
+                                if (daysLeft <= 0)
+                                {
+                                    rowClass = "row-expired";
+                                    statusKey = "expired";
+                                    statusBadge = "Expired";
+                                    statusIcon = "bi bi-x-octagon";
+                                }
+                                else if (daysLeft <= greenDays)
+                                {
+                                    rowClass = "row-green";
+                                    statusKey = "green";
+                                    statusBadge = "Very Soon";
+                                    statusIcon = "bi bi-check-circle";
+                                }
+                                else if (daysLeft <= yellowDays)
+                                {
+                                    rowClass = "row-yellow";
+                                    statusKey = "yellow";
+                                    statusBadge = "Soon";
+                                    statusIcon = "bi bi-exclamation-triangle";
+                                }
+                                else
+                                {
+                                    rowClass = "row-gray";
+                                    statusKey = "gray";
+                                    statusBadge = "Far";
+                                    statusIcon = "bi bi-calendar2-week";
+                                }
+                            }
+                            else
+                            {
+                                rowClass = "row-gray";
+                                statusKey = "gray";
+                                statusBadge = "No Expiry";
+                                statusIcon = "bi bi-calendar2";
+                            }
+
+                            var isExpired = (!x.IsDeletedByFactory) && x.ExpiryDate.HasValue && x.ExpiryDate.Value.Date <= nowUtc;
+                            var canDelete = x.IsDeletedByFactory || isExpired;
+
+                            var jobState = x.IsDeletedByFactory
+                                ? "deleted"
+                                : (x.ExpiryDate.HasValue
+                                    ? (x.ExpiryDate.Value.Date <= nowUtc ? "expired" : "active")
+                                    : "noexpiry");
+
+                            // ✅ normalize order status for filtering
+                            var orderStatusKey = (x.OrderStatus ?? "Pending").Trim().ToLowerInvariant().Replace(" ", "");
+
+                            <tr class="@rowClass job-row"
+                                data-status="@statusKey"
+                                data-jobstate="@jobState"
+                                data-orderstatus="@orderStatusKey"
+                                data-expiry="@(x.ExpiryDate.HasValue ? x.ExpiryDate.Value.ToString("O") : "")"
+                                data-text="@($"{x.JobType} {x.FactoryName} {x.Location}".ToLowerInvariant())">
+
+                                <td>
+                                    <div class="d-flex align-items-start justify-content-between gap-2">
+                                        <div>
+                                            <div class="fw-semibold">@x.JobType</div>
+                                            <div class="text-muted small">Joined: @x.OrderDate.ToString("MMM dd, yyyy")</div>
+                                        </div>
+
+                                        <span class="badge status-badge">
+                                            <i class="@statusIcon me-1"></i>@statusBadge
+                                        </span>
+                                    </div>
+
+                                    @if (x.IsDeletedByFactory && !string.IsNullOrWhiteSpace(x.DeletedNote))
+                                    {
+                                        <div class="small fw-semibold mt-2 text-primary">
+                                            <i class="bi bi-info-circle me-1"></i>@x.DeletedNote
+                                        </div>
+                                    }
+
+                                    @if (!x.IsDeletedByFactory && x.DaysLeft.HasValue && x.DaysLeft.Value > 0 && x.DaysLeft.Value <= yellowDays)
+                                    {
+                                        <div class="small fw-semibold mt-2">
+                                            <i class="bi bi-bell me-1"></i>
+                                            باقي @x.DaysLeft.Value يوم
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="fw-semibold">@x.FactoryName</div>
+                                    @if (x.FactoryVerified)
+                                    {
+                                        <span class="badge bg-success mt-1">
+                                            <i class="bi bi-check-circle me-1"></i>Verified
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="fw-semibold">
+                                    @(x.Salary.HasValue ? $"${x.Salary.Value:N2}" : "—")
+                                </td>
+
+                                <td>@(x.Location ?? "—")</td>
+
+                                <td>
+                                    @(x.ExpiryDate.HasValue ? x.ExpiryDate.Value.ToString("MMM dd, yyyy HH:mm") : "—")
+                                </td>
+
+                                <td>
+                                    <span class="badge order-badge @GetOrderBadgeClass(orderStatusKey)">
+                                        <i class="@GetOrderBadgeIcon(orderStatusKey) me-1"></i>@(x.OrderStatus ?? "Pending")
+                                    </span>
+                                </td>
+
+                                <td class="text-end">
+                                    <a asp-action="JobDetails" asp-controller="Individual" asp-route-id="@x.JobID"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>Details
+                                    </a>
+
+                                    @if (canDelete)
+                                    {
+                                        <form asp-action="DeleteJobOrder"
+                                              asp-controller="Individual"
+                                              method="post"
+                                              class="d-inline ms-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="jobOrderId" value="@x.JobOrderID" />
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Are you sure you want to delete this job from your list?');">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer bg-white small text-muted">
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <span><span class="legend-dot dot-blue"></span> Deleted</span>
+                    <span><span class="legend-dot dot-red"></span> Expired</span>
+                    <span><span class="legend-dot dot-green"></span> Very Soon (≤ @greenDays days)</span>
+                    <span><span class="legend-dot dot-yellow"></span> Soon (≤ @yellowDays days)</span>
+                    <span><span class="legend-dot dot-gray"></span> Far / No expiry</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetOrderBadgeClass(string k)
+    {
+        return k switch
+        {
+            "pending" => "bg-warning text-dark",
+            "confirmed" => "bg-primary",
+            "scheduled" => "bg-info text-dark",
+            "inprogress" => "bg-dark",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetOrderBadgeIcon(string k)
+    {
+        return k switch
+        {
+            "pending" => "bi bi-hourglass-split",
+            "confirmed" => "bi bi-patch-check",
+            "scheduled" => "bi bi-calendar-event",
+            "inprogress" => "bi bi-gear",
+            "completed" => "bi bi-check-circle",
+            "cancelled" => "bi bi-x-circle",
+            _ => "bi bi-info-circle"
+        };
+    }
+}
+
+<style nonce="@nonce">
+    .row-deleted { background: rgba(13,110,253,0.12) !important; }
+    .row-expired { background: rgba(220,53,69,0.12) !important; }
+    .row-green   { background: rgba(25,135,84,0.12) !important; }
+    .row-yellow  { background: rgba(255,193,7,0.20) !important; }
+    .row-gray    { background: rgba(108,117,125,0.10) !important; }
+
+    .job-row td { transition: background 0.2s ease; }
+    .job-row:hover { filter: brightness(0.98); }
+
+    .status-badge {
+        font-size: 0.75rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.6rem;
+    }
+    .row-deleted .status-badge { background: rgba(13,110,253,0.18); color: #0d6efd; }
+    .row-expired .status-badge { background: rgba(220,53,69,0.18); color: #dc3545; }
+    .row-green   .status-badge { background: rgba(25,135,84,0.18); color: #198754; }
+    .row-yellow  .status-badge { background: rgba(255,193,7,0.30); color: #8a6d00; }
+    .row-gray    .status-badge { background: rgba(108,117,125,0.18); color: #6c757d; }
+
+    .order-badge {
+        font-size: 0.80rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.6rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .legend-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+    .dot-blue  { background:#0d6efd; }
+    .dot-red   { background:#dc3545; }
+    .dot-green { background:#198754; }
+    .dot-yellow{ background:#ffc107; }
+    .dot-gray  { background:#6c757d; }
+</style>
+
+<script nonce="@nonce">
+(function () {
+    const search = document.getElementById('jobSearch');
+    const status = document.getElementById('statusFilter');
+    const jobState = document.getElementById('jobStateFilter');
+    const orderState = document.getElementById('orderStatusFilter');
+    const clear = document.getElementById('clearFilter');
+
+    const tbody = document.querySelector('#jobsTable tbody');
+    const rows = Array.from(document.querySelectorAll('#jobsTable tbody .job-row'));
+
+    function rank(state) {
+        // Deleted -> Expired -> Active -> NoExpiry
+        if (state === 'deleted') return 0;
+        if (state === 'expired') return 1;
+        if (state === 'active') return 2;
+        return 3;
+    }
+
+    function sortRows() {
+        const sorted = rows.slice().sort((a, b) => {
+            const sa = a.getAttribute('data-jobstate') || '';
+            const sb = b.getAttribute('data-jobstate') || '';
+            const ra = rank(sa), rb = rank(sb);
+            if (ra !== rb) return ra - rb;
+
+            const ea = a.getAttribute('data-expiry');
+            const eb = b.getAttribute('data-expiry');
+            const da = ea ? new Date(ea).getTime() : Number.MAX_SAFE_INTEGER;
+            const db = eb ? new Date(eb).getTime() : Number.MAX_SAFE_INTEGER;
+            return da - db; // closest expiry first
+        });
+
+        sorted.forEach(r => tbody.appendChild(r));
+    }
+
+    function applyFilter() {
+        const q = (search.value || '').trim().toLowerCase();
+        const s = status.value;
+        const js = jobState.value;
+        const os = (orderState.value || '').trim();
+
+        rows.forEach(r => {
+            const text = r.getAttribute('data-text') || '';
+            const st = r.getAttribute('data-status') || '';
+            const jst = r.getAttribute('data-jobstate') || '';
+            const ost = r.getAttribute('data-orderstatus') || '';
+
+            const matchText = !q || text.includes(q);
+            const matchStatus = !s || st === s;
+            const matchJobState = !js || jst === js;
+            const matchOrder = !os || ost === os;
+
+            r.style.display = (matchText && matchStatus && matchJobState && matchOrder) ? '' : 'none';
+        });
+
+        sortRows();
+    }
+
+    search.addEventListener('input', applyFilter);
+    status.addEventListener('change', applyFilter);
+    jobState.addEventListener('change', applyFilter);
+    orderState.addEventListener('change', applyFilter);
+
+    clear.addEventListener('click', function (e) {
+        e.preventDefault();
+        search.value = '';
+        status.value = '';
+        jobState.value = '';
+        orderState.value = '';
+        applyFilter();
+    });
+
+    sortRows();
+    applyFilter();
+})();
+</script>

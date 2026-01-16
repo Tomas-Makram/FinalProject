@@ -1,0 +1,343 @@
+﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel>
+
+@{
+    ViewData["Title"] = "Manage Auctions";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi bi-hammer fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="h2 mb-1 fw-bold">Manage Auctions</h1>
+                    <p class="text-muted mb-0">Add, edit, or remove your auctions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-end">
+            <a asp-action="AddAuction" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Add New Auction
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search auctions...">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <select id="sortFilter" class="form-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="price_low">Starting Price: Low to High</option>
+                        <option value="price_high">Starting Price: High to Low</option>
+                        <option value="ending_soon">Ending Soon</option>
+                        <option value="ending_late">Ending Late</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row" id="auctionsGrid">
+            @foreach (var auction in Model)
+            {
+                var endTicks = auction.AuctionEndDate?.Ticks ?? long.MaxValue;
+                var daysRemaining = auction.DaysRemaining ?? int.MaxValue;
+
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 auction-card"
+                     data-price="@auction.Price"
+                     data-date="@auction.CreatedAt.Ticks"
+                     data-end="@endTicks"
+                     data-days="@daysRemaining">
+
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="position-relative">
+                            @if (!string.IsNullOrWhiteSpace(auction.ImageUrl))
+                            {
+                                <img src="@auction.ImageUrl" class="card-img-top auction-img" alt="@auction.Name">
+                            }
+                            else
+                            {
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="bi bi-image fs-1 text-muted"></i>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(auction.Status))
+                            {
+                                <span class="position-absolute top-0 start-0 m-2 badge @GetStatusBadgeClass(auction.Status)">
+                                    @auction.Status
+                                </span>
+                            }
+
+                            @if (auction.IsAuctionEnded == true)
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-danger">
+                                    Ended
+                                </span>
+                            }
+                            else if (auction.DaysRemaining.HasValue && auction.DaysRemaining.Value != int.MaxValue)
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-info text-dark">
+                                    @($"{auction.DaysRemaining} days left")
+                                </span>
+                            }
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate mb-2">@auction.Name</h5>
+
+                            <!-- Price + Qty -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="text-muted small">Starting Price</div>
+                                    <div class="fw-bold text-primary">$@auction.Price.ToString("N2")</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Quantity</div>
+                                    <div class="fw-bold">@auction.AvailableQuantity</div>
+                                </div>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    Start: @(auction.AuctionStartDate?.ToString("MMM dd, yyyy") ?? auction.CreatedAt.ToString("MMM dd, yyyy"))
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-x me-1"></i>
+                                    End: @(auction.AuctionEndDate?.ToString("MMM dd, yyyy") ?? "No end date")
+                                </small>
+                            </div>
+
+                            <!-- Top bidder -->
+                            <div class="border rounded-3 p-2 bg-light-subtle mb-3">
+                                <div class="small text-muted">Top bidder so far</div>
+                                <div class="fw-semibold">
+                                    @(!string.IsNullOrWhiteSpace(auction.TopBidderName) ? auction.TopBidderName : "No bids yet")
+                                </div>
+                                @if (auction.TopBidAmount.HasValue)
+                                {
+                                    <div class="small text-muted">
+                                        <i class="bi bi-trophy me-1"></i>
+                                        $@auction.TopBidAmount.Value.ToString("N2")
+                                        @if (auction.TopBidAt.HasValue)
+                                        {
+                                            <span class="ms-2">(@auction.TopBidAt.Value.ToString("MMM dd, yyyy"))</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Thumbnails -->
+                            @if (auction.ImageUrls != null && auction.ImageUrls.Count > 1)
+                            {
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @foreach (var url in auction.ImageUrls.Take(3))
+                                    {
+                                        <img src="@url" class="thumb rounded" alt="thumb">
+                                    }
+                                </div>
+                            }
+
+                            <div class="text-muted small mt-3">
+                                <i class="bi bi-clock me-1"></i>Created: @auction.CreatedAt.ToString("MMM dd, yyyy")
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top">
+                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                <a asp-action="EditAuction" asp-route-id="@auction.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+
+                                <form asp-action="DeleteAuction" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@auction.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-hammer fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="h4 text-muted mb-3">No Auctions Found</h3>
+            <p class="text-muted mb-4">You haven't added any auctions yet.</p>
+            <div class="d-flex justify-content-center">
+                <a asp-action="AddAuction" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Add Your First Auction
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "available" => "bg-success",
+            "soldout" or "sold out" => "bg-danger",
+            "reserved" => "bg-warning text-dark",
+            "inactive" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<style nonce="@nonce">
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .auction-img {
+        height: 200px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    .bg-light-subtle {
+        background-color: rgba(248, 249, 250, 0.5) !important;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .thumb {
+        width: 44px;
+        height: 36px;
+        object-fit: cover;
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+</style>
+
+<script nonce="@nonce">
+document.addEventListener('DOMContentLoaded', function () {
+
+    const searchInput = document.getElementById('searchInput');
+    const sortFilter = document.getElementById('sortFilter');
+    const clearFilters = document.getElementById('clearFilters');
+
+    function getCards() {
+        return Array.from(document.querySelectorAll('.auction-card'));
+    }
+
+    function filterAndSort() {
+        const term = (searchInput.value || '').toLowerCase();
+        const sortBy = sortFilter.value;
+
+        let cards = getCards();
+
+        if (term) {
+            cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
+        }
+
+        cards.sort((a, b) => {
+            const da = parseInt(a.dataset.date || '0');
+            const db = parseInt(b.dataset.date || '0');
+
+            const pa = parseFloat(a.dataset.price || '0');
+            const pb = parseFloat(b.dataset.price || '0');
+
+            const enda = parseInt(a.dataset.end || '0');
+            const endb = parseInt(b.dataset.end || '0');
+
+            const daysa = parseInt(a.dataset.days || '2147483647');
+            const daysb = parseInt(b.dataset.days || '2147483647');
+
+            switch (sortBy) {
+                case 'newest': return db - da;
+                case 'oldest': return da - db;
+                case 'price_low': return pa - pb;
+                case 'price_high': return pb - pa;
+                case 'ending_soon': return daysa - daysb;
+                case 'ending_late': return daysb - daysa;
+                default: return 0;
+            }
+        });
+
+        const grid = document.getElementById('auctionsGrid');
+        if (!grid) return;
+
+        getCards().forEach(c => c.style.display = 'none');
+        cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
+    }
+
+    searchInput?.addEventListener('input', filterAndSort);
+    sortFilter?.addEventListener('change', filterAndSort);
+
+    clearFilters?.addEventListener('click', function () {
+        searchInput.value = '';
+        sortFilter.value = 'newest';
+        filterAndSort();
+        searchInput.focus();
+    });
+
+    filterAndSort();
+});
+</script>

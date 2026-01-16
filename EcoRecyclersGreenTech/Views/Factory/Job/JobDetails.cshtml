@@ -1,0 +1,388 @@
+﻿@using EcoRecyclersGreenTech.Data.Orders
+@using EcoRecyclersGreenTech.Data.Stores
+@using static EcoRecyclersGreenTech.Data.Stores.EnumsProductStatus
+@model EcoRecyclersGreenTech.Models.FactoryStore.Orders.JobDetailsModel
+
+@{
+    ViewData["Title"] = "Job Details (Orders)";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    string DefaultImg() => Url.Content("~/img/default-user.png");
+    string SafeImg(string? url) => string.IsNullOrWhiteSpace(url) ? DefaultImg() : url!;
+
+    var nowUtc = DateTime.UtcNow;
+    var isDeleted = Model.Job.Status != ProductStatus.Available; // Inactive => deleted from public
+    var isExpired = Model.Job.ExpiryDate.HasValue && Model.Job.ExpiryDate.Value <= nowUtc;
+
+    // ✅ اخفاء/تعطيل Edit لو Deleted أو Expired أو HasOrders
+    var canShowEdit = Model.CanEdit && !isDeleted && !isExpired;
+
+    // status style for job badge
+    string JobStateText()
+    {
+        if (isDeleted) return "Deleted (Inactive)";
+        if (isExpired) return "Expired";
+        if (!Model.Job.ExpiryDate.HasValue) return "Active (No Expiry)";
+        return "Active";
+    }
+
+    string JobStateBadgeClass()
+    {
+        if (isDeleted) return "bg-secondary";
+        if (isExpired) return "bg-danger";
+        return "bg-success";
+    }
+}
+
+<div class="container-fluid py-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:52px;height:52px;background:#f1f3f5;border:1px solid #e9ecef;">
+                <i class="bi bi-briefcase-fill fs-4 text-primary"></i>
+            </div>
+            <div>
+                <h2 class="mb-0">Job Details</h2>
+                <div class="text-muted small">
+                    Orders: <span class="fw-semibold">@Model.OrdersCount</span>
+
+                    <span class="badge ms-2 @JobStateBadgeClass()">
+                        <i class="bi bi-info-circle me-1"></i>@JobStateText()
+                    </span>
+
+                    @if (!Model.CanEdit)
+                    {
+                        <span class="badge bg-secondary ms-2"><i class="bi bi-lock me-1"></i>Editing Locked</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success ms-2"><i class="bi bi-unlock me-1"></i>Editable</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Jobs" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back
+            </a>
+
+            @* ✅ اخفاء Edit لو Deleted/Expired *@
+            @if (canShowEdit)
+            {
+                <a asp-action="EditJob" asp-route-id="@Model.Job.Id" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-2"></i>Edit
+                </a>
+            }
+
+            <form asp-action="DeleteJob" asp-controller="Factory" method="post" class="m-0">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Job.Id" />
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-2"></i>Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Job Info -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="fw-bold"><i class="bi bi-info-circle me-2"></i>Job Info</div>
+                <span class="badge bg-light text-dark border">
+                    Status: @Model.Job.Status
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="p-3 rounded border bg-light-subtle">
+                        <div class="text-muted small">Job Type</div>
+                        <div class="fw-semibold">@Model.Job.JobType</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="p-3 rounded border bg-light-subtle">
+                        <div class="text-muted small">Salary</div>
+                        <div class="fw-semibold text-success">$@Model.Job.Salary.ToString("N2")</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="p-3 rounded border bg-light-subtle">
+                        <div class="text-muted small">Work Hours</div>
+                        <div class="fw-semibold">@Model.Job.WorkHours</div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="p-3 rounded border">
+                        <div class="text-muted small">Location</div>
+                        <div class="fw-semibold"><i class="bi bi-geo-alt me-1"></i>@Model.Job.Location</div>
+
+                        @if (Model.Job.Latitude.HasValue && Model.Job.Longitude.HasValue)
+                        {
+                            var mapsUrl = $"https://www.google.com/maps?q={Model.Job.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{Model.Job.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                            <div class="small text-muted mt-1">
+                                Lat: @Model.Job.Latitude.Value.ToString("0.000000"),
+                                Lng: @Model.Job.Longitude.Value.ToString("0.000000")
+                                <span class="ms-2">
+                                    <a href="@mapsUrl" target="_blank" rel="noopener" class="text-decoration-none">
+                                        <i class="bi bi-map me-1"></i>Open Map
+                                    </a>
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Job.EmploymentType))
+                {
+                    <div class="col-lg-4">
+                        <div class="p-3 rounded border bg-light-subtle">
+                            <div class="text-muted small">Employment</div>
+                            <div class="fw-semibold">@Model.Job.EmploymentType</div>
+                        </div>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Job.ExperienceLevel))
+                {
+                    <div class="col-lg-4">
+                        <div class="p-3 rounded border bg-light-subtle">
+                            <div class="text-muted small">Experience</div>
+                            <div class="fw-semibold">@Model.Job.ExperienceLevel</div>
+                        </div>
+                    </div>
+                }
+                @if (Model.Job.ExpiryDate.HasValue)
+                {
+                    <div class="col-lg-4">
+                        <div class="p-3 rounded border bg-light-subtle">
+                            <div class="text-muted small">Expiry</div>
+                            <div class="fw-semibold"><i class="bi bi-clock me-1"></i>@Model.Job.ExpiryDate.Value.ToString("MMM dd, yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                }
+
+                <div class="col-12">
+                    <div class="p-3 rounded border">
+                        <div class="text-muted small mb-1">Description</div>
+                        <div style="white-space:pre-wrap">@Model.Job.Description</div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Job.RequiredSkills))
+                {
+                    <div class="col-12">
+                        <div class="p-3 rounded border">
+                            <div class="text-muted small mb-1">Required Skills</div>
+                            <div class="fw-semibold">@Model.Job.RequiredSkills</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (!Model.CanEdit)
+            {
+                <div class="alert alert-info border-0 mt-3 mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Editing is locked because this job already has orders. You can still delete it anytime.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between">
+            <div class="fw-bold"><i class="bi bi-receipt me-2"></i>Orders</div>
+            <span class="text-muted small">Total: @Model.OrdersCount</span>
+        </div>
+
+        @if (Model.Orders == null || !Model.Orders.Any())
+        {
+            <div class="card-body">
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>No orders for this job yet.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="min-width:340px;">User</th>
+                            <th style="min-width:160px;">User Type</th>
+                            <th style="min-width:200px;">Order Date</th>
+                            <th style="min-width:220px;">Order Status</th>
+                            <th class="text-end" style="min-width:140px;">More</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model.Orders)
+                        {
+                            var modalId = $"userModal_{o.JobOrderID}";
+                            <tr>
+                                <td>
+                                    <button type="button" class="btn p-0 text-start w-100 user-card"
+                                            data-bs-toggle="modal" data-bs-target="#@modalId">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@SafeImg(o.UserProfileImgUrl)" class="rounded-circle border"
+                                                 style="width:46px;height:46px;object-fit:cover;" alt="User" />
+                                            <div>
+                                                <div class="fw-semibold">@o.FullName</div>
+                                                <div class="small text-muted">@o.Email</div>
+                                                @if (o.IsVerified)
+                                                {
+                                                    <span class="badge bg-success mt-1"><i class="bi bi-check-circle me-1"></i>Verified</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="@modalId" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">
+                                                        <i class="bi bi-person-badge me-2"></i>User Details
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="d-flex align-items-center gap-3 mb-3">
+                                                        <img src="@SafeImg(o.UserProfileImgUrl)" class="rounded-circle border"
+                                                             style="width:64px;height:64px;object-fit:cover;" alt="User" />
+                                                        <div>
+                                                            <div class="fw-bold fs-5">@o.FullName</div>
+                                                            <div class="text-muted">@o.Email</div>
+                                                            @if (!string.IsNullOrWhiteSpace(o.UserTypeName))
+                                                            {
+                                                                <span class="badge bg-light text-dark border mt-1">
+                                                                    <i class="bi bi-person-vcard me-1"></i>@o.UserTypeName
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <div class="p-3 rounded border bg-light-subtle">
+                                                                <div class="text-muted small">Phone</div>
+                                                                <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(o.Phone) ? o.Phone : "—")</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="p-3 rounded border bg-light-subtle">
+                                                                <div class="text-muted small">Verified</div>
+                                                                <div class="fw-semibold">@(o.IsVerified ? "Yes" : "No")</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <div class="p-3 rounded border">
+                                                                <div class="text-muted small">Address</div>
+                                                                <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(o.Address) ? o.Address : "—")</div>
+                                                            </div>
+                                                        </div>
+
+                                                        @if (o.Latitude.HasValue && o.Longitude.HasValue)
+                                                        {
+                                                            var umaps = $"https://www.google.com/maps?q={o.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{o.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                                                            <div class="col-12">
+                                                                <div class="p-3 rounded border">
+                                                                    <div class="text-muted small">Location</div>
+                                                                    <div class="small text-muted">
+                                                                        Lat: @o.Latitude.Value.ToString("0.000000"),
+                                                                        Lng: @o.Longitude.Value.ToString("0.000000")
+                                                                    </div>
+                                                                    <a href="@umaps" class="btn btn-sm btn-outline-primary mt-2" target="_blank" rel="noopener">
+                                                                        <i class="bi bi-map me-1"></i>Open Map
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                        Close
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        @(string.IsNullOrWhiteSpace(o.UserTypeName) ? "—" : o.UserTypeName)
+                                    </span>
+                                </td>
+
+                                <td>@o.OrderDate.ToString("MMM dd, yyyy HH:mm")</td>
+
+                                <td>
+                                    @* ✅ تعديل حالة الأوردر لكل مستخدم *@
+                                    <form asp-action="UpdateJobOrderStatus" asp-controller="Factory" method="post" class="d-flex gap-2 align-items-center">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="jobId" value="@Model.Job.Id" />
+                                        <input type="hidden" name="jobOrderId" value="@o.JobOrderID" />
+
+                                        <select name="status" class="form-select form-select-sm" style="min-width:160px;">
+                                            @foreach (var st in Enum.GetNames(typeof(JobOrderStatus)))
+                                            {
+                                                var selected = string.Equals(st, o.OrderStatus, StringComparison.OrdinalIgnoreCase);
+                                                <option value="@st" selected="@(selected ? "selected" : null)">@st</option>
+                                            }
+                                        </select>
+
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-save me-1"></i>Save
+                                        </button>
+                                    </form>
+                                </td>
+
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-dark"
+                                            data-bs-toggle="modal" data-bs-target="#@modalId">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>Open
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>
+
+<style nonce="@nonce">
+    .card { border-radius: 12px; overflow: hidden; }
+    .bg-light-subtle { background-color: rgba(248, 249, 250, 0.55) !important; border: 1px solid rgba(0,0,0,0.06); }
+
+    .user-card { border: none; background: transparent; }
+    .user-card:hover { filter: brightness(0.98); }
+</style>

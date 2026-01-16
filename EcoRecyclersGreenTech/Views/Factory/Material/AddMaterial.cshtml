@@ -1,0 +1,360 @@
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.MaterialModel
+@{
+    ViewData["Title"] = "Add New Material";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Materials">Materials</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add New Material</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient border-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-plus-circle-fill fs-1 text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1 text-white">Add New Material</h2>
+                            <p class="text-white-50 mb-0">Fill in the details below to list your material</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="AddMaterial" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+
+                    <div class="card-body p-4 p-md-5">
+
+                        <!-- Validation Summary -->
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Please fix the errors below
+                        </div>
+
+                        <div class="row g-4">
+
+                            <!-- Basic Information -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                                            Basic Information
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="ProductType" class="form-control" placeholder="Plastic, Paper, Metal..." required />
+                                                    <label asp-for="ProductType" class="form-label">
+                                                        <i class="bi bi-tag me-1"></i>Material Type *
+                                                    </label>
+                                                    <span asp-validation-for="ProductType" class="text-danger small"></span>
+                                                    <div class="form-text">e.g., Plastic, Paper, Metal, Glass</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Quantity" type="number" class="form-control" placeholder="100" min="1" required />
+                                                    <label asp-for="Quantity" class="form-label">
+                                                        <i class="bi bi-box me-1"></i>Quantity *
+                                                    </label>
+                                                    <span asp-validation-for="Quantity" class="text-danger small"></span>
+                                                    <div class="form-text">Available stock quantity</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pricing -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-currency-dollar me-2 text-success"></i>
+                                            Pricing Information
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Price" type="number" class="form-control" placeholder="0.00" step="0.01" min="0.01" required />
+                                                    <label asp-for="Price" class="form-label">
+                                                        <i class="bi bi-cash-stack me-1"></i>Price per Unit *
+                                                    </label>
+                                                    <span asp-validation-for="Price" class="text-danger small"></span>
+                                                    <div class="form-text">Price for one unit</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <select asp-for="Unit" class="form-select">
+                                                        <option value="kg">Kilogram (kg)</option>
+                                                        <option value="ton">Ton (t)</option>
+                                                        <option value="piece">Piece</option>
+                                                        <option value="liter">Liter (L)</option>
+                                                        <option value="meter">Meter (m)</option>
+                                                    </select>
+                                                    <label asp-for="Unit" class="form-label">
+                                                        <i class="bi bi-rulers me-1"></i>Unit
+                                                    </label>
+                                                    <span asp-validation-for="Unit" class="text-danger small"></span>
+                                                    <div class="form-text">Measurement unit</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="MinOrderQuantity" type="number" class="form-control" placeholder="0"
+                                                           step="0.01" min="0" />
+                                                    <label asp-for="MinOrderQuantity" class="form-label">
+                                                        <i class="bi bi-box-arrow-in-down me-1"></i>Minimum Order Quantity
+                                                    </label>
+                                                    <span asp-validation-for="MinOrderQuantity" class="text-danger small"></span>
+                                                    <div class="form-text">Leave empty for no minimum</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Images -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-images me-2 text-info"></i>
+                                            Material Images (up to 3)
+                                        </h5>
+
+                                        <div class="row g-4">
+
+                                            <!-- Image 1 -->
+                                            <div class="col-md-4">
+                                                <div class="border rounded-3 p-3 bg-white">
+                                                    <img id="preview1"
+                                                         src="https://placehold.co/300x200/e9ecef/6c757d?text=Image+1"
+                                                         class="img-fluid rounded mb-2"
+                                                         alt="Preview 1"
+                                                         style="height: 180px; width: 100%; object-fit: cover;" />
+                                                    <label asp-for="ProductImage1" class="form-label fw-semibold">
+                                                        <i class="bi bi-upload me-1"></i>Upload Image 1
+                                                    </label>
+                                                    <input asp-for="ProductImage1" type="file" class="form-control"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                           id="imageInput1" />
+                                                    <span asp-validation-for="ProductImage1" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Image 2 -->
+                                            <div class="col-md-4">
+                                                <div class="border rounded-3 p-3 bg-white">
+                                                    <img id="preview2"
+                                                         src="https://placehold.co/300x200/e9ecef/6c757d?text=Image+2"
+                                                         class="img-fluid rounded mb-2"
+                                                         alt="Preview 2"
+                                                         style="height: 180px; width: 100%; object-fit: cover;" />
+                                                    <label asp-for="ProductImage2" class="form-label fw-semibold">
+                                                        <i class="bi bi-upload me-1"></i>Upload Image 2
+                                                    </label>
+                                                    <input asp-for="ProductImage2" type="file" class="form-control"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                           id="imageInput2" />
+                                                    <span asp-validation-for="ProductImage2" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Image 3 -->
+                                            <div class="col-md-4">
+                                                <div class="border rounded-3 p-3 bg-white">
+                                                    <img id="preview3"
+                                                         src="https://placehold.co/300x200/e9ecef/6c757d?text=Image+3"
+                                                         class="img-fluid rounded mb-2"
+                                                         alt="Preview 3"
+                                                         style="height: 180px; width: 100%; object-fit: cover;" />
+                                                    <label asp-for="ProductImage3" class="form-label fw-semibold">
+                                                        <i class="bi bi-upload me-1"></i>Upload Image 3
+                                                    </label>
+                                                    <input asp-for="ProductImage3" type="file" class="form-control"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp"
+                                                           id="imageInput3" />
+                                                    <span asp-validation-for="ProductImage3" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <div class="form-text">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Max file size: 5MB لكل صورة — Supported: JPG, PNG, GIF, WebP
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-card-text me-2 text-warning"></i>
+                                            Description
+                                        </h5>
+
+                                        <div class="form-floating">
+                                            <textarea asp-for="Description" class="form-control"
+                                                      placeholder="Describe your material..."
+                                                      style="height: 140px" required></textarea>
+                                            <label asp-for="Description" class="form-label">Description *</label>
+                                            <span asp-validation-for="Description" class="text-danger small"></span>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="card-footer bg-light border-0 py-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Fields marked with * are required
+                            </small>
+
+                            <div class="d-flex gap-2">
+                                <a asp-action="Materials" class="btn btn-outline-secondary px-4">
+                                    <i class="bi bi-arrow-left me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Material
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card-header.bg-gradient {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    }
+
+    .bg-light-subtle {
+        background-color: rgba(248, 249, 250, 0.5) !important;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: #6c757d;
+    }
+
+    .breadcrumb-item.active {
+        color: #0d6efd;
+        font-weight: 500;
+    }
+</style>
+
+<script nonce="@nonce">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function bindImagePreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!input || !preview) return;
+
+            input.addEventListener('change', function () {
+                const file = this.files && this.files[0];
+                if (!file) return;
+
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                if (file.size > maxSize) {
+                    alert('File size exceeds 5MB limit.');
+                    this.value = '';
+                    return;
+                }
+
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Invalid file type. Please upload JPG, PNG, GIF, or WebP image.');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        bindImagePreview('imageInput1', 'preview1');
+        bindImagePreview('imageInput2', 'preview2');
+        bindImagePreview('imageInput3', 'preview3');
+
+        // Bootstrap validation (مرة واحدة)
+        const form = document.querySelector('form.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                form.classList.add('was-validated');
+
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+                }
+            }, false);
+        }
+
+        // Auto focus
+        const productTypeInput = document.getElementById('ProductType');
+        if (productTypeInput) productTypeInput.focus();
+    });
+</script>

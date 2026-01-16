@@ -1,29 +1,101 @@
 ﻿@{
-    var nonce = Context.Items["CSPNonce"]?.ToString();
     bool logged = ViewBag.UserLoggedIn ?? false;
+    string type = ViewBag.Type?.ToString()!;
     ViewBag.Title = "Home";
 }
 
-<h1>Eco Recyclers Green Tech</h1>
-
 @if (logged)
 {
-    <p>Welcome @ViewBag.Email 🎉</p>
-    <p>Welcome @ViewBag.type 🎉</p>
+    @if (TempData["VerificationMessage"] != null && TempData["ShowVerificationAlert"]?.ToString() == "true")
+    {
+        <div class="alert alert-info alert-dismissible fade show shadow-lg" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-envelope-check-fill fs-3 me-3 text-primary"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">📨 Verification Required</h5>
+                    <p class="mb-0">@TempData["VerificationMessage"]</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-    <form asp-controller="Auth" asp-action="Logout" method="post" style="display:inline;">
-        <button type="submit" class="btn btn-danger">
-            Logout
-        </button>
+    <p class="text-success text-center fs-4">Welcome @ViewBag.Email 🎉 - (@type)</p>
+
+    <div class="row justify-content-center mt-4">
+
+        @* ==== خيارات الـ Admin ==== *@
+        @if (type == "Admin")
+        {
+            <div class="col-md-3">
+                <div class="card shadow text-center p-3">
+                    <h4>👤 Manage Users</h4>
+                    <p>Control Permissions & Accounts</p>
+                    <a href="/Admin/Users" class="btn btn-primary w-100">Open</a>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow text-center p-3">
+                    <h4>🏭 Manage Factories</h4>
+                    <p>Add/Edit Factory Accounts</p>
+                    <a href="/Admin/Factories" class="btn btn-info w-100">Open</a>
+                </div>
+            </div>
+        }
+
+        @* ==== خيارات الـ Factory ==== *@
+        @if (type == "Factory")
+        {
+            <div class="col-md-3">
+                <div class="card shadow text-center p-3">
+                    <h4>♻️ Manage Recycle Plans</h4>
+                    <p>Add/Edit Operations</p>
+                    <a href="/Factory/Plans" class="btn btn-success w-100">Open</a>
+                </div>
+            </div>
+        }
+
+        @* ==== خيارات الـ Customer ==== *@
+        @if (type == "Craftsman")
+        {
+            <div class="col-md-3">
+                <div class="card shadow text-center p-3">
+                    <h4>💼 My Requests</h4>
+                    <p>Track Recycling Pickup</p>
+                    <a href="/Customer/Orders" class="btn btn-warning w-100">Open</a>
+                </div>
+            </div>
+        }
+
+        @if (type == "Individual")
+        {
+            <div class="col-md-3">
+                <div class="card shadow text-center p-3">
+                    <h4>💼 My Requests</h4>
+                    <p>Track Recycling Pickup</p>
+                    <a href="/Customer/Orders" class="btn btn-warning w-100">Open</a>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <hr />
+
+    <form asp-controller="Auth" asp-action="Logout" method="post" class="text-center mt-3">
+        <button type="submit" class="btn btn-danger">Logout</button>
     </form>
 
-    <a href="/Settings" class="btn btn-primary">Settings</a>
 }
 else
 {
-    <a href="/Auth/Login" class="btn btn-success">Login</a>
-    <a href="/Auth/Signup" class="btn btn-info">Signup</a>
+    <div class="text-center mt-5">
+        <a href="/Auth/Login" class="btn btn-success">Login</a>
+        <a href="/Auth/Signup" class="btn btn-info">Signup</a>
+    </div>
 }
+
 @* <script nonce="@nonce">
     console.log("🔥 NONCE Test: Script Executed Successfully!");
 

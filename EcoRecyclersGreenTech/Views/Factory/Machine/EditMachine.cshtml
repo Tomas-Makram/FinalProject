@@ -1,0 +1,460 @@
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.MachineModel
+@using EcoRecyclersGreenTech.Data.Stores
+
+@{
+    ViewData["Title"] = "Edit Machine";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+    var canModify = ViewBag.CanModify as bool? ?? true;
+
+    string placeholder1 = "https://placehold.co/300x200/e9ecef/6c757d?text=Image+1";
+    string placeholder2 = "https://placehold.co/300x200/e9ecef/6c757d?text=Image+2";
+    string placeholder3 = "https://placehold.co/300x200/e9ecef/6c757d?text=Image+3";
+
+    string img1 = !string.IsNullOrWhiteSpace(Model.CurrentImageUrl1) ? Model.CurrentImageUrl1! : placeholder1;
+    string img2 = !string.IsNullOrWhiteSpace(Model.CurrentImageUrl2) ? Model.CurrentImageUrl2! : placeholder2;
+    string img3 = !string.IsNullOrWhiteSpace(Model.CurrentImageUrl3) ? Model.CurrentImageUrl3! : placeholder3;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Machines">Machines</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Machine</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-warning border-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-pencil-square fs-1 text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1 text-white">Edit Machine</h2>
+                            <p class="text-white-50 mb-0">Update the details of your machine</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="EditMachine"
+                      asp-route-id="@Model.Id"
+                      method="post"
+                      enctype="multipart/form-data"
+                      class="needs-validation"
+                      novalidate>
+
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.Id)
+
+                    @* لو في حقول Disabled لازم تبعت قيمها Hidden *@
+                    @if (!canModify)
+                    {
+                        @Html.HiddenFor(m => m.MachineType)
+                        @Html.HiddenFor(m => m.Quantity)
+                        @Html.HiddenFor(m => m.Price)
+                        @Html.HiddenFor(m => m.ManufactureDate)
+                        @Html.HiddenFor(m => m.Condition)
+                        @Html.HiddenFor(m => m.Brand)
+                        @Html.HiddenFor(m => m.Model)
+                        @Html.HiddenFor(m => m.WarrantyMonths)
+                    }
+
+                    @if (!canModify)
+                    {
+                        <div class="alert alert-warning border-0 rounded-0 mb-0">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                                <div>
+                                    <h5 class="alert-heading mb-1">Restricted Editing</h5>
+                                    <p class="mb-0">This machine has active orders. Some fields cannot be modified.</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="card-body p-4 p-md-5">
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Please fix the errors below
+                        </div>
+
+                        <div class="row g-4">
+
+                            <!-- Status -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-toggle-on me-2 text-secondary"></i>
+                                            Status
+                                        </h5>
+
+                                        <div class="form-floating">
+                                            <select asp-for="Status" class="form-select" required>
+                                                <option value="Available">Available</option>
+                                                <option value="Reserved">Reserved</option>
+                                                <option value="SoldOut">Sold Out</option>
+                                                <option value="Inactive">Inactive</option>
+                                            </select>
+                                            <label asp-for="Status">Current Status *</label>
+                                            <span asp-validation-for="Status" class="text-danger small"></span>
+                                        </div>
+
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            You can change product status anytime.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-info-circle-fill me-2 text-success"></i>
+                                            Basic Information
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="MachineType"
+                                                           class="form-control"
+                                                           placeholder="Type"
+                                                           disabled="@(canModify ? null : "disabled")"
+                                                           required />
+                                                    <label asp-for="MachineType"><i class="bi bi-tag me-1"></i>Machine Type *</label>
+                                                    <span asp-validation-for="MachineType" class="text-danger small"></span>
+
+                                                    @if (!canModify)
+                                                    {
+                                                        <div class="form-text text-warning">
+                                                            <i class="bi bi-lock me-1"></i>Locked due to active orders
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Quantity"
+                                                           type="number"
+                                                           class="form-control"
+                                                           placeholder="1"
+                                                           min="1"
+                                                           disabled="@(canModify ? null : "disabled")"
+                                                           required />
+                                                    <label asp-for="Quantity"><i class="bi bi-box me-1"></i>Quantity *</label>
+                                                    <span asp-validation-for="Quantity" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="ManufactureDate"
+                                                           type="date"
+                                                           class="form-control"
+                                                           disabled="@(canModify ? null : "disabled")"
+                                                           required />
+                                                    <label asp-for="ManufactureDate"><i class="bi bi-calendar me-1"></i>Manufacture Date *</label>
+                                                    <span asp-validation-for="ManufactureDate" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <select asp-for="Condition"
+                                                            asp-items="Html.GetEnumSelectList<MachineCondition>()"
+                                                            class="form-select"
+                                                            disabled="@(canModify ? null : "disabled")"
+                                                            required>
+                                                        <option value="">Select Condition</option>
+                                                    </select>
+                                                    <label asp-for="Condition"><i class="bi bi-wrench me-1"></i>Condition *</label>
+                                                    <span asp-validation-for="Condition" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Brand & Model -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-building me-2 text-primary"></i>
+                                            Brand & Model
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Brand"
+                                                           class="form-control"
+                                                           placeholder="Brand"
+                                                           disabled="@(canModify ? null : "disabled")" />
+                                                    <label asp-for="Brand"><i class="bi bi-trademark me-1"></i>Brand</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Model"
+                                                           class="form-control"
+                                                           placeholder="Model"
+                                                           disabled="@(canModify ? null : "disabled")" />
+                                                    <label asp-for="Model"><i class="bi bi-tags me-1"></i>Model</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="WarrantyMonths"
+                                                           type="number"
+                                                           class="form-control"
+                                                           placeholder="12"
+                                                           min="0" max="120"
+                                                           disabled="@(canModify ? null : "disabled")" />
+                                                    <label asp-for="WarrantyMonths"><i class="bi bi-shield-check me-1"></i>Warranty (Months)</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pricing -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-currency-dollar me-2 text-success"></i>
+                                            Pricing
+                                        </h5>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="Price"
+                                                           type="number"
+                                                           class="form-control"
+                                                           placeholder="0.00"
+                                                           step="0.01"
+                                                           min="0.01"
+                                                           disabled="@(canModify ? null : "disabled")"
+                                                           required />
+                                                    <label asp-for="Price"><i class="bi bi-cash-stack me-1"></i>Price *</label>
+                                                    <span asp-validation-for="Price" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="MinOrderQuantity"
+                                                           type="number"
+                                                           class="form-control"
+                                                           placeholder="0"
+                                                           step="0.01"
+                                                           min="0" />
+                                                    <label asp-for="MinOrderQuantity"><i class="bi bi-box-arrow-in-down me-1"></i>Minimum Order Quantity</label>
+                                                    <span asp-validation-for="MinOrderQuantity" class="text-danger small"></span>
+                                                    <div class="form-text">Leave empty for no minimum</div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Images -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-images me-2 text-info"></i>
+                                            Machine Images (Optional)
+                                        </h5>
+
+                                        <div class="row g-4">
+                                            <div class="col-md-4">
+                                                <div class="border rounded-3 p-3 bg-white">
+                                                    <img id="preview1" src="@img1" class="img-fluid rounded mb-2"
+                                                         style="height: 180px; width: 100%; object-fit: cover;" alt="Image 1" />
+                                                    <label asp-for="MachineImage1" class="form-label fw-semibold">
+                                                        <i class="bi bi-upload me-1"></i>Update Image 1
+                                                    </label>
+                                                    <input asp-for="MachineImage1" type="file" class="form-control"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp" id="imageInput1" />
+                                                    <span asp-validation-for="MachineImage1" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="border rounded-3 p-3 bg-white">
+                                                    <img id="preview2" src="@img2" class="img-fluid rounded mb-2"
+                                                         style="height: 180px; width: 100%; object-fit: cover;" alt="Image 2" />
+                                                    <label asp-for="MachineImage2" class="form-label fw-semibold">
+                                                        <i class="bi bi-upload me-1"></i>Update Image 2
+                                                    </label>
+                                                    <input asp-for="MachineImage2" type="file" class="form-control"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp" id="imageInput2" />
+                                                    <span asp-validation-for="MachineImage2" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="border rounded-3 p-3 bg-white">
+                                                    <img id="preview3" src="@img3" class="img-fluid rounded mb-2"
+                                                         style="height: 180px; width: 100%; object-fit: cover;" alt="Image 3" />
+                                                    <label asp-for="MachineImage3" class="form-label fw-semibold">
+                                                        <i class="bi bi-upload me-1"></i>Update Image 3
+                                                    </label>
+                                                    <input asp-for="MachineImage3" type="file" class="form-control"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp" id="imageInput3" />
+                                                    <span asp-validation-for="MachineImage3" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <div class="form-text">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Leave empty to keep current images. Max 5MB لكل صورة.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <div class="card border-0 bg-light-subtle">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-card-text me-2 text-warning"></i>
+                                            Description
+                                        </h5>
+
+                                        <div class="form-floating">
+                                            <textarea asp-for="Description" class="form-control"
+                                                      placeholder="Describe your machine..."
+                                                      style="height: 140px" required></textarea>
+                                            <label asp-for="Description">Description *</label>
+                                            <span asp-validation-for="Description" class="text-danger small"></span>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-light border-0 py-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Fields marked with * are required
+                            </small>
+
+                            <div class="d-flex gap-2">
+                                <a asp-action="Machines" class="btn btn-outline-secondary px-4">
+                                    <i class="bi bi-x-circle me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-warning px-4" id="submitBtn">
+                                    <i class="bi bi-save me-2"></i>Update Machine
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    .card { border-radius: 12px; overflow: hidden; }
+    .card-header.bg-gradient-warning { background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); }
+    .bg-light-subtle { background-color: rgba(248, 249, 250, 0.5) !important; border: 1px solid rgba(0,0,0,0.05); }
+</style>
+
+<script nonce="@nonce">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function bindImagePreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!input || !preview) return;
+
+            input.addEventListener('change', function () {
+                const file = this.files && this.files[0];
+                if (!file) return;
+
+                const maxSize = 5 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    alert('File size exceeds 5MB limit.');
+                    this.value = '';
+                    return;
+                }
+
+                const validTypes = ['image/jpeg','image/jpg','image/png','image/gif','image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Invalid file type. Please upload JPG, PNG, GIF, or WebP image.');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = e => preview.src = e.target.result;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        bindImagePreview('imageInput1', 'preview1');
+        bindImagePreview('imageInput2', 'preview2');
+        bindImagePreview('imageInput3', 'preview3');
+
+        const manufactureDateInput = document.getElementById('ManufactureDate');
+        if (manufactureDateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            manufactureDateInput.max = today;
+        }
+
+        const form = document.querySelector('form.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                form.classList.add('was-validated');
+
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+                }
+            }, false);
+        }
+    });
+</script>
