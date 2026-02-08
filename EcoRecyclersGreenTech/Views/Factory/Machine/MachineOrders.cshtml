@@ -1,0 +1,643 @@
+﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.Orders.MachineOrderDetailsModel>
+@using EcoRecyclersGreenTech.Data.Orders
+
+@{
+    ViewData["Title"] = "Machines Orders";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <h3 class="mb-1">Machines Orders</h3>
+                        <p class="mb-0 text-muted small">Click on any order row to open full details</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Machines Orders</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <!-- Orders Table -->
+                        <div class="premium-card">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                                <h4 class="mb-0 text-section-title">
+                                    <i class="bi bi-list-check me-2 text-success"></i>All Machine Orders
+                                </h4>
+                                <a asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+                                </a>
+                            </div>
+
+                            @if (Model?.Any() == true)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead>
+                                            <tr class="text-label">
+                                                <th style="width: 90px;">Order #</th>
+                                                <th>Machine</th>
+                                                <th style="width: 90px;">Qty</th>
+                                                <th style="width: 120px;">Total</th>
+                                                <th style="width: 140px;">Status</th>
+                                                <th style="width: 170px;">Cancel Until</th>
+                                                <th style="width: 170px;">Expected Arrival</th>
+                                                <th style="width: 120px;">Order Date</th>
+                                                <th class="text-end" style="width: 240px;">Actions</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @foreach (var o in Model)
+                                            {
+                                                <tr class="order-row text-label"
+                                                    role="button"
+                                                    onclick="window.location='@Url.Action("MachineOrderDetails","Factory", new { id = o.OrderId })'">
+                                                    <td>
+                                                        <span class="badge bg-light text-dark">@o.OrderId</span>
+                                                    </td>
+
+                                                    <td>
+                                                        <div class="fw-semibold">@((o.MachineName ?? o.MachineType ?? "Machine"))</div>
+                                                        <div class="text-muted small">Buyer: @((o.BuyerName ?? "Buyer"))</div>
+                                                    </td>
+
+                                                    <td>@o.Quantity</td>
+
+                                                    <td class="fw-bold">$@o.Total.ToString("N2")</td>
+
+                                                    <td>
+                                                        @{
+                                                            string BadgeColor(string status)
+                                                            {
+                                                                var s = (status ?? "").Trim().ToLowerInvariant();
+                                                                return s switch
+                                                                {
+                                                                    "pending" => "bg-warning text-dark",
+                                                                    "processing" => "bg-primary",
+                                                                    "confirmed" => "bg-info text-dark",
+                                                                    "shipped" => "bg-primary",
+                                                                    "readyforpickup" => "bg-primary",
+                                                                    "pickedup" => "bg-success",
+                                                                    "delivered" => "bg-success",
+                                                                    "completed" => "bg-success",
+                                                                    "cancelled" => "bg-danger",
+                                                                    "refunded" => "bg-secondary",
+                                                                    "returned" => "bg-secondary",
+                                                                    "deletedbyseller" => "bg-dark",
+                                                                    "deletedbybuyer" => "bg-dark",
+                                                                    _ => "bg-secondary"
+                                                                };
+                                                            }
+                                                        }
+                                                        <span class="badge @BadgeColor(o.Status?.ToString())">@o.Status</span>
+                                                    </td>
+
+                                                    <td class="text-muted">
+                                                        @(o.CancelUntil.HasValue ? o.CancelUntil.Value.ToString("yyyy-MM-dd HH:mm") : "-")
+                                                    </td>
+
+                                                    <td class="text-muted">
+                                                        @(o.ExpectedArrivalDate.HasValue ? o.ExpectedArrivalDate.Value.ToString("yyyy-MM-dd HH:mm") : "-")
+                                                    </td>
+
+                                                    <td class="text-muted">
+                                                        @o.OrderDate.ToString("yyyy-MM-dd")
+                                                    </td>
+
+                                                    <td class="text-end" onclick="event.stopPropagation()">
+                                                        <a class="btn btn-sm btn-success auth-btn-success me-1"
+                                                           href="@Url.Action("MachineOrderDetails","Factory", new { id = o.OrderId })">
+                                                            <i class="bi bi-eye me-1"></i>Details
+                                                        </a>
+
+                                                        <form asp-action="ChangeMachineOrderStatus"
+                                                              asp-controller="Factory"
+                                                              method="post"
+                                                              class="d-inline-flex align-items-center gap-2">
+                                                            @Html.AntiForgeryToken()
+
+                                                            <input type="hidden" name="orderId" value="@o.OrderId" />
+
+                                                            <select name="status"
+                                                                    class="form-select form-select-sm text-label"
+                                                                    style="width: 150px;">
+                                                                @{
+                                                                    var allowed = new[]
+                                                                    {
+                                                        EnumsOrderStatus.Pending,
+                                                        EnumsOrderStatus.Confirmed,
+                                                        EnumsOrderStatus.Processing,
+                                                        EnumsOrderStatus.ReadyForPickup,
+                                                        EnumsOrderStatus.Shipped,
+                                                        EnumsOrderStatus.PickedUp,
+                                                        EnumsOrderStatus.Delivered,
+                                                        EnumsOrderStatus.Completed,
+                                                        EnumsOrderStatus.Refunded,
+                                                        EnumsOrderStatus.Returned,
+                                                        EnumsOrderStatus.Cancelled,
+                                                        EnumsOrderStatus.DeletedBySeller
+                                                        };
+
+                                                                    foreach (var st in allowed)
+                                                                    {
+                                                                        var selected = string.Equals(o.Status?.ToString(), st.ToString(), StringComparison.OrdinalIgnoreCase);
+                                                                        <option value="@st" selected="@(selected ? "selected" : null)">@st</option>
+                                                                    }
+                                                                }
+                                                            </select>
+
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                                <i class="bi bi-arrow-repeat me-1"></i>Change
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    No machine orders found.
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Machine Orders Management</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM ORDERS LIST STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Table Styles */
+    .table {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(0,0,0,.02);
+        --bs-table-hover-bg: rgba(25, 135, 84, 0.06);
+        margin-bottom: 0;
+    }
+
+        .table thead th {
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            font-weight: 600;
+            color: var(--ink);
+            padding: 12px 16px;
+            background: rgba(240,253,250,.4);
+        }
+
+        .table tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            border-color: rgba(15,23,42,.05);
+        }
+
+    /* Order Row Hover */
+    .order-row {
+        transition: all 0.2s ease;
+    }
+
+        .order-row:hover {
+            background-color: rgba(25, 135, 84, 0.06) !important;
+            cursor: pointer;
+            transform: translateX(4px);
+        }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 6px 12px !important;
+        font-size: 0.8125rem;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* Form Controls */
+    .form-select-sm {
+        border: 1px solid rgba(15,23,42,.12);
+        border-radius: 10px;
+        background: rgba(255,255,255,.8);
+        backdrop-filter: blur(4px);
+        transition: all 0.2s ease;
+    }
+
+        .form-select-sm:focus {
+            border-color: var(--eco-green);
+            box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.15);
+        }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] h1,
+    [data-bs-theme="dark"] h2,
+    [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] h4,
+    [data-bs-theme="dark"] h5,
+    [data-bs-theme="dark"] h6 {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important;
+    }
+
+    /* Table Dark Mode */
+    [data-bs-theme="dark"] .table thead th {
+        background: rgba(2, 6, 23, .6);
+        border-bottom-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .table tbody td {
+        border-color: rgba(148, 163, 184, .08);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .order-row:hover {
+        background-color: rgba(34, 197, 94, 0.12) !important;
+    }
+
+    [data-bs-theme="dark"] .form-select-sm {
+        background: rgba(15, 23, 42, .5);
+        border-color: rgba(148, 163, 184, .2);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] .form-select-sm:focus {
+            border-color: var(--eco-green);
+            background: rgba(15, 23, 42, .7);
+        }
+
+    /* Badge Dark Mode */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(148, 163, 184, 0.2) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .table thead th,
+        .table tbody td {
+            padding: 10px 12px;
+            font-size: 0.875rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 16px;
+        }
+
+        .auth-body {
+            padding: 0 16px 14px;
+        }
+
+        .table-responsive {
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        .form-select-sm {
+            width: 130px !important;
+        }
+
+        .d-inline-flex.gap-2 {
+            gap: 6px !important;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
+
+            .d-flex.flex-wrap .btn {
+                align-self: flex-start;
+            }
+    }
+</style>

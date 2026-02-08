@@ -309,7 +309,7 @@ namespace EcoRecyclersGreenTech.Services
                     
                     <p>This is an automated notification from {EmailTemplateConfig.CompanyName}.</p>",
                 buttonText: "View Details",
-                buttonLink: $"{EmailTemplateConfig.WebsiteUrl}/notifications",
+                buttonLink: $"{EmailTemplateConfig.WebsiteUrl}/Home",
                 themeColor: "#f39c12",
                 isNotification: true
             );
@@ -481,7 +481,7 @@ namespace EcoRecyclersGreenTech.Services
             </html>";
         }
 
-        // ========== Helper Methods ==========
+        // Helper Methods
         private string GetEmailStyles(string themeColor)
         {
             return $@"

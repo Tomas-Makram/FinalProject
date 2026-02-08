@@ -1,0 +1,717 @@
+﻿@model (EcoRecyclersGreenTech.Data.Orders.AuctionOrder order, EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel item)
+
+@{
+    ViewData["Title"] = "Auction Order Details";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var order = Model.order;
+    var item = Model.item;
+
+    var st = order.Status.ToString();
+    var canDeletePending = (ViewBag.CanDeletePending as bool?) == true;
+    var isPending = order.Status == EcoRecyclersGreenTech.Data.Orders.EnumsOrderStatus.Pending;
+
+    var bidAmount = ViewBag.BidAmount as decimal? ?? order.BidAmount;
+    var depositPaid = ViewBag.DepositPaid as decimal? ?? order.AmountPaid;
+
+    // ✅ Images from the auction
+    var images = (item.ImageUrls ?? new List<string>())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Select(x => x.Trim())
+        .Distinct()
+        .ToList();
+
+    string statusClass(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "pending" => "bg-warning text-dark",
+            "confirmed" => "bg-info text-dark",
+            "processing" => "bg-primary",
+            "readyforpickup" => "bg-primary",
+            "pickedup" => "bg-success",
+            "shipped" => "bg-primary",
+            "delivered" => "bg-success",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            "refunded" => "bg-secondary",
+            "returned" => "bg-secondary",
+            "paymentreceived" => "bg-success",
+            "disputed" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    // ✅ Auction timing
+    var isAuctionEnded = item.IsAuctionEnded ?? false;
+    var daysRemaining = item.DaysRemaining ?? 0;
+    var auctionEndDate = item.AuctionEndDate;
+    var auctionStartDate = item.AuctionStartDate;
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-file-text"></i>
+                        </div>
+                        <h3 class="mb-1 text-section-title">@ViewData["Title"]</h3>
+                        <p class="mb-0 text-muted small text-label">
+                            Order #@order.AuctionOrderID • <span class="badge @statusClass(st)">@st</span>
+                            <span class="ms-2">
+                                <i class="bi bi-clock me-1"></i>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index" asp-controller="CraftsMan">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="AuctionOrders">My Auction Orders</a></li>
+                                <li class="breadcrumb-item active text-label" aria-current="page">@ViewData["Title"]</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="premium-card alert alert-success mb-4">
+                                @TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="premium-card alert alert-danger mb-4">
+                                @TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <!-- Content -->
+                        <div class="row g-4">
+                            <!-- Left: Auction Images -->
+                            <div class="col-lg-6">
+                                <div class="premium-card h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 text-section-title">Auction Photos</h5>
+                                        <span class="text-muted small text-label">@images.Count صورة</span>
+                                    </div>
+
+                                    @if (images.Any())
+                                    {
+                                        var gid = "g" + Guid.NewGuid().ToString("N");
+                                        <div id="@gid" class="carousel slide" data-bs-ride="carousel">
+                                            <div class="carousel-inner rounded-3 border">
+                                                @for (int i = 0; i < images.Count; i++)
+                                                {
+                                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                        <img src="@images[i]"
+                                                             class="d-block w-100"
+                                                             alt="Auction image"
+                                                             style="max-height:460px; object-fit:cover;">
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            @if (images.Count > 1)
+                                            {
+                                                <button class="carousel-control-prev" type="button" data-bs-target="#@gid" data-bs-slide="prev">
+                                                    <span class="carousel-control-prev-icon"></span>
+                                                </button>
+                                                <button class="carousel-control-next" type="button" data-bs-target="#@gid" data-bs-slide="next">
+                                                    <span class="carousel-control-next-icon"></span>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded-3 bg-light d-flex align-items-center justify-content-center" style="height:260px;">
+                                            <div class="text-muted text-center">
+                                                <i class="bi bi-image fs-1 d-block mb-2"></i>
+                                                <span class="text-label">No images</span>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <hr class="my-3" />
+
+                                    <div class="d-flex gap-2">
+                                        <a class="btn btn-outline-primary"
+                                           asp-action="AuctionDetails"
+                                           asp-route-id="@item.Id">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i> View Auction Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Order Details -->
+                            <div class="col-lg-6">
+                                <div class="premium-card">
+                                    <!-- Auction Title -->
+                                    <h5 class="fw-bold mb-1 text-section-title">@item.Name</h5>
+                                    <div class="text-muted small mb-3 text-label">Auction</div>
+
+                                    <!-- Auction Status & Timing -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Auction Status</div>
+                                            <div class="fw-bold text-label">
+                                                @if (isAuctionEnded)
+                                                {
+                                                    <span class="badge bg-success">Ended</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark">Active</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Days Remaining</div>
+                                            <div class="fw-bold text-label">@daysRemaining days</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Auction Dates -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Start Date</div>
+                                            <div class="fw-bold text-label">@(auctionStartDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">End Date</div>
+                                            <div class="fw-bold text-label">@(auctionEndDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-3" />
+
+                                    <!-- Order Summary -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Start Price</div>
+                                            <div class="fw-bold text-label">@(item.Price.ToString("N2"))</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Your Winning Bid</div>
+                                            <div class="fw-bold text-success text-label">@bidAmount.ToString("N2")</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Payment Info -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Deposit Paid</div>
+                                            <div class="fw-bold text-label">@depositPaid.ToString("N2")</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="text-muted small text-label">Remaining Balance</div>
+                                            @{
+                                                var remaining = bidAmount - depositPaid;
+                                                var remainingText = remaining > 0 ? remaining.ToString("N2") : "0.00";
+                                            }
+                                            <div class="fw-bold @(remaining > 0 ? "text-danger" : "text-success") text-label">
+                                                @remainingText
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Payment Provider -->
+                                    @if (!string.IsNullOrWhiteSpace(order.PaymentProvider))
+                                    {
+                                        <div class="mb-3">
+                                            <div class="text-muted small text-label">Payment Method</div>
+                                            <div class="fw-semibold text-label">
+                                                @order.PaymentProvider
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Auction Location -->
+                                    @if (!string.IsNullOrWhiteSpace(item.AuctionAddress))
+                                    {
+                                        <div class="mb-3">
+                                            <div class="text-muted small text-label">Auction Location</div>
+                                            <div class="fw-semibold text-label">
+                                                <i class="bi bi-geo-alt me-1"></i>@item.AuctionAddress
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <hr class="my-3" />
+
+                                    <!-- Seller Info -->
+                                    <div class="mb-2">
+                                        <div class="text-muted small text-label">Seller</div>
+                                        <div class="fw-bold text-label">
+                                            <i class="bi bi-person me-1"></i>@(item.SellerName ?? "—")
+                                            @if (item.IsVerifiedSeller)
+                                            {
+                                                <span class="badge bg-success-subtle text-success ms-1">Verified</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.SellerAddress))
+                                    {
+                                        <div class="mb-2">
+                                            <div class="text-muted small text-label">Seller Address</div>
+                                            <div class="fw-semibold text-label">
+                                                <i class="bi bi-geo-alt me-1"></i>@item.SellerAddress
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Actions -->
+                                    <div class="d-flex gap-2 mt-4 align-items-center">
+                                        @if (canDeletePending && isPending)
+                                        {
+                                            <form asp-action="CancelAuctionOrder" method="post" class="ms-auto">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="orderId" value="@order.AuctionOrderID" />
+                                                <button class="btn btn-outline-danger" type="submit"
+                                                        onclick="return confirm('Cancel this auction order?');">
+                                                    <i class="bi bi-x-circle me-1"></i> Cancel Order
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (!isPending)
+                                        {
+                                            <span class="ms-auto text-muted small text-label">
+                                                This order can no longer be canceled.
+                                            </span>
+                                        }
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted text-label">© @DateTime.Now.Year EcoRecyclers GreenTech • @ViewData["Title"]</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM AUCTION ORDER DETAILS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn-outline-primary {
+        border-color: rgba(14, 165, 233, 0.3);
+        color: #0ea5e9;
+        border-radius: 8px;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: rgba(14, 165, 233, 0.1);
+            border-color: #0ea5e9;
+            transform: translateY(-1px);
+        }
+
+    .btn-outline-danger {
+        border-color: rgba(220,53,69,.3);
+        color: #dc3545;
+        border-radius: 8px;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: rgba(220,53,69,.1);
+            border-color: #dc3545;
+            transform: translateY(-1px);
+        }
+
+    /* Carousel */
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 45px;
+        opacity: .9;
+    }
+
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            opacity: 1;
+        }
+
+    .carousel-inner {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,.25);
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+    /* Dark Mode Buttons */
+    [data-bs-theme="dark"] .btn-outline-primary {
+        border-color: rgba(14, 165, 233, 0.3);
+        color: #38bdf8;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-primary:hover {
+            background-color: rgba(14, 165, 233, 0.1);
+            border-color: #38bdf8;
+            color: #7dd3fc;
+        }
+
+    [data-bs-theme="dark"] .btn-outline-danger {
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-danger:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #f87171;
+        }
+
+    /* Dark Mode Badges */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(148, 163, 184, 0.2) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success-subtle {
+        background-color: rgba(34, 197, 94, 0.25) !important;
+        color: #86efac !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success {
+        background-color: rgba(34, 197, 94, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-danger {
+        background-color: rgba(239, 68, 68, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-secondary {
+        background-color: rgba(148, 163, 184, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Dark Mode Carousel */
+    [data-bs-theme="dark"] .carousel-inner {
+        border-color: rgba(148, 163, 184, .3) !important;
+    }
+
+    [data-bs-theme="dark"] .bg-light {
+        background-color: rgba(30, 41, 59, 0.5) !important;
+        border-color: rgba(148, 163, 184, .3) !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 14px;
+        }
+
+        .auth-body {
+            padding: 0 14px 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+    }
+</style>

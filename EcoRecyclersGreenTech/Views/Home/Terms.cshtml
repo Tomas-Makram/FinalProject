@@ -1,0 +1,502 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Terms & Conditions";
+    var nonce = HttpContextAccessor.HttpContext?.Items["CSPNonce"] as string ?? "";
+    var updated = "Last updated: February 2026";
+}
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM TERMS & CONDITIONS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Main Container */
+    .terms-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .terms-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Content Wrapper */
+    .terms-content-wrap {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    /* Hero Section */
+    .terms-hero {
+        border-radius: 20px;
+        padding: 30px;
+        background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.18), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.12), transparent 55%), linear-gradient(135deg, rgba(34,197,94,.95), rgba(20,184,166,.92));
+        color: #fff;
+        box-shadow: 0 18px 45px rgba(2,6,23,.15);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.16);
+        margin-bottom: 25px;
+    }
+
+        .terms-hero:after {
+            content: "";
+            position: absolute;
+            left: -90px;
+            bottom: -90px;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.12);
+        }
+
+    /* Cards */
+    .legal-card {
+        border-radius: 18px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+        .legal-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Text Colors - LIGHT MODE */
+    .section-title {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-weight: 900;
+        margin-bottom: 10px;
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    .legal-anchor {
+        scroll-margin-top: 88px;
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    .legal-card ul,
+    .legal-card li,
+    .legal-card p {
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    .terms-hero h2,
+    .terms-hero div,
+    .terms-hero p {
+        color: #fff !important; /* White on green background */
+    }
+
+    .text-muted {
+        color: var(--muted) !important; /* Muted gray */
+    }
+
+    /* TOC Styling */
+    .toc a {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(15,23,42,.07);
+        background: rgba(255,255,255,.65);
+        color: var(--ink) !important; /* Black in Light Mode */
+        transition: .22s ease;
+    }
+
+        .toc a:hover {
+            transform: translateY(-2px);
+            border-color: rgba(34,197,94,.35);
+            background: rgba(34,197,94,.10);
+        }
+
+    /* Pills */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(15,23,42,.03);
+        font-weight: 700;
+        font-size: .9rem;
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    /* Note Box */
+    .note {
+        border-radius: 16px;
+        padding: 16px 18px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(34,197,94,.08);
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* Badges */
+    .badge {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .terms-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .terms-content-wrap {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .legal-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .terms-hero {
+        background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.10), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.07), transparent 55%), linear-gradient(135deg, rgba(22,163,74,.85), rgba(20,184,166,.78));
+    }
+
+    /* DARK MODE TEXT COLORS - White Text */
+    [data-bs-theme="dark"] .section-title {
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .legal-anchor {
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .legal-card ul,
+    [data-bs-theme="dark"] .legal-card li,
+    [data-bs-theme="dark"] .legal-card p {
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .toc a {
+        background: rgba(2, 6, 23, .35);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+        [data-bs-theme="dark"] .toc a:hover {
+            background: rgba(34,197,94,.12);
+            border-color: rgba(34,197,94,.25);
+        }
+
+    [data-bs-theme="dark"] .pill {
+        background: rgba(255,255,255,.04);
+        border-color: rgba(255,255,255,.12);
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .note {
+        background: rgba(34,197,94,.12);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important; /* Light gray in Dark Mode */
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .terms-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .terms-content-wrap {
+            padding: 18px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .terms-hero {
+            padding: 20px;
+        }
+
+        .legal-card {
+            padding: 15px !important;
+        }
+    }
+</style>
+
+<div class="terms-premium">
+    <div class="container">
+        <div class="terms-shell">
+            <div class="terms-content-wrap">
+
+                <!-- Hero Section -->
+                <div class="terms-hero">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div>
+                            <h2 class="fw-bold mb-1"><i class="bi bi-file-earmark-text me-2"></i>Terms & Conditions</h2>
+                            <div class="opacity-75">@updated</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark rounded-pill px-3 py-2">
+                                Platform Rules
+                            </span>
+                        </div>
+                    </div>
+                    <p class="mt-3 mb-0" style="max-width: 920px;">
+                        These terms govern your use of EcoRecyclers GreenTech. By using the platform, you agree to these rules.
+                    </p>
+                </div>
+
+                <!-- Main Content -->
+                <div class="row g-4">
+                    <!-- TOC -->
+                    <div class="col-lg-4">
+                        <div class="card legal-card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-2"><i class="bi bi-signpost-split me-2 text-success"></i>Navigate</h5>
+
+                                <div class="toc d-grid gap-2">
+                                    <a href="#eligibility" class="small">Eligibility & accounts <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#platform" class="small">Platform usage rules <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#listings" class="small">Listings & content <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#orders" class="small">Orders, deposits & cancellations <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#wallet" class="small">Wallet & payments <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#disputes" class="small">Disputes & enforcement <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#liability" class="small">Liability <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#changes" class="small">Changes to terms <i class="bi bi-arrow-right"></i></a>
+                                </div>
+
+                                <div class="note mt-3 small">
+                                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle me-1"></i>Important</div>
+                                    For legal compliance, tailor this page to your country/regulations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTENT -->
+                    <div class="col-lg-8">
+                        <div class="card legal-card shadow-sm">
+                            <div class="card-body p-4">
+
+                                <section id="eligibility" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-person-badge text-success"></i>
+                                        <span>1) Eligibility & accounts</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>You must provide accurate information and keep it updated.</li>
+                                        <li>Some features require verification (e.g., selling, bidding, rentals).</li>
+                                        <li>You are responsible for your account security and activity.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="platform" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-shield-exclamation text-warning"></i>
+                                        <span>2) Platform usage rules</span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                        <span class="pill"><i class="bi bi-check-circle text-success"></i>No fraud</span>
+                                        <span class="pill"><i class="bi bi-check-circle text-success"></i>No abuse</span>
+                                        <span class="pill"><i class="bi bi-check-circle text-success"></i>No spam</span>
+                                        <span class="pill"><i class="bi bi-check-circle text-success"></i>Respect others</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>Do not upload illegal, harmful, or misleading content.</li>
+                                        <li>Do not attempt to bypass security, payment flow, or verification rules.</li>
+                                        <li>We may suspend or block accounts violating rules.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="listings" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-shop text-success"></i>
+                                        <span>3) Listings & content</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>Listings must be accurate (price, availability, description, photos).</li>
+                                        <li>Seller/Owner is responsible for fulfillment and quality.</li>
+                                        <li>We can remove content that violates policy or is suspicious.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="orders" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-bag-check text-info"></i>
+                                        <span>4) Orders, deposits & cancellations</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>Some orders require a deposit before confirmation.</li>
+                                        <li>Cancellation windows may apply (depending on store type).</li>
+                                        <li>Auctions: deposit rules apply; refunds depend on outcome and policy.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="wallet" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-wallet2 text-warning"></i>
+                                        <span>5) Wallet & payments</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>Wallet balance may include available and reserved amounts (holds).</li>
+                                        <li>Payment providers may apply their own terms for card processing.</li>
+                                        <li>Chargebacks and disputes may result in holds or restrictions.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="disputes" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-life-preserver text-success"></i>
+                                        <span>6) Disputes & enforcement</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>We may request evidence from both parties (messages, receipts, images).</li>
+                                        <li>We may freeze disputed amounts until resolution.</li>
+                                        <li>Repeated abuse may lead to suspension or permanent ban.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="liability" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-exclamation-octagon text-danger"></i>
+                                        <span>7) Liability</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>The platform provides marketplace functionality "as is".</li>
+                                        <li>We are not responsible for third-party listings accuracy.</li>
+                                        <li>We are not liable for indirect losses (unless required by law).</li>
+                                    </ul>
+                                </section>
+
+                                <section id="changes" class="legal-anchor">
+                                    <div class="section-title">
+                                        <i class="bi bi-arrow-repeat text-secondary"></i>
+                                        <span>8) Changes to these terms</span>
+                                    </div>
+                                    <p class="mb-0">
+                                        We may update these terms to reflect new features or legal requirements.
+                                        Continued use means you accept the updated terms.
+                                    </p>
+
+                                    <div class="mt-3 d-flex flex-wrap gap-2">
+                                        <a class="btn btn-success auth-btn-success" asp-controller="Home" asp-action="Privacy">
+                                            <i class="bi bi-shield-lock me-1"></i>Privacy Policy
+                                        </a>
+                                        <a class="btn btn-outline-secondary rounded-pill px-3" asp-controller="Home" asp-action="Index">
+                                            <i class="bi bi-house me-1"></i>Back to Home
+                                        </a>
+                                    </div>
+                                </section>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

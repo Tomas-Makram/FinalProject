@@ -1,0 +1,888 @@
+﻿@model IEnumerable<EcoRecyclersGreenTech.Models.FactoryStore.Orders.RentalOrderDetailsModel>
+
+@{
+    ViewData["Title"] = ViewBag.Title as string ?? "My Rental Orders";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    string Badge(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "pending" => "bg-warning text-dark",
+            "confirmed" => "bg-info text-dark",
+            "processing" => "bg-primary",
+            "readyforpickup" => "bg-primary",
+            "pickedup" => "bg-success",
+            "shipped" => "bg-primary",
+            "delivered" => "bg-success",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            "refunded" => "bg-secondary",
+            "returned" => "bg-secondary",
+            "paymentreceived" => "bg-success",
+            "disputed" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    // ✅ Delete button rule (same as your original)
+    bool CanDelete(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s == "cancelled" || s == "refunded" || s == "returned"
+            || s == "completed" || s == "delivered" || s == "pickedup";
+    }
+
+    // ✅ Images ONLY from VM
+    List<string> GetImages(EcoRecyclersGreenTech.Models.FactoryStore.Orders.RentalOrderDetailsModel o)
+    {
+        var imgs = new List<string>();
+
+        void Add(string? x)
+        {
+            if (!string.IsNullOrWhiteSpace(x))
+            {
+                var t = x.Trim();
+                if (!imgs.Contains(t)) imgs.Add(t);
+            }
+        }
+
+        if (o.ImageUrls != null && o.ImageUrls.Any())
+        {
+            foreach (var u in o.ImageUrls) Add(u);
+        }
+
+        return imgs;
+    }
+
+    string SafeAddr(string? x) => string.IsNullOrWhiteSpace(x) ? "—" : x.Trim();
+
+    int SafeMonths(int m) => (m <= 0 ? 3 : m);
+
+    decimal TotalForMonths(decimal pricePerMonth, int months)
+    {
+        if (pricePerMonth < 0) pricePerMonth = 0;
+        if (months <= 0) months = 3;
+        return pricePerMonth * months;
+    }
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 class="mb-1">@ViewData["Title"]</h3>
+                        <p class="mb-0 text-muted small">Rental requests you sent</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index" asp-controller="CraftsMan">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="premium-card alert alert-success mb-4">
+                                @TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="premium-card alert alert-danger mb-4">
+                                @TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <!-- Content -->
+                        <div class="premium-card">
+                            @if (Model != null && Model.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle orders-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-label">#</th>
+                                                <th class="text-label" style="width:140px;">Photos</th>
+                                                <th class="text-label">Address</th>
+                                                <th class="text-label">Price / month</th>
+                                                <th class="text-label">Months</th>
+                                                <th class="text-label">Total</th>
+                                                <th class="text-label">Available</th>
+                                                <th class="text-label">Status</th>
+                                                <th class="text-label">Date</th>
+                                                <th class="text-end text-label" style="width:240px;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var o in Model)
+                                            {
+                                                var st = (o.Status ?? "");
+                                                var imgs = GetImages(o);
+                                                var cid = $"orderImgs_{o.RentalOrderId}";
+
+                                                var address = SafeAddr(o.RentalAddress);
+                                                var pricePerMonth = (o.PricePerMonth > 0 ? o.PricePerMonth : 0m);
+
+                                                var months = SafeMonths(o.Months);
+                                                var total = TotalForMonths(pricePerMonth, months);
+
+                                                var availFrom = o.AvailableFrom.HasValue ? o.AvailableFrom.Value.ToString("yyyy-MM-dd") : "—";
+                                                var availUntil = o.AvailableUntil.HasValue ? o.AvailableUntil.Value.ToString("yyyy-MM-dd") : "—";
+                                                var availText = (availFrom == "—" && availUntil == "—") ? "—" : $"{availFrom} → {availUntil}";
+
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-light text-dark">
+                                                            REN-@o.RentalOrderId.ToString("000000")
+                                                        </span>
+                                                    </td>
+
+                                                    <!-- Photos -->
+                                                    <td>
+                                                        @if (imgs.Count == 0)
+                                                        {
+                                                            <div class="img-placeholder" title="No images">
+                                                                <i class="bi bi-image"></i>
+                                                            </div>
+                                                        }
+                                                        else if (imgs.Count == 1)
+                                                        {
+                                                            <a href="@imgs[0]" target="_blank" class="img-one-wrap" title="Open image">
+                                                                <img class="img-one" src="@imgs[0]" alt="rental" loading="lazy" />
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div id="@cid" class="carousel slide mini-carousel" data-bs-ride="carousel" data-bs-interval="3500">
+                                                                <div class="carousel-inner">
+                                                                    @for (int i = 0; i < imgs.Count; i++)
+                                                                    {
+                                                                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                                            <a href="@imgs[i]" target="_blank" title="Open image">
+                                                                                <img src="@imgs[i]" class="d-block w-100 mini-img" alt="rental" loading="lazy" />
+                                                                            </a>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+
+                                                                <button class="carousel-control-prev mini-control" type="button" data-bs-target="#@cid" data-bs-slide="prev">
+                                                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                                    <span class="visually-hidden">Previous</span>
+                                                                </button>
+                                                                <button class="carousel-control-next mini-control" type="button" data-bs-target="#@cid" data-bs-slide="next">
+                                                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                                    <span class="visually-hidden">Next</span>
+                                                                </button>
+
+                                                                <div class="mini-dots">
+                                                                    @for (int i = 0; i < imgs.Count; i++)
+                                                                    {
+                                                                        <button type="button"
+                                                                                data-bs-target="#@cid"
+                                                                                data-bs-slide-to="@i"
+                                                                                class="@(i == 0 ? "active" : "")"
+                                                                                aria-current="@(i == 0 ? "true" : "false")"
+                                                                                aria-label="Slide @(i + 1)"></button>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </td>
+
+                                                    <td class="text-label">@address</td>
+
+                                                    <td class="fw-bold text-label">@pricePerMonth.ToString("N2")</td>
+
+                                                    <td>
+                                                        <span class="badge bg-light text-dark border">
+                                                            @months
+                                                        </span>
+                                                    </td>
+
+                                                    <td class="fw-bold text-danger text-label">@total.ToString("N2")</td>
+
+                                                    <td class="text-muted text-label">
+                                                        @availText
+                                                    </td>
+
+                                                    <td><span class="badge @Badge(st)">@st</span></td>
+
+                                                    <td class="text-muted text-label">@o.OrderDate.ToString("yyyy-MM-dd")</td>
+
+                                                    <td class="text-end">
+                                                        <a asp-controller="CraftsMan"
+                                                           asp-action="RentalOrderDetails"
+                                                           asp-route-id="@o.RentalOrderId"
+                                                           class="btn btn-sm btn-outline-warning">
+                                                            View
+                                                        </a>
+
+                                                        @if (CanDelete(st))
+                                                        {
+                                                            <form asp-action="CancelRentalOrder" method="post" class="d-inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="orderId" value="@o.RentalOrderId" />
+                                                                <button class="btn btn-sm btn-outline-danger"
+                                                                        onclick="return confirm('Remove this order from your list? (It will be deleted permanently only if owner also removes it)');">
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <small class="text-muted d-block mt-3 text-label">
+                                    ملاحظة: عرض "Months" و "Total" يعتمد على RentalOrderRowVM.Months (افتراضي 3) و PricePerMonth.
+                                </small>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-inbox fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+                                    </div>
+                                    <h5 class="h6 text-muted mb-2 text-label">No rental requests yet</h5>
+                                    <p class="text-muted small text-label">You haven't sent any rental requests yet</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • @ViewData["Title"]</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM RENTAL ORDERS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Table */
+    .table {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(0,0,0,.02);
+        --bs-table-hover-bg: rgba(0,0,0,.04);
+        border-color: rgba(15,23,42,.08);
+    }
+
+        .table thead th {
+            background-color: rgba(0,0,0,.02);
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.02);
+    }
+
+    /* Buttons */
+    .btn-outline-warning {
+        border-color: rgba(255,193,7,.3);
+        color: #ffc107;
+        border-radius: 8px;
+        padding: 6px 12px;
+    }
+
+        .btn-outline-warning:hover {
+            background-color: rgba(255,193,7,.1);
+            border-color: #ffc107;
+            transform: translateY(-1px);
+        }
+
+    .btn-outline-danger {
+        border-color: rgba(220,53,69,.3);
+        color: #dc3545;
+        border-radius: 8px;
+        padding: 6px 12px;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: rgba(220,53,69,.1);
+            border-color: #dc3545;
+            transform: translateY(-1px);
+        }
+
+    /* Photos cell */
+    .img-placeholder {
+        width: 120px;
+        height: 72px;
+        border-radius: 12px;
+        border: 1px dashed #dee2e6;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 22px;
+        transition: all 0.2s ease;
+    }
+
+    .img-one-wrap {
+        display: inline-block;
+        width: 120px;
+        height: 72px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(15,23,42,.08);
+        background: #f8f9fa;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        transition: all 0.2s ease;
+    }
+
+        .img-one-wrap:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.10);
+        }
+
+    .img-one {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform .25s ease;
+    }
+
+    .img-one-wrap:hover .img-one {
+        transform: scale(1.04);
+    }
+
+    .mini-carousel {
+        width: 120px;
+        height: 72px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(15,23,42,.08);
+        background: #f8f9fa;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+        .mini-carousel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.10);
+        }
+
+    .mini-img {
+        width: 120px;
+        height: 72px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .mini-control {
+        width: 28px;
+        opacity: .9;
+        transition: opacity 0.2s ease;
+    }
+
+    .mini-carousel:hover .mini-control {
+        opacity: 1;
+    }
+
+    .mini-control .carousel-control-prev-icon,
+    .mini-control .carousel-control-next-icon {
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+    }
+
+    .mini-dots {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 6px;
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+    }
+
+        .mini-dots button {
+            width: 10px;
+            height: 4px;
+            border-radius: 999px;
+            border: 0;
+            background: rgba(255,255,255,.55);
+            padding: 0;
+            transition: all 0.2s ease;
+        }
+
+            .mini-dots button.active {
+                background: rgba(255,255,255,.95);
+                width: 16px;
+            }
+
+            .mini-dots button:hover {
+                background: rgba(255,255,255,.75);
+            }
+
+    .orders-table td, .orders-table th {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,.25);
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+    /* Dark Mode Table */
+    [data-bs-theme="dark"] .table {
+        --bs-table-striped-bg: rgba(255,255,255,.02);
+        --bs-table-hover-bg: rgba(255,255,255,.05);
+        color: #e2e8f0;
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+        [data-bs-theme="dark"] .table thead th {
+            background-color: rgba(255,255,255,.06);
+            border-bottom-color: rgba(148, 163, 184, .2);
+            color: #e2e8f0;
+        }
+
+    [data-bs-theme="dark"] .table-hover tbody tr:hover {
+        background-color: rgba(255,255,255,.08);
+    }
+
+    /* Dark Mode Buttons */
+    [data-bs-theme="dark"] .btn-outline-warning {
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #f59e0b;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-warning:hover {
+            background-color: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            color: #fbbf24;
+        }
+
+    [data-bs-theme="dark"] .btn-outline-danger {
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-danger:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #f87171;
+        }
+
+    /* Dark Mode Images */
+    [data-bs-theme="dark"] .img-placeholder {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, .3);
+        color: rgba(226, 232, 240, .6);
+    }
+
+    [data-bs-theme="dark"] .img-one-wrap {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .mini-carousel {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .mini-dots button {
+        background: rgba(255,255,255,.3);
+    }
+
+        [data-bs-theme="dark"] .mini-dots button.active {
+            background: rgba(255,255,255,.9);
+        }
+
+    /* Dark Mode Badges */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(148, 163, 184, 0.2) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-secondary {
+        background-color: rgba(148, 163, 184, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-info {
+        background-color: rgba(56, 189, 248, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-primary {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success {
+        background-color: rgba(34, 197, 94, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-danger {
+        background-color: rgba(239, 68, 68, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 14px;
+        }
+
+        .auth-body {
+            padding: 0 14px 12px;
+        }
+
+        .orders-table td, .orders-table th {
+            padding: 8px 6px;
+        }
+
+        .img-placeholder,
+        .img-one-wrap,
+        .mini-carousel {
+            width: 100px;
+            height: 60px;
+        }
+
+        .mini-img {
+            width: 100px;
+            height: 60px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .orders-table td, .orders-table th {
+            padding: 6px 4px;
+            font-size: 0.8rem;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .img-placeholder,
+        .img-one-wrap,
+        .mini-carousel {
+            width: 80px;
+            height: 48px;
+        }
+
+        .mini-img {
+            width: 80px;
+            height: 48px;
+        }
+    }
+</style>

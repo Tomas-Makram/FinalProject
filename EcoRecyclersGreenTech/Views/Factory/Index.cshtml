@@ -1,371 +1,315 @@
 ﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Orders.DashboardModel
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+@using EcoRecyclersGreenTech.Models.FactoryStore.Orders
+
 @{
     ViewData["Title"] = "Factory Dashboard";
     var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
-    var userType = ViewBag.UserType as string ?? "Factory";
+
     var userName = ViewBag.userName as string ?? "User";
     var isVerified = ViewBag.IsVerified as bool? ?? false;
 }
 
-<div class="container-fluid py-4">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+                    
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-recycle"></i>
+                        </div>
+                        <h3 class="mb-1">Factory Store Dashboard</h3>
+                        <p class="mb-0 text-muted small">Eco-friendly management for products, orders, and sales</p>
+                    </div>
 
-    <!-- Alerts -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+                    <div class="auth-body">
+                        <!-- Alerts -->
+                        <div class="alerts-container mb-4">
+                            @if (TempData["Success"] != null)
+                            {
+                                <div class="alert premium-alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+                            @if (TempData["Error"] != null)
+                            {
+                                <div class="alert premium-alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+                            @if (TempData["Warning"] != null)
+                            {
+                                <div class="alert premium-alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+                            <!-- Verification Status -->
+                            <div class="premium-card mb-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">Welcome back, <span class="text-success">@userName</span></h5>
+                                        <p class="text-muted small mb-0">Manage your factory store operations efficiently</p>
+                                    </div>
+                                    <div>
+                                        @if (!isVerified)
+                                        {
+                                            <span class="badge bg-warning px-3 py-2 rounded-pill">
+                                                <i class="bi bi-shield-exclamation me-1"></i>Verification Required
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success px-3 py-2 rounded-pill">
+                                                <i class="bi bi-shield-check me-1"></i>Verified Factory
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-    @if (TempData["Warning"] != null)
-    {
-        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+                        <!-- Stats (بدون Revenue) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-box text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Active Materials</div>
+                                        <div class="fs-3 fw-bold">@Model.ActiveMaterials</div>
+                                        <a asp-action="Materials" class="eco-link mt-2 d-block">Manage <i class="bi bi-arrow-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
 
-    <!-- Page Header -->
-    <div class="row align-items-center mb-5">
-        <div class="col-md-8">
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <i class="bi bi-building-gear fs-1 text-primary"></i>
-                </div>
-                <div>
-                    <h1 class="h2 mb-1 fw-bold">Factory Store Dashboard</h1>
-                    <p class="text-muted mb-0">Manage your products, orders, and sales from one place</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 text-end">
-            <div class="d-flex gap-2 justify-content-end">
-                @if (!isVerified)
-                {
-                    <div class="alert alert-warning py-2 px-3 mb-0">
-                        <i class="bi bi-shield-exclamation me-1"></i>
-                        <small>Verification Required</small>
-                    </div>
-                }
-                else
-                {
-                    <span class="badge bg-success rounded-pill p-2">
-                        <i class="bi bi-shield-check me-1"></i>Verified Factory
-                    </span>
-                }
-            </div>
-            <small class="text-muted">Welcome back, @userName</small>
-        </div>
-    </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-gear text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Active Machines</div>
+                                        <div class="fs-3 fw-bold">@Model.ActiveMachines</div>
+                                        <a asp-action="Machines" class="eco-link mt-2 d-block">Manage <i class="bi bi-arrow-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
 
-    <!-- Stats Cards -->
-    <div class="row g-4 mb-5">
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-primary border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-2">Active Materials</h6>
-                            <h3 class="mb-0 fw-bold">@Model.ActiveMaterials</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="bi bi-box fs-1 text-primary opacity-75"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a asp-action="Materials" class="text-decoration-none small">
-                            Manage <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-building text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Active Rentals</div>
+                                        <div class="fs-3 fw-bold">@Model.ActiveRentals</div>
+                                        <a asp-action="Rentals" class="eco-link mt-2 d-block">Manage <i class="bi bi-arrow-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
 
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-success border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-2">Active Machines</h6>
-                            <h3 class="mb-0 fw-bold">@Model.ActiveMachines</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="bi bi-gear fs-1 text-success opacity-75"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a asp-action="Machines" class="text-decoration-none small">
-                            Manage <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-gavel text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Active Auctions</div>
+                                        <div class="fs-3 fw-bold">@Model.ActiveAuctions</div>
+                                        <a asp-action="Auctions" class="eco-link mt-2 d-block">Manage <i class="bi bi-arrow-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
 
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-warning border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-2">Active Rentals</h6>
-                            <h3 class="mb-0 fw-bold">@Model.ActiveRentals</h3>
+                            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-briefcase text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Active Jobs</div>
+                                        <div class="fs-3 fw-bold">@Model.ActiveJobs</div>
+                                        <a asp-action="Jobs" class="eco-link mt-2 d-block">Manage <i class="bi bi-arrow-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="ms-3">
-                            <i class="bi bi-building fs-1 text-warning opacity-75"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a asp-action="Rentals" class="text-decoration-none small">
-                            Manage <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-info border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-2">Active Auctions</h6>
-                            <h3 class="mb-0 fw-bold">@Model.ActiveAuctions</h3>
+                        <!-- Quick Actions (بدون Marketplace) -->
+                        <div class="premium-card mb-4">
+                            <h5 class="mb-3"><i class="bi bi-lightning-charge-fill me-2 text-success"></i>Quick Actions</h5>
+                            
+                            <div class="row g-3">
+                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                    <a asp-action="AddMaterial" class="quick-action-tile">
+                                        <i class="bi bi-plus-circle text-success"></i>
+                                        <span>Add Material</span>
+                                    </a>
+                                </div>
+                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                    <a asp-action="AddMachine" class="quick-action-tile">
+                                        <i class="bi bi-plus-circle text-success"></i>
+                                        <span>Add Machine</span>
+                                    </a>
+                                </div>
+                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                    <a asp-action="AddRental" class="quick-action-tile">
+                                        <i class="bi bi-plus-circle text-success"></i>
+                                        <span>Add Rental</span>
+                                    </a>
+                                </div>
+                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                    <a asp-action="AddAuction" class="quick-action-tile">
+                                        <i class="bi bi-plus-circle text-success"></i>
+                                        <span>Add Auction</span>
+                                    </a>
+                                </div>
+                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                    <a asp-action="AddJob" class="quick-action-tile">
+                                        <i class="bi bi-plus-circle text-success"></i>
+                                        <span>Add Job</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="ms-3">
-                            <i class="bi bi-gavel fs-1 text-info opacity-75"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a asp-action="Auctions" class="text-decoration-none small">
-                            Manage <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-secondary border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-2">Active Jobs</h6>
-                            <h3 class="mb-0 fw-bold">@Model.ActiveJobs</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="bi bi-briefcase fs-1 text-secondary opacity-75"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a asp-action="Jobs" class="text-decoration-none small">
-                            Manage <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <!-- Orders + Store Summary -->
+                        <div class="row g-4 align-items-stretch">
+                            <!-- Orders -->
+                            <div class="col-lg-8">
+                                <div class="premium-card h-100">
+                                    <h5 class="mb-3"><i class="bi bi-receipt-cutoff me-2 text-success"></i>Orders</h5>
+                                    <p class="text-muted small mb-3">Click any order type to open its page</p>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-xl-4 col-md-6">
+                                            <a asp-action="MaterialOrders" class="order-tile">
+                                                <div class="order-icon">
+                                                    <i class="bi bi-box-seam"></i>
+                                                </div>
+                                                <div class="order-content">
+                                                    <div class="order-title">Materials Orders</div>
+                                                    <div class="order-subtitle">Open materials orders page</div>
+                                                </div>
+                                                <i class="bi bi-arrow-right-short order-arrow"></i>
+                                            </a>
+                                        </div>
 
-        <div class="col-xl-2 col-md-4 col-sm-6">
-            <div class="card border-start border-danger border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-2">Revenue</h6>
-                            <h3 class="mb-0 fw-bold">$@Model.TotalRevenue.ToString("N2")</h3>
-                        </div>
-                        <div class="ms-3">
-                            <i class="bi bi-currency-dollar fs-1 text-danger opacity-75"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="#" class="text-decoration-none small">
-                            View Report <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                                        <div class="col-xl-4 col-md-6">
+                                            <a asp-action="MachineOrders" class="order-tile">
+                                                <div class="order-icon">
+                                                    <i class="bi bi-gear"></i>
+                                                </div>
+                                                <div class="order-content">
+                                                    <div class="order-title">Machines Orders</div>
+                                                    <div class="order-subtitle">Open machines orders page</div>
+                                                </div>
+                                                <i class="bi bi-arrow-right-short order-arrow"></i>
+                                            </a>
+                                        </div>
 
-    <!-- Quick Actions -->
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-transparent border-0 py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-xl-2 col-md-4 col-sm-6">
-                            <a asp-action="AddMaterial" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center">
-                                <i class="bi bi-plus-circle-fill fs-2 mb-2"></i>
-                                <span>Add Material</span>
-                            </a>
-                        </div>
-                        <div class="col-xl-2 col-md-4 col-sm-6">
-                            <a asp-action="AddMachine" class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center">
-                                <i class="bi bi-plus-circle-fill fs-2 mb-2"></i>
-                                <span>Add Machine</span>
-                            </a>
-                        </div>
-                        <div class="col-xl-2 col-md-4 col-sm-6">
-                            <a asp-action="AddRental" class="btn btn-outline-warning w-100 py-3 d-flex flex-column align-items-center">
-                                <i class="bi bi-plus-circle-fill fs-2 mb-2"></i>
-                                <span>Add Rental</span>
-                            </a>
-                        </div>
-                        <div class="col-xl-2 col-md-4 col-sm-6">
-                            <a asp-action="AddAuction" class="btn btn-outline-info w-100 py-3 d-flex flex-column align-items-center">
-                                <i class="bi bi-plus-circle-fill fs-2 mb-2"></i>
-                                <span>Add Auction</span>
-                            </a>
-                        </div>
-                        <div class="col-xl-2 col-md-4 col-sm-6">
-                            <a asp-action="AddJob" class="btn btn-outline-secondary w-100 py-3 d-flex flex-column align-items-center">
-                                <i class="bi bi-plus-circle-fill fs-2 mb-2"></i>
-                                <span>Add Job</span>
-                            </a>
-                        </div>
-                        <div class="col-xl-2 col-md-4 col-sm-6">
-                            <a asp-action="Marketplace" asp-route-type="materials" class="btn btn-outline-dark w-100 py-3 d-flex flex-column align-items-center">
-                                <i class="bi bi-shop fs-2 mb-2"></i>
-                                <span>Browse Market</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                                        <div class="col-xl-4 col-md-6">
+                                            <a asp-action="RentalOrders" class="order-tile">
+                                                <div class="order-icon">
+                                                    <i class="bi bi-building"></i>
+                                                </div>
+                                                <div class="order-content">
+                                                    <div class="order-title">Rentals Orders</div>
+                                                    <div class="order-subtitle">Open rentals orders page</div>
+                                                </div>
+                                                <i class="bi bi-arrow-right-short order-arrow"></i>
+                                            </a>
+                                        </div>
 
-    <!-- Recent Orders -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-transparent border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-clock-history me-2 text-primary"></i>Recent Orders
-                        </h5>
-                        <a asp-action="Orders" class="btn btn-sm btn-outline-primary">
-                            View All <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    @if (Model.RecentOrders?.Any() == true)
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Order #</th>
-                                        <th>Customer</th>
-                                        <th>Product</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var order in Model.RecentOrders.Take(5))
-                                    {
-                                        <tr>
-                                            <td>
-                                                <span class="badge bg-light text-dark">@order.OrderNumber</span>
-                                            </td>
-                                            <td>@order.CustomerName</td>
-                                            <td>@order.ProductName</td>
-                                            <td class="fw-bold">$@order.Amount.ToString("N2")</td>
-                                            <td>
-                                                <span class="badge @GetOrderStatusBadge(order.Status!)">
-                                                    @order.Status
-                                                </span>
-                                            </td>
-                                            <td class="text-muted">@order.OrderDate.ToString("MMM dd")</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="bi bi-cart-x fs-1 text-muted mb-3"></i>
-                            <h5 class="text-muted">No Recent Orders</h5>
-                            <p class="text-muted small mb-0">Your orders will appear here</p>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
+                                        <div class="col-xl-4 col-md-6">
+                                            <a asp-action="AuctionOrders" class="order-tile">
+                                                <div class="order-icon">
+                                                    <i class="bi bi-gavel"></i>
+                                                </div>
+                                                <div class="order-content">
+                                                    <div class="order-title">Auctions Orders</div>
+                                                    <div class="order-subtitle">Open auctions orders page</div>
+                                                </div>
+                                                <i class="bi bi-arrow-right-short order-arrow"></i>
+                                            </a>
+                                        </div>
 
-        <!-- Store Summary -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-transparent border-0 py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-pie-chart-fill me-2 text-success"></i>Store Summary
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-box me-2 text-primary"></i>
-                                Materials
-                            </span>
-                            <span class="badge bg-primary rounded-pill">@Model.ActiveMaterials</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-gear me-2 text-success"></i>
-                                Machines
-                            </span>
-                            <span class="badge bg-success rounded-pill">@Model.ActiveMachines</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-building me-2 text-warning"></i>
-                                Rentals
-                            </span>
-                            <span class="badge bg-warning rounded-pill">@Model.ActiveRentals</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-gavel me-2 text-info"></i>
-                                Auctions
-                            </span>
-                            <span class="badge bg-info rounded-pill">@Model.ActiveAuctions</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-briefcase me-2 text-secondary"></i>
-                                Jobs
-                            </span>
-                            <span class="badge bg-secondary rounded-pill">@Model.ActiveJobs</span>
+                                        <div class="col-xl-4 col-md-6">
+                                            <a asp-action="JobOrders" class="order-tile">
+                                                <div class="order-icon">
+                                                    <i class="bi bi-briefcase"></i>
+                                                </div>
+                                                <div class="order-content">
+                                                    <div class="order-title">Jobs Orders</div>
+                                                    <div class="order-subtitle">Open jobs orders page</div>
+                                                </div>
+                                                <i class="bi bi-arrow-right-short order-arrow"></i>
+                                            </a>
+                                        </div>
+
+                                        <!-- Empty space for balance in large screens -->
+                                        <div class="col-xl-4 d-none d-xl-block"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Store Summary (بدون زر Marketplace) -->
+                            <div class="col-lg-4">
+                                <div class="premium-card h-100">
+                                    <h5 class="mb-3"><i class="bi bi-pie-chart-fill me-2 text-success"></i>Store Summary</h5>
+                                    
+                                    <div class="store-summary">
+                                        <div class="summary-item">
+                                            <span class="summary-label">
+                                                <i class="bi bi-box"></i> Materials
+                                            </span>
+                                            <span class="summary-count">@Model.ActiveMaterials</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">
+                                                <i class="bi bi-gear"></i> Machines
+                                            </span>
+                                            <span class="summary-count">@Model.ActiveMachines</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">
+                                                <i class="bi bi-building"></i> Rentals
+                                            </span>
+                                            <span class="summary-count">@Model.ActiveRentals</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">
+                                                <i class="bi bi-gavel"></i> Auctions
+                                            </span>
+                                            <span class="summary-count">@Model.ActiveAuctions</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">
+                                                <i class="bi bi-briefcase"></i> Jobs
+                                            </span>
+                                            <span class="summary-count">@Model.ActiveJobs</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 pt-3 border-top small text-muted">
+                                        <i class="bi bi-lightbulb me-1"></i> Tip: Manage your items from the cards above and track orders from Orders section.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-top">
-                        <div class="d-grid">
-                            <a asp-action="Marketplace" class="btn btn-outline-primary">
-                                <i class="bi bi-shop me-2"></i>Browse Marketplace
-                            </a>
-                        </div>
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Factory Store Management</small>
                     </div>
                 </div>
             </div>
@@ -373,85 +317,510 @@
     </div>
 </div>
 
-@functions {
-    string GetOrderStatusBadge(string status)
-    {
-        return status.ToLower() switch
-        {
-            "pending" => "bg-warning",
-            "confirmed" => "bg-info",
-            "shipped" => "bg-primary",
-            "delivered" => "bg-success",
-            "cancelled" => "bg-danger",
-            _ => "bg-secondary"
-        };
+<style>
+    /* ===================== PREMIUM FACTORY DASHBOARD STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
     }
-}
 
-<style nonce="@nonce">
-    .card {
-        border-radius: 12px;
-        border: 1px solid #e9ecef;
+    /* Animated background */
+    body {
+        background: 
+            radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%),
+            radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%),
+            radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%),
+            linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: 
+                radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%),
+                radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%),
+                radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%),
+                linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+        50% {
+            background: 
+                radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%),
+                radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%),
+                radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%),
+                linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+        100% {
+            background: 
+                radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%),
+                radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%),
+                radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%),
+                linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
         transition: all 0.3s ease;
     }
 
-        .card:hover {
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
         }
 
-    .border-start {
-        border-left-width: 4px !important;
+    /* Premium Alerts */
+    .premium-alert {
+        border-radius: 14px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
+        margin-bottom: 15px;
     }
 
-    .btn-outline-primary:hover,
-    .btn-outline-success:hover,
-    .btn-outline-warning:hover,
-    .btn-outline-info:hover,
-    .btn-outline-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    /* KPI Cards */
+    .kpi-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        text-align: center;
+        height: 100%;
     }
 
-    .table-hover tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.05);
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(2,6,23,.12);
+        }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(34,197,94,.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.5rem;
+        color: var(--eco-green);
     }
 
+    /* Quick Action Tiles */
+    .quick-action-tile {
+        height: 100px;
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 10px 22px rgba(2,6,23,.07);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        color: var(--ink);
+        text-align: center;
+    }
+
+        .quick-action-tile i {
+            font-size: 24px;
+            color: var(--eco-green);
+        }
+
+        .quick-action-tile span {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .quick-action-tile:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 34px rgba(2,6,23,.12);
+            background: rgba(255,255,255,.95);
+            border-color: rgba(34,197,94,.25);
+        }
+
+    /* Order Tiles */
+    .order-tile {
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.90);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 10px 22px rgba(2,6,23,.07);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+        color: var(--ink);
+        transition: all 0.3s ease;
+        min-height: 90px;
+    }
+
+        .order-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 34px rgba(2,6,23,.12);
+            background: rgba(255,255,255,.95);
+        }
+
+    .order-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 10px 22px rgba(34,197,94,.18);
+        flex: 0 0 auto;
+    }
+
+        .order-icon i {
+            font-size: 22px;
+        }
+
+    .order-content {
+        flex: 1;
+    }
+
+    .order-title {
+        font-weight: 900;
+        line-height: 1.2;
+        color: var(--ink);
+    }
+
+    .order-subtitle {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    .order-arrow {
+        font-size: 22px;
+        color: var(--muted);
+        transition: all 0.2s ease;
+    }
+
+    .order-tile:hover .order-arrow {
+        transform: translateX(4px);
+        color: var(--eco-green);
+    }
+
+    /* Store Summary */
+    .store-summary {
+        margin-top: 15px;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px dashed rgba(15,23,42,.12);
+    }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+    .summary-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+        .summary-label i {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(34,197,94,.12);
+            color: var(--eco-green);
+            border: 1px solid rgba(34,197,94,.18);
+        }
+
+    .summary-count {
+        font-weight: 900;
+        color: var(--eco-green);
+        background: rgba(34,197,94,.10);
+        border: 1px solid rgba(34,197,94,.18);
+        padding: 6px 12px;
+        border-radius: 999px;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    /* Links */
+    .eco-link {
+        text-decoration: none;
+        font-weight: 700;
+        color: var(--eco-green);
+        font-size: 0.88rem;
+        transition: all 0.2s ease;
+    }
+
+        .eco-link:hover {
+            color: var(--eco-teal);
+            text-decoration: underline;
+        }
+
+    /* Badges */
     .badge {
-        font-weight: 500;
-        padding: 0.35rem 0.65rem;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: 
+            radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%),
+            radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%),
+            radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%),
+            linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: 
+                radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%),
+                radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%),
+                radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%),
+                linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+        50% {
+            background: 
+                radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%),
+                radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%),
+                radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%),
+                linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+        100% {
+            background: 
+                radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%),
+                radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%),
+                radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%),
+                linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .auth-head h3 {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .premium-card,
+    [data-bs-theme="dark"] .kpi-card,
+    [data-bs-theme="dark"] .premium-alert {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .order-title,
+    [data-bs-theme="dark"] .summary-label,
+    [data-bs-theme="dark"] .quick-action-tile {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .order-subtitle {
+        color: rgba(226, 232, 240, .65);
+    }
+
+    [data-bs-theme="dark"] .quick-action-tile {
+        background: rgba(2, 6, 23, .35);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .quick-action-tile:hover {
+            background: rgba(2, 6, 23, .50);
+            border-color: rgba(34,197,94,.25);
+        }
+
+    [data-bs-theme="dark"] .order-tile {
+        background: rgba(2, 6, 23, .35);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .order-tile:hover {
+            background: rgba(2, 6, 23, .50);
+        }
+
+    [data-bs-theme="dark"] .summary-item {
+        border-bottom-color: rgba(148, 163, 184, .12);
+    }
+
+    [data-bs-theme="dark"] .summary-label i {
+        background: rgba(34,197,94,.15);
+        border-color: rgba(34,197,94,.25);
+        color: #22c55e;
+    }
+
+    [data-bs-theme="dark"] .summary-count {
+        background: rgba(34,197,94,.15);
+        border-color: rgba(34,197,94,.25);
+        color: #22c55e;
+    }
+
+    [data-bs-theme="dark"] .kpi-icon {
+        background: rgba(34,197,94,.15);
+        color: #22c55e;
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .kpi-card .fs-3 {
+            font-size: 1.75rem !important;
+        }
+
+        .quick-action-tile {
+            height: 85px;
+        }
+
+        .order-tile {
+            min-height: 80px;
+        }
     }
 </style>
-
-<script nonce="@nonce">
-    document.addEventListener('DOMContentLoaded', function () {
-        // Auto-refresh stats every 2 minutes
-        setInterval(function () {
-            fetch('@Url.Action("GetDashboardStats", "FactoryStore")')
-                .then(response => {
-                    if (!response.ok) throw new Error('Network error');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.error) return;
-
-                    // Update stats on the page
-                    const elements = document.querySelectorAll('.fw-bold');
-                    if (elements.length >= 6) {
-                        elements[0].textContent = data.activeMaterials;
-                        elements[1].textContent = data.activeMachines;
-                        elements[2].textContent = data.activeRentals;
-                        elements[3].textContent = data.activeAuctions;
-                        elements[4].textContent = data.activeJobs;
-                    }
-                })
-                .catch(error => console.error('Error updating stats:', error));
-        }, 120000);
-
-        // Initialize tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>

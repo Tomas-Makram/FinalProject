@@ -1,0 +1,722 @@
+﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.Orders.MaterialOrderDetailsModel>
+@using EcoRecyclersGreenTech.Data.Orders
+@using System
+
+@{
+    ViewData["Title"] = "Materials Orders";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    string StatusBadge(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "pending" => "bg-warning text-dark",
+            "processing" => "bg-primary",
+            "confirmed" => "bg-info text-dark",
+            "shipped" => "bg-primary",
+            "readyforpickup" => "bg-primary",
+            "pickedup" => "bg-success",
+            "delivered" => "bg-success",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            "refunded" => "bg-secondary",
+            "returned" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string Money(decimal v) => v.ToString("N2");
+
+    decimal Remaining(decimal total, decimal paid)
+        => Math.Max(0, total - paid);
+
+    bool IsFullyPaid(decimal total, decimal paid)
+    {
+        total = Math.Round(total, 2, MidpointRounding.AwayFromZero);
+        paid = Math.Round(paid, 2, MidpointRounding.AwayFromZero);
+        return paid + 0.0001m >= total;
+    }
+
+    // 🔁 Next step logic
+    EnumsOrderStatus? NextStatus(EnumsOrderStatus current) => current switch
+    {
+        EnumsOrderStatus.Pending => EnumsOrderStatus.Processing,
+        EnumsOrderStatus.Processing => EnumsOrderStatus.Confirmed,
+        EnumsOrderStatus.Confirmed => EnumsOrderStatus.Shipped,
+        EnumsOrderStatus.Shipped => EnumsOrderStatus.ReadyForPickup,
+        EnumsOrderStatus.ReadyForPickup => EnumsOrderStatus.PickedUp,
+        EnumsOrderStatus.PickedUp => EnumsOrderStatus.Delivered,
+        EnumsOrderStatus.Delivered => EnumsOrderStatus.Completed,
+        _ => null
+    };
+
+    bool IsClosed(EnumsOrderStatus s) =>
+        s == EnumsOrderStatus.Completed
+        || s == EnumsOrderStatus.Cancelled
+        || s == EnumsOrderStatus.Refunded
+        || s == EnumsOrderStatus.Returned;
+
+    var totalOrders = Model?.Count ?? 0;
+    var totalValue = Model?.Sum(x => x.Total) ?? 0;
+    var totalPending = Model?.Count(x => x.Status == EnumsOrderStatus.Pending) ?? 0;
+    var totalCompleted = Model?.Count(x => x.Status == EnumsOrderStatus.Completed) ?? 0;
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <h3 class="mb-1">Materials Orders</h3>
+                        <p class="mb-0 text-muted small">Manage and track your material orders</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Material Orders</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        <div class="alerts-container mb-4">
+                            @if (TempData["Success"] != null)
+                            {
+                                <div class="alert premium-alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+                            @if (TempData["Error"] != null)
+                            {
+                                <div class="alert premium-alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-receipt text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Orders</div>
+                                        <div class="fs-3 fw-bold">@totalOrders</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-cash-stack text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Value</div>
+                                        <div class="fs-3 fw-bold">@Money(totalValue)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-clock text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Pending</div>
+                                        <div class="fs-3 fw-bold">@totalPending</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-check-circle text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Completed</div>
+                                        <div class="fs-3 fw-bold">@totalCompleted</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Orders Table -->
+                        <div class="premium-card">
+                            @if (Model?.Any() == true)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle orders-table">
+                                        <thead class="table-light text-label">
+                                            <tr>
+                                                <th>Order</th>
+                                                <th>Material / Buyer</th>
+                                                <th>Qty</th>
+                                                <th>Paid</th>
+                                                <th>Remaining</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                                <th>Cancel Until</th>
+                                                <th>Expected Arrival</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @foreach (var o in Model)
+                                            {
+                                                var status = o.Status ?? EnumsOrderStatus.Pending;
+                                                var next = NextStatus(status);
+                                                var rowUrl = Url.Action("MaterialOrderDetails", "Factory", new { id = o.OrderId });
+
+                                                var remaining = Remaining(o.Total, o.DepositPaid);
+                                                var fullyPaid = IsFullyPaid(o.Total, o.DepositPaid);
+
+                                                <tr class="@(fullyPaid ? "" : "row-not-paid")">
+                                                    <td>
+                                                        <div class="fw-bold text-label">#@o.OrderId</div>
+                                                        <div class="text-muted small">@o.OrderDate.ToString("yyyy-MM-dd")</div>
+                                                    </td>
+
+                                                    <td>
+                                                        <div class="fw-semibold text-label">@o.ProductType</div>
+                                                        <div class="text-muted small">
+                                                            <i class="bi bi-person me-1"></i>@o.BuyerName
+                                                        </div>
+
+                                                        @if (!fullyPaid)
+                                                        {
+                                                            <div class="mt-1">
+                                                                <span class="badge bg-warning text-dark">
+                                                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                                                    Not fully paid
+                                                                </span>
+                                                                <span class="text-muted small ms-2">
+                                                                    Remaining: @Money(remaining)
+                                                                </span>
+                                                            </div>
+                                                        }
+                                                    </td>
+
+                                                    <td class="fw-semibold text-label">@o.Quantity</td>
+
+                                                    <td class="fw-bold text-success">
+                                                        @Money(o.DepositPaid)
+                                                    </td>
+
+                                                    <td class="fw-bold @(fullyPaid ? "text-success" : "text-danger")">
+                                                        @Money(remaining)
+                                                    </td>
+
+                                                    <td class="fw-bold text-label">
+                                                        @Money(o.Total)
+                                                    </td>
+
+                                                    <td>
+                                                        <span class="badge @StatusBadge(status.ToString())">
+                                                            @status
+                                                        </span>
+                                                    </td>
+
+                                                    <td class="text-muted">
+                                                        @(o.CancelUntil?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                                                    </td>
+
+                                                    <td class="text-muted">
+                                                        @(o.ExpectedArrivalDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                                                    </td>
+
+                                                    <td class="text-end">
+                                                        <div class="d-flex gap-1 justify-content-end">
+                                                            <a class="btn btn-sm btn-outline-primary"
+                                                               href="@rowUrl">
+                                                                <i class="bi bi-eye me-1"></i>Details
+                                                            </a>
+
+                                                            @if (!IsClosed(status) && next.HasValue)
+                                                            {
+                                                                <form asp-action="ChangeMaterialOrderStatus"
+                                                                      asp-controller="Factory"
+                                                                      method="post"
+                                                                      class="d-inline">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="orderId" value="@o.OrderId" />
+                                                                    <input type="hidden" name="status" value="@next.Value" />
+
+                                                                    <button type="submit"
+                                                                            class="btn btn-sm btn-success auth-btn-success">
+                                                                        <i class="bi bi-arrow-right-circle me-1"></i>
+                                                                        @next.Value
+                                                                    </button>
+                                                                </form>
+                                                            }
+
+                                                            @if (status == EnumsOrderStatus.Cancelled)
+                                                            {
+                                                                <form asp-action="DeleteMaterialOrder"
+                                                                      method="post"
+                                                                      class="d-inline">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="orderId" value="@o.OrderId" />
+                                                                    <button class="btn btn-sm btn-outline-danger">
+                                                                        <i class="bi bi-trash me-1"></i>Delete
+                                                                    </button>
+                                                                </form>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="text-muted small mt-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Remaining = Total − Deposit Paid • Highlighted rows indicate orders not fully paid.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-receipt fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+                                    </div>
+                                    <h4 class="text-muted mb-3">No Orders Found</h4>
+                                    <p class="text-muted mb-4">You don't have any material orders yet.</p>
+                                    <a asp-action="Materials" class="btn btn-success auth-btn-success">
+                                        <i class="bi bi-box-seam me-2"></i>Manage Materials
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Material Orders Management</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM MATERIALS ORDERS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Premium Alerts */
+    .premium-alert {
+        border-radius: 14px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
+        margin-bottom: 15px;
+    }
+
+    /* KPI Cards */
+    .kpi-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        text-align: center;
+        height: 100%;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(2,6,23,.12);
+        }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(34,197,94,.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.5rem;
+        color: var(--eco-green);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    /* Orders Table */
+    .orders-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+        .orders-table th {
+            font-size: .85rem;
+            white-space: nowrap;
+            background: rgba(248,249,250,.8);
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            padding: 14px 12px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .orders-table td {
+            vertical-align: middle;
+            padding: 12px;
+            border-bottom: 1px solid rgba(15,23,42,.06);
+            color: var(--ink);
+        }
+
+        .orders-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+            .orders-table tbody tr:hover {
+                background: rgba(34,197,94,.04);
+                transform: translateY(-1px);
+            }
+
+    /* Unpaid Order Highlight */
+    .row-not-paid {
+        background: rgba(255, 193, 7, 0.08);
+    }
+
+        .row-not-paid:hover {
+            background: rgba(255, 193, 7, 0.12) !important;
+        }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 6px 12px !important;
+        font-size: 0.875rem;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .premium-card,
+    [data-bs-theme="dark"] .premium-alert,
+    [data-bs-theme="dark"] .kpi-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .kpi-icon {
+        background: rgba(34,197,94,.15);
+        color: #22c55e;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65);
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    [data-bs-theme="dark"] .orders-table th {
+        background: rgba(2, 6, 23, .3);
+        border-bottom-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .orders-table td {
+        border-bottom-color: rgba(148, 163, 184, .1);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .orders-table tbody tr:hover {
+        background: rgba(34,197,94,.08);
+    }
+
+    [data-bs-theme="dark"] .row-not-paid {
+        background: rgba(255, 193, 7, 0.1);
+    }
+
+        [data-bs-theme="dark"] .row-not-paid:hover {
+            background: rgba(255, 193, 7, 0.15) !important;
+        }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .kpi-card .fs-3 {
+            font-size: 1.75rem !important;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .orders-table {
+            display: block;
+            overflow-x: auto;
+        }
+
+            .orders-table th,
+            .orders-table td {
+                white-space: nowrap;
+                min-width: 120px;
+            }
+
+        .premium-card {
+            padding: 16px;
+        }
+    }
+</style>

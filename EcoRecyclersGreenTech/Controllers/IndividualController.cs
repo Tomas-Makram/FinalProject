@@ -111,7 +111,7 @@ namespace EcoRecyclersGreenTech.Controllers
             var user = await _db.Users
                 .AsNoTracking()
                 .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == userId.Value);
+                .FirstOrDefaultAsync(u => u.UserId == userId.Value);
 
             if (user == null)
             {
@@ -133,7 +133,7 @@ namespace EcoRecyclersGreenTech.Controllers
                 TempData["ShowVerificationAlert"] = "true";
             }
 
-            return (true, user.UserID, user);
+            return (true, user.UserId, user);
         }
 
         [HttpGet]
@@ -288,7 +288,7 @@ namespace EcoRecyclersGreenTech.Controllers
                     .Select(o => new { o.JobOrderID, o.Status })
                     .FirstOrDefaultAsync();
 
-                var factoryUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == job.SellerUserId);
+                var factoryUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == job.SellerUserId);
 
                 var imgs = new List<string>();
                 if (factory != null)
@@ -359,7 +359,7 @@ namespace EcoRecyclersGreenTech.Controllers
                     where o.UserID == userId
                     join j in _db.JobStores.AsNoTracking() on o.JobStoreID equals j.JobID into gj
                     from j in gj.DefaultIfEmpty()
-                    join u in _db.Users.AsNoTracking() on (int?)j.PostedBy equals (int?)u.UserID into gu
+                    join u in _db.Users.AsNoTracking() on (int?)j.PostedBy equals (int?)u.UserId into gu
                     from u in gu.DefaultIfEmpty()
                     select new MyJoinedJobVM
                     {

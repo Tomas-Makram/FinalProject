@@ -1,0 +1,646 @@
+﻿@model EcoRecyclersGreenTech.Models.Home.FinancialLedgerModel
+@using EcoRecyclersGreenTech.Models.Home
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Financial Ledger";
+
+    decimal totalCredit = Model.Rows.Where(r => r.Amount > 0).Sum(r => r.Amount);
+    decimal totalDebit = Model.Rows.Where(r => r.Amount < 0).Sum(r => -r.Amount); // absolute
+    decimal net = totalCredit - totalDebit;
+
+    string OpLabel(decimal amount) => amount >= 0 ? "Addition" : "Opponent";
+    string OpBadge(decimal amount) => amount >= 0 ? "bg-success" : "bg-danger";
+    string SrcBadge(LedgerSource s) => s == LedgerSource.Wallet ? "bg-info" : "bg-primary";
+    string SrcText(LedgerSource s) => s == LedgerSource.Wallet ? "Wallet" : "Payment";
+
+    string Money(decimal x) => x.ToString("0.00", CultureInfo.InvariantCulture);
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+
+            <!-- ================= FULL WIDTH CONTENT ================= -->
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h3 class="mb-1">Financial Ledger</h3>
+                        <p class="mb-0 text-muted small">Track all financial transactions and maintain transparency</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Filter Form -->
+                        <div class="premium-card mb-4">
+                            <h5 class="mb-3"><i class="bi bi-filter me-2 text-success"></i>Filter Transactions</h5>
+                            <form method="get">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold small">From Date</label>
+                                        <input type="date" name="from" value="@(Model.From?.ToString("yyyy-MM-dd"))"
+                                               class="form-control premium-input" />
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold small">To Date</label>
+                                        <input type="date" name="to" value="@(Model.To?.ToString("yyyy-MM-dd"))"
+                                               class="form-control premium-input" />
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold small">Search</label>
+                                        <input type="text" name="q" value="@Model.Query"
+                                               class="form-control premium-input"
+                                               placeholder="Search by name, provider ID, note, idempotency..." />
+                                    </div>
+
+                                    <div class="col-md-2 d-flex gap-2">
+                                        <button type="submit" class="btn btn-success w-100 auth-btn-success">
+                                            <i class="fas fa-filter me-2"></i>Filter
+                                        </button>
+                                        <a class="btn btn-outline-secondary w-100" href="@Url.Action("Ledger","Home")">
+                                            <i class="fas fa-redo me-2"></i>Reset
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- KPI Cards -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-list-check text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Rows</div>
+                                        <div class="fs-3 fw-bold">@Model.Rows.Count</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-arrow-up-circle text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Addition</div>
+                                        <div class="fs-4 fw-bold text-success">@Money(totalCredit)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-arrow-down-circle text-danger"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Opponent</div>
+                                        <div class="fs-4 fw-bold text-danger">@Money(totalDebit)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-graph-up text-primary"></i>
+                                        </div>
+                                        <div class="text-muted small">Net Balance</div>
+                                        <div class="fs-4 fw-bold @(net >= 0 ? "text-success" : "text-danger")">@Money(net)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transactions Table -->
+                        <div class="premium-card">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle premium-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width:160px;">Date (UTC)</th>
+                                            <th style="width:120px;">Source</th>
+                                            <th style="width:120px;">Operation</th>
+                                            <th class="text-end" style="width:140px;">Amount</th>
+                                            <th style="width:90px;">Currency</th>
+                                            <th>User</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Rows.Count == 0)
+                                        {
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-5">
+                                                    <i class="bi bi-receipt-cutoff fs-1 opacity-50"></i>
+                                                    <div class="mt-2">No transactions found.</div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            foreach (var r in Model.Rows)
+                                            {
+                                                var op = OpLabel(r.Amount);
+                                                var abs = Math.Abs(r.Amount);
+
+                                                <tr>
+                                                    <td>
+                                                        <div class="fw-semibold">@r.CreatedAt.ToString("yyyy-MM-dd")</div>
+                                                        <div class="text-muted small">@r.CreatedAt.ToString("HH:mm:ss")</div>
+                                                    </td>
+
+                                                    <td>
+                                                        <span class="badge @SrcBadge(r.Source)">@SrcText(r.Source)</span>
+                                                    </td>
+
+                                                    <td>
+                                                        <span class="badge @OpBadge(r.Amount)">@op</span>
+                                                    </td>
+
+                                                    <td class="text-end">
+                                                        <div class="fw-bold fs-5 @(r.Amount >= 0 ? "text-success" : "text-danger")">
+                                                            @(r.Amount >= 0 ? "+" : "-")@Money(abs)
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">@r.Currency</span>
+                                                    </td>
+
+                                                    <td>
+                                                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(r.UserName) ? "N/A" : r.UserName)</div>
+                                                        <div class="text-muted small">User ID: @r.UserId</div>
+                                                    </td>
+
+                                                    <td>
+                                                        @if (r.Source == LedgerSource.Wallet)
+                                                        {
+                                                            <div class="transaction-details">
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Wallet ID:</span>
+                                                                    <span class="detail-value">@r.WalletId</span>
+                                                                </div>
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Type:</span>
+                                                                    <span class="detail-value">@(r.WalletType ?? "—")</span>
+                                                                </div>
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Status:</span>
+                                                                    <span class="detail-value badge @(r.WalletStatus == "Completed" ? "bg-success" : "bg-warning")">
+                                                                        @(r.WalletStatus ?? "—")
+                                                                    </span>
+                                                                </div>
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Balance After:</span>
+                                                                    <span class="detail-value">@(r.BalanceAfter.HasValue ? Money(r.BalanceAfter.Value) : "—")</span>
+                                                                </div>
+                                                                @if (!string.IsNullOrEmpty(r.Note))
+                                                                {
+                                                                    <div class="detail-row">
+                                                                        <span class="detail-label">Note:</span>
+                                                                        <span class="detail-value text-muted">@r.Note</span>
+                                                                    </div>
+                                                                }
+                                                                <div class="detail-row text-muted small mt-1">
+                                                                    <span>Transaction ID: @r.Id</span>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="transaction-details">
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Provider:</span>
+                                                                    <span class="detail-value">@(r.Provider ?? "—")</span>
+                                                                </div>
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Payment ID:</span>
+                                                                    <span class="detail-value">@(r.ProviderPaymentId ?? "—")</span>
+                                                                </div>
+                                                                <div class="detail-row">
+                                                                    <span class="detail-label">Status:</span>
+                                                                    <span class="detail-value badge @(r.PaymentStatus == "Success" ? "bg-success" : "bg-warning")">
+                                                                        @(r.PaymentStatus ?? "—")
+                                                                    </span>
+                                                                </div>
+                                                                <div class="detail-row text-muted small mt-1">
+                                                                    <span>Transaction ID: @r.Id</span>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Financial Transparency</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===================== PREMIUM FINANCIAL LEDGER STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Inputs */
+    .premium-input {
+        border-radius: 12px !important;
+        border: 1px solid rgba(15,23,42,.10) !important;
+        background: rgba(255,255,255,.88) !important;
+        box-shadow: none !important;
+        transition: all .22s ease;
+    }
+
+        .premium-input:focus {
+            border-color: rgba(34,197,94,.55) !important;
+            box-shadow: 0 0 0 .2rem rgba(34,197,94,.18) !important;
+            background: rgba(255,255,255,.96) !important;
+        }
+
+    /* KPI Cards */
+    .kpi-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(2,6,23,.12);
+        }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(34,197,94,.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.5rem;
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Premium Table */
+    .premium-table {
+        background: transparent;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+        .premium-table thead th {
+            background: rgba(248,250,252,.85);
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            font-weight: 700;
+            color: var(--ink);
+            padding: 16px 12px;
+            font-size: 0.9rem;
+        }
+
+        .premium-table tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(15,23,42,.06);
+        }
+
+            .premium-table tbody tr:last-child {
+                border-bottom: none;
+            }
+
+            .premium-table tbody tr:hover {
+                background: rgba(34,197,94,.06);
+            }
+
+        .premium-table tbody td {
+            padding: 16px 12px;
+            vertical-align: top;
+        }
+
+    /* Transaction Details */
+    .transaction-details {
+        font-size: 0.85rem;
+    }
+
+    .detail-row {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 4px;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--ink);
+        min-width: 100px;
+        opacity: 0.8;
+    }
+
+    .detail-value {
+        flex: 1;
+        color: var(--muted);
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    .auth-link {
+        color: var(--eco-teal) !important;
+        text-decoration: none !important;
+    }
+
+        .auth-link:hover {
+            color: #0ea5a6 !important;
+            text-decoration: underline !important;
+        }
+
+    /* Badges */
+    .badge {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0;
+        }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .kpi-card,
+    [data-bs-theme="dark"] .premium-card,
+    [data-bs-theme="dark"] .premium-input {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] .premium-input:focus {
+            background: rgba(2, 6, 23, .70) !important;
+            border-color: rgba(34,197,94,.45) !important;
+            box-shadow: 0 0 0 .2rem rgba(34,197,94,.16) !important;
+            color: #e2e8f0 !important;
+        }
+
+    [data-bs-theme="dark"] .premium-table thead th {
+        background: rgba(15, 23, 42, .45);
+        color: #e2e8f0;
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .premium-table tbody tr {
+        border-bottom-color: rgba(148, 163, 184, .10);
+    }
+
+        [data-bs-theme="dark"] .premium-table tbody tr:hover {
+            background: rgba(34,197,94,.10);
+        }
+
+    [data-bs-theme="dark"] .detail-label {
+        color: #e2e8f0;
+        opacity: 0.8;
+    }
+
+    [data-bs-theme="dark"] .detail-value {
+        color: rgba(226, 232, 240, .75);
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .kpi-card .fs-3 {
+            font-size: 1.75rem !important;
+        }
+
+        .kpi-card .fs-4 {
+            font-size: 1.5rem !important;
+        }
+
+        .premium-table {
+            font-size: 0.85rem;
+        }
+
+        .transaction-details {
+            font-size: 0.8rem;
+        }
+
+        .detail-row {
+            flex-direction: column;
+        }
+
+        .detail-label {
+            min-width: auto;
+            margin-bottom: 2px;
+        }
+    }
+</style>

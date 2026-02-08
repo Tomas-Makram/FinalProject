@@ -1,14 +1,44 @@
-﻿@{
-    bool logged = ViewBag.UserLoggedIn ?? false;
-    string type = ViewBag.Type?.ToString()!;
+﻿@model EcoRecyclersGreenTech.Models.Home.HomeIndexModel
+@using EcoRecyclersGreenTech.Models.Home
+
+@{
     ViewBag.Title = "Home";
+
+    string type = (Model.Type ?? "").Trim();
+    bool logged = Model.Logged;
+
+    string BadgeClass(string status) => status switch
+    {
+        "Pending" => "bg-secondary",
+        "Confirmed" => "bg-info",
+        "Processing" => "bg-primary",
+        "ReadyForPickup" => "bg-warning text-dark",
+        "Shipped" => "bg-primary",
+        "PickedUp" => "bg-success",
+        "Delivered" => "bg-success",
+        "Completed" => "bg-success",
+        "Cancelled" => "bg-danger",
+        _ => "bg-dark"
+    };
+
+    string SourceIcon(string src) => src switch
+    {
+        "Material" => "bi-box-seam",
+        "Machine" => "bi-gear-fill",
+        "Auction" => "bi-hammer",
+        "Rental" => "bi-house-door-fill",
+        "Job" => "bi-briefcase-fill",
+        _ => "bi-grid"
+    };
 }
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
 @if (logged)
 {
     @if (TempData["VerificationMessage"] != null && TempData["ShowVerificationAlert"]?.ToString() == "true")
     {
-        <div class="alert alert-info alert-dismissible fade show shadow-lg" role="alert">
+        <div class="alert alert-info alert-dismissible fade show shadow-lg premium-alert" role="alert">
             <div class="d-flex align-items-center">
                 <i class="bi bi-envelope-check-fill fs-3 me-3 text-primary"></i>
                 <div>
@@ -20,94 +50,1275 @@
         </div>
     }
 
-    <p class="text-success text-center fs-4">Welcome @ViewBag.Email 🎉 - (@type)</p>
+    <div class="dashboard-premium">
+        <div class="container">
+            <div class="dashboard-shell">
+                <div class="row g-0 align-items-stretch">
 
-    <div class="row justify-content-center mt-4">
+                    <!-- ================= LEFT HERO SIDEBAR ================= -->
+                    <div class="col-lg-4 d-none d-lg-flex">
+                        <div class="dashboard-hero w-100">
+                            <div class="hero-top">
+                                <div class="hero-badge">
+                                    <i class="bi bi-recycle me-2"></i>
+                                    EcoRecyclers GreenTech
+                                </div>
+                            </div>
 
-        @* ==== خيارات الـ Admin ==== *@
-        @if (type == "Admin")
-        {
-            <div class="col-md-3">
-                <div class="card shadow text-center p-3">
-                    <h4>👤 Manage Users</h4>
-                    <p>Control Permissions & Accounts</p>
-                    <a href="/Admin/Users" class="btn btn-primary w-100">Open</a>
+                            <div class="hero-mid">
+                                <h1 class="hero-title">Dashboard</h1>
+                                <p class="hero-sub">
+                                    Welcome back to your eco-friendly dashboard. Manage your orders, track activities, and contribute to a greener future.
+                                </p>
+
+                                <div class="user-welcome-box">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-placeholder">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="mb-0">@Model.Email</h5>
+                                            <span class="badge role-badge">@type</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <ul class="hero-list">
+                                    <li><span class="dot"></span> Track orders & requests</li>
+                                    <li><span class="dot"></span> Manage factory operations</li>
+                                    <li><span class="dot"></span> Eco-friendly analytics</li>
+                                </ul>
+                            </div>
+
+                            <!-- Illustration -->
+                            <div class="hero-illus">
+                                <div class="illus-card">
+                                    <div class="illus-row">
+                                        <span class="illus-pill"></span>
+                                        <span class="illus-pill"></span>
+                                        <span class="illus-pill"></span>
+                                    </div>
+                                    <div class="illus-grid">
+                                        <div class="b b1"></div>
+                                        <div class="b b2"></div>
+                                        <div class="b b3"></div>
+                                        <div class="b b4"></div>
+                                    </div>
+                                    <div class="illus-wave"></div>
+                                </div>
+
+                                <div class="wind w1"></div>
+                                <div class="wind w2"></div>
+                                <div class="wind w3"></div>
+                            </div>
+
+                            <div class="hero-bottom">
+                                <small class="text-white-50">Cleaner future starts with smarter recycling.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= RIGHT: MAIN CONTENT AREA ================= -->
+                    <div class="col-lg-8">
+                        <div class="dashboard-content-wrap">
+                            <div class="dashboard-card">
+
+                                <!-- Admin Dashboard -->
+                                @if (type == "Admin")
+                                {
+                                    <div class="auth-head">
+                                        <div class="auth-logo">
+                                            <i class="bi bi-shield-check"></i>
+                                        </div>
+                                        <h3 class="mb-1">Admin Dashboard</h3>
+                                        <p class="mb-0 text-muted small">Manage platform operations</p>
+                                    </div>
+
+                                    <div class="auth-body">
+                                        <div class="row justify-content-center g-4 mt-4">
+                                            <div class="col-md-6">
+                                                <div class="card card-hover text-center p-4 h-100">
+                                                    <div class="card-body">
+                                                        <i class="fas fa-users fa-2x text-success mb-3"></i>
+                                                        <h4 class="card-title mb-2">👤 Manage Users</h4>
+                                                        <p class="card-text small text-muted mb-3">Control Permissions & Accounts</p>
+                                                        <a href="/Admin/Users" class="btn btn-success w-100 auth-btn-success">
+                                                            <i class="fas fa-external-link-alt me-2"></i>Open
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="card card-hover text-center p-4 h-100">
+                                                    <div class="card-body">
+                                                        <i class="fas fa-industry fa-2x text-success mb-3"></i>
+                                                        <h4 class="card-title mb-2">🏭 Manage Factories</h4>
+                                                        <p class="card-text small text-muted mb-3">Add/Edit Factory Accounts</p>
+                                                        <a href="/Admin/Factories" class="btn btn-success w-100 auth-btn-success">
+                                                            <i class="fas fa-external-link-alt me-2"></i>Open
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Factory Dashboard -->
+                                @if (type == "Factory")
+                                {
+                                    var dash = Model.FactoryDashboard;
+
+                                    <div class="auth-head">
+                                        <div class="auth-logo">
+                                            <i class="bi bi-gear-fill"></i>
+                                        </div>
+                                        <h3 class="mb-1">Factory Dashboard</h3>
+                                        <p class="mb-0 text-muted small">Manage orders & operations</p>
+                                    </div>
+
+                                    <div class="auth-body">
+                                        @if (dash == null)
+                                        {
+                                            <div class="alert alert-warning premium-alert">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                Dashboard is empty. Make sure the Controller returns <code>FactoryDashboard</code> inside the Model
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <!-- KPI Cards -->
+                                            <div class="row g-3 mb-4">
+                                                <div class="col-md-3">
+                                                    <div class="card kpi-card shadow-sm">
+                                                        <div class="card-body text-center">
+                                                            <div class="kpi-icon">
+                                                                <i class="bi bi-list-task text-success"></i>
+                                                            </div>
+                                                            <div class="text-muted small">Active Orders</div>
+                                                            <div class="fs-3 fw-bold">@dash.TotalActive</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="card kpi-card shadow-sm">
+                                                        <div class="card-body text-center">
+                                                            <div class="kpi-icon">
+                                                                <i class="bi bi-exclamation-triangle text-danger"></i>
+                                                            </div>
+                                                            <div class="text-muted small">Overdue</div>
+                                                            <div class="fs-3 fw-bold text-danger">@dash.OverdueCount</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="card kpi-card shadow-sm">
+                                                        <div class="card-body text-center">
+                                                            <div class="kpi-icon">
+                                                                <i class="bi bi-calendar-day text-warning"></i>
+                                                            </div>
+                                                            <div class="text-muted small">Due Today</div>
+                                                            <div class="fs-3 fw-bold text-warning">@dash.DueTodayCount</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="card kpi-card shadow-sm">
+                                                        <div class="card-body text-center">
+                                                            <div class="kpi-icon">
+                                                                <i class="bi bi-lightning-charge text-primary"></i>
+                                                            </div>
+                                                            <div class="text-muted small">Due Soon (7 days)</div>
+                                                            <div class="fs-3 fw-bold text-primary">@dash.DueSoonCount</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tabs -->
+                                            <ul class="nav nav-pills mb-3 premium-tabs" id="factoryDashTabs" role="tablist">
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link active" id="tab-today" data-bs-toggle="pill" data-bs-target="#pane-today" type="button" role="tab">
+                                                        <i class="bi bi-calendar-check"></i> Today (@dash.DueTodayCount)
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" id="tab-soon" data-bs-toggle="pill" data-bs-target="#pane-soon" type="button" role="tab">
+                                                        <i class="bi bi-lightning-charge"></i> Soon (@dash.DueSoonCount)
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" id="tab-overdue" data-bs-toggle="pill" data-bs-target="#pane-overdue" type="button" role="tab">
+                                                        <i class="bi bi-exclamation-triangle"></i> Overdue (@dash.OverdueCount)
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" id="tab-created" data-bs-toggle="pill" data-bs-target="#pane-created" type="button" role="tab">
+                                                        <i class="bi bi-sunrise"></i> Created Today (@dash.CreatedTodayCount)
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item" role="presentation">
+                                                    <button class="nav-link" id="tab-all" data-bs-toggle="pill" data-bs-target="#pane-all" type="button" role="tab">
+                                                        <i class="bi bi-layers"></i> All Active (@dash.TotalActive)
+                                                    </button>
+                                                </li>
+                                            </ul>
+
+                                            <div class="tab-content" id="factoryDashTabsContent">
+
+                                                <!-- TODAY -->
+                                                <div class="tab-pane fade show active" id="pane-today" role="tabpanel">
+                                                    <div class="card shadow-sm premium-card">
+                                                        <div class="card-body">
+                                                            @if (dash.DueToday == null || dash.DueToday.Count == 0)
+                                                            {
+                                                                <div class="text-center py-5">
+                                                                    <i class="bi bi-emoji-smile fs-1 text-muted"></i>
+                                                                    <div class="mt-2 text-muted">No orders due today.</div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table align-middle table-hover mb-0 premium-table">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:140px;">Source</th>
+                                                                                <th>Order</th>
+                                                                                <th>Status</th>
+                                                                                <th>Customer</th>
+                                                                                <th>Order Date</th>
+                                                                                <th>Due</th>
+                                                                                <th>Location</th>
+                                                                                <th class="text-end">Amount</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var o in dash.DueToday)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <span class="badge bg-light text-dark border">
+                                                                                            <i class="bi @SourceIcon(o.Source)"></i> @o.Source
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td class="fw-semibold">@o.OrderNo</td>
+                                                                                    <td>
+                                                                                        <span class="badge @BadgeClass(o.Status)">@o.Status</span>
+                                                                                        @if (!string.IsNullOrWhiteSpace(o.Note))
+                                                                                        {
+                                                                                            <div class="small text-muted">@o.Note</div>
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>@(o.CustomerLabel ?? "—")</td>
+                                                                                    <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                                                                    <td>@(o.DueDate.HasValue ? o.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                                                                                    <td>@(string.IsNullOrWhiteSpace(o.Location) ? "—" : o.Location)</td>
+                                                                                    <td class="text-end">@(o.TotalAmount.HasValue ? o.TotalAmount.Value.ToString("0.00") : "—")</td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- SOON -->
+                                                <div class="tab-pane fade" id="pane-soon" role="tabpanel">
+                                                    <div class="card shadow-sm premium-card">
+                                                        <div class="card-body">
+                                                            @if (dash.DueSoon == null || dash.DueSoon.Count == 0)
+                                                            {
+                                                                <div class="text-center py-5">
+                                                                    <i class="bi bi-emoji-smile fs-1 text-muted"></i>
+                                                                    <div class="mt-2 text-muted">No upcoming orders.</div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table align-middle table-hover mb-0 premium-table">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:140px;">Source</th>
+                                                                                <th>Order</th>
+                                                                                <th>Status</th>
+                                                                                <th>Customer</th>
+                                                                                <th>Order Date</th>
+                                                                                <th>Due</th>
+                                                                                <th>Location</th>
+                                                                                <th class="text-end">Amount</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var o in dash.DueSoon)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <span class="badge bg-light text-dark border">
+                                                                                            <i class="bi @SourceIcon(o.Source)"></i> @o.Source
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td class="fw-semibold">@o.OrderNo</td>
+                                                                                    <td>
+                                                                                        <span class="badge @BadgeClass(o.Status)">@o.Status</span>
+                                                                                        @if (!string.IsNullOrWhiteSpace(o.Note))
+                                                                                        {
+                                                                                            <div class="small text-muted">@o.Note</div>
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>@(o.CustomerLabel ?? "—")</td>
+                                                                                    <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                                                                    <td>@(o.DueDate.HasValue ? o.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                                                                                    <td>@(string.IsNullOrWhiteSpace(o.Location) ? "—" : o.Location)</td>
+                                                                                    <td class="text-end">@(o.TotalAmount.HasValue ? o.TotalAmount.Value.ToString("0.00") : "—")</td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- OVERDUE -->
+                                                <div class="tab-pane fade" id="pane-overdue" role="tabpanel">
+                                                    <div class="card shadow-sm premium-card">
+                                                        <div class="card-body">
+                                                            @if (dash.Overdue == null || dash.Overdue.Count == 0)
+                                                            {
+                                                                <div class="text-center py-5">
+                                                                    <i class="bi bi-emoji-smile fs-1 text-muted"></i>
+                                                                    <div class="mt-2 text-muted">No overdue orders 🎉</div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table align-middle table-hover mb-0 premium-table">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:140px;">Source</th>
+                                                                                <th>Order</th>
+                                                                                <th>Status</th>
+                                                                                <th>Customer</th>
+                                                                                <th>Order Date</th>
+                                                                                <th>Due</th>
+                                                                                <th>Location</th>
+                                                                                <th class="text-end">Amount</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var o in dash.Overdue)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <span class="badge bg-light text-dark border">
+                                                                                            <i class="bi @SourceIcon(o.Source)"></i> @o.Source
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td class="fw-semibold">@o.OrderNo</td>
+                                                                                    <td>
+                                                                                        <span class="badge @BadgeClass(o.Status)">@o.Status</span>
+                                                                                        @if (!string.IsNullOrWhiteSpace(o.Note))
+                                                                                        {
+                                                                                            <div class="small text-muted">@o.Note</div>
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>@(o.CustomerLabel ?? "—")</td>
+                                                                                    <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                                                                    <td>@(o.DueDate.HasValue ? o.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                                                                                    <td>@(string.IsNullOrWhiteSpace(o.Location) ? "—" : o.Location)</td>
+                                                                                    <td class="text-end">@(o.TotalAmount.HasValue ? o.TotalAmount.Value.ToString("0.00") : "—")</td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- CREATED TODAY -->
+                                                <div class="tab-pane fade" id="pane-created" role="tabpanel">
+                                                    <div class="card shadow-sm premium-card">
+                                                        <div class="card-body">
+                                                            @if (dash.CreatedToday == null || dash.CreatedToday.Count == 0)
+                                                            {
+                                                                <div class="text-center py-5">
+                                                                    <i class="bi bi-emoji-smile fs-1 text-muted"></i>
+                                                                    <div class="mt-2 text-muted">No orders created today.</div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table align-middle table-hover mb-0 premium-table">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:140px;">Source</th>
+                                                                                <th>Order</th>
+                                                                                <th>Status</th>
+                                                                                <th>Customer</th>
+                                                                                <th>Order Date</th>
+                                                                                <th>Due</th>
+                                                                                <th>Location</th>
+                                                                                <th class="text-end">Amount</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var o in dash.CreatedToday)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <span class="badge bg-light text-dark border">
+                                                                                            <i class="bi @SourceIcon(o.Source)"></i> @o.Source
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td class="fw-semibold">@o.OrderNo</td>
+                                                                                    <td>
+                                                                                        <span class="badge @BadgeClass(o.Status)">@o.Status</span>
+                                                                                        @if (!string.IsNullOrWhiteSpace(o.Note))
+                                                                                        {
+                                                                                            <div class="small text-muted">@o.Note</div>
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>@(o.CustomerLabel ?? "—")</td>
+                                                                                    <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                                                                    <td>@(o.DueDate.HasValue ? o.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                                                                                    <td>@(string.IsNullOrWhiteSpace(o.Location) ? "—" : o.Location)</td>
+                                                                                    <td class="text-end">@(o.TotalAmount.HasValue ? o.TotalAmount.Value.ToString("0.00") : "—")</td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- ALL ACTIVE -->
+                                                <div class="tab-pane fade" id="pane-all" role="tabpanel">
+                                                    <div class="card shadow-sm premium-card">
+                                                        <div class="card-body">
+                                                            @if (dash.ActiveAll == null || dash.ActiveAll.Count == 0)
+                                                            {
+                                                                <div class="text-center py-5">
+                                                                    <i class="bi bi-emoji-smile fs-1 text-muted"></i>
+                                                                    <div class="mt-2 text-muted">No active orders.</div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table align-middle table-hover mb-0 premium-table">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:140px;">Source</th>
+                                                                                <th>Order</th>
+                                                                                <th>Status</th>
+                                                                                <th>Customer</th>
+                                                                                <th>Order Date</th>
+                                                                                <th>Due</th>
+                                                                                <th>Location</th>
+                                                                                <th class="text-end">Amount</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var o in dash.ActiveAll)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <span class="badge bg-light text-dark border">
+                                                                                            <i class="bi @SourceIcon(o.Source)"></i> @o.Source
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td class="fw-semibold">@o.OrderNo</td>
+                                                                                    <td>
+                                                                                        <span class="badge @BadgeClass(o.Status)">@o.Status</span>
+                                                                                        @if (!string.IsNullOrWhiteSpace(o.Note))
+                                                                                        {
+                                                                                            <div class="small text-muted">@o.Note</div>
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>@(o.CustomerLabel ?? "—")</td>
+                                                                                    <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                                                                    <td>@(o.DueDate.HasValue ? o.DueDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                                                                                    <td>@(string.IsNullOrWhiteSpace(o.Location) ? "—" : o.Location)</td>
+                                                                                    <td class="text-end">@(o.TotalAmount.HasValue ? o.TotalAmount.Value.ToString("0.00") : "—")</td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Customer Dashboard -->
+                                @if (type == "Craftsman" || type == "Individual")
+                                {
+                                    <div class="auth-head">
+                                        <div class="auth-logo">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <h3 class="mb-1">@(type == "Craftsman" ? "Craftsman" : "Individual") Dashboard</h3>
+                                        <p class="mb-0 text-muted small">Manage your recycling activities</p>
+                                    </div>
+
+                                    <div class="auth-body">
+                                        <div class="row justify-content-center g-4 mt-4">
+                                            <div class="col-md-8">
+                                                <div class="card card-hover text-center p-4 h-100">
+                                                    <div class="card-body">
+                                                        <i class="fas fa-briefcase fa-2x text-success mb-3"></i>
+                                                        <h4 class="card-title mb-2">💼 My Requests</h4>
+                                                        <p class="card-text small text-muted mb-3">Track Recycling Pickup & Orders</p>
+                                                        <a href="/Customer/Orders" class="btn btn-success w-100 auth-btn-success">
+                                                            <i class="fas fa-external-link-alt me-2"></i>Open
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="col-md-3">
-                <div class="card shadow text-center p-3">
-                    <h4>🏭 Manage Factories</h4>
-                    <p>Add/Edit Factory Accounts</p>
-                    <a href="/Admin/Factories" class="btn btn-info w-100">Open</a>
-                </div>
-            </div>
-        }
-
-        @* ==== خيارات الـ Factory ==== *@
-        @if (type == "Factory")
-        {
-            <div class="col-md-3">
-                <div class="card shadow text-center p-3">
-                    <h4>♻️ Manage Recycle Plans</h4>
-                    <p>Add/Edit Operations</p>
-                    <a href="/Factory/Plans" class="btn btn-success w-100">Open</a>
-                </div>
-            </div>
-        }
-
-        @* ==== خيارات الـ Customer ==== *@
-        @if (type == "Craftsman")
-        {
-            <div class="col-md-3">
-                <div class="card shadow text-center p-3">
-                    <h4>💼 My Requests</h4>
-                    <p>Track Recycling Pickup</p>
-                    <a href="/Customer/Orders" class="btn btn-warning w-100">Open</a>
-                </div>
-            </div>
-        }
-
-        @if (type == "Individual")
-        {
-            <div class="col-md-3">
-                <div class="card shadow text-center p-3">
-                    <h4>💼 My Requests</h4>
-                    <p>Track Recycling Pickup</p>
-                    <a href="/Customer/Orders" class="btn btn-warning w-100">Open</a>
-                </div>
-            </div>
-        }
-
+        </div>
     </div>
-
-    <hr />
-
-    <form asp-controller="Auth" asp-action="Logout" method="post" class="text-center mt-3">
-        <button type="submit" class="btn btn-danger">Logout</button>
-    </form>
-
 }
 else
 {
-    <div class="text-center mt-5">
-        <a href="/Auth/Login" class="btn btn-success">Login</a>
-        <a href="/Auth/Signup" class="btn btn-info">Signup</a>
+    <div class="auth-premium">
+        <div class="container">
+            <div class="auth-shell">
+                <div class="row g-0 align-items-stretch">
+                    <!-- LEFT HERO -->
+                    <div class="col-lg-6 d-none d-lg-flex">
+                        <div class="auth-hero w-100">
+                            <div class="hero-top">
+                                <div class="hero-badge">
+                                    <i class="bi bi-recycle me-2"></i>
+                                    EcoRecyclers GreenTech
+                                </div>
+                            </div>
+
+                            <div class="hero-mid">
+                                <h1 class="hero-title">Welcome</h1>
+                                <p class="hero-sub">
+                                    Join the greener supply chain — connect factories, craftsmen, and traders in one platform.
+                                </p>
+
+                                <ul class="hero-list">
+                                    <li><span class="dot"></span> Eco-friendly recycling</li>
+                                    <li><span class="dot"></span> Secure transactions</li>
+                                    <li><span class="dot"></span> Sustainable supply chain</li>
+                                </ul>
+                            </div>
+
+                            <!-- Illustration -->
+                            <div class="hero-illus">
+                                <div class="illus-card">
+                                    <div class="illus-row">
+                                        <span class="illus-pill"></span>
+                                        <span class="illus-pill"></span>
+                                        <span class="illus-pill"></span>
+                                    </div>
+                                    <div class="illus-grid">
+                                        <div class="b b1"></div>
+                                        <div class="b b2"></div>
+                                        <div class="b b3"></div>
+                                        <div class="b b4"></div>
+                                    </div>
+                                    <div class="illus-wave"></div>
+                                </div>
+
+                                <div class="wind w1"></div>
+                                <div class="wind w2"></div>
+                                <div class="wind w3"></div>
+                            </div>
+
+                            <div class="hero-bottom">
+                                <small class="text-white-50">Cleaner future starts with smarter recycling.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: LOGIN/SIGNUP OPTIONS -->
+                    <div class="col-lg-6">
+                        <div class="auth-form-wrap">
+                            <div class="auth-card">
+                                <div class="auth-head">
+                                    <div class="auth-logo">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                    <h3 class="mb-1">Get Started</h3>
+                                    <p class="mb-0 text-muted small">Join our eco-friendly community</p>
+                                </div>
+
+                                <div class="auth-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card card-hover text-center p-3 h-100">
+                                                <div class="card-body">
+                                                    <i class="fas fa-sign-in-alt fa-2x text-success mb-3"></i>
+                                                    <h4 class="card-title mb-2">Login</h4>
+                                                    <p class="card-text small text-muted mb-3">Access your account</p>
+                                                    <a href="/Auth/Login" class="btn btn-success w-100 auth-btn-success">
+                                                        <i class="fas fa-arrow-right me-2"></i>Login
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="card card-hover text-center p-3 h-100">
+                                                <div class="card-body">
+                                                    <i class="fas fa-user-plus fa-2x text-success mb-3"></i>
+                                                    <h4 class="card-title mb-2">Signup</h4>
+                                                    <p class="card-text small text-muted mb-3">Create new account</p>
+                                                    <a href="/Auth/Signup" class="btn btn-outline-success w-100">
+                                                        <i class="fas fa-user-plus me-2"></i>Signup
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mt-4">
+                                        <p class="mb-0 text-muted small">
+                                            By continuing, you agree to our
+                                            <a asp-controller="Home" asp-action="Terms" class="auth-link fw-semibold">Terms</a>
+                                            and
+                                            <a asp-controller="Home" asp-action="Privacy" class="auth-link fw-semibold">Privacy Policy</a>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="auth-foot">
+                                    <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
-@* <script nonce="@nonce">
-    console.log("🔥 NONCE Test: Script Executed Successfully!");
+<style>
+    /* ===================== PREMIUM DASHBOARD STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-green2: #22c55e;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
 
-        // Nonce test on the page
-        const h = document.createElement("h2");
-        h.innerText = "✅ CSP Nonce is working!";
-        h.style.color = "white";
-        h.style.background = "green";
-        h.style.padding = "15px";
-        h.style.textAlign = "center";
-        h.style.fontSize = "24px";
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
 
-        document.body.prepend(h);
-</script>
- *@
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1180px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Left Hero Sidebar */
+    .dashboard-hero {
+        position: relative;
+        padding: 26px 26px 20px;
+        color: #fff;
+        background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.18), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.12), transparent 55%), linear-gradient(135deg, rgba(34,197,94,.95), rgba(20,184,166,.92));
+        min-height: 720px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.16);
+        border: 1px solid rgba(255,255,255,.22);
+        font-weight: 800;
+        letter-spacing: .2px;
+        width: fit-content;
+    }
+
+    .hero-title {
+        font-size: 2.05rem;
+        font-weight: 900;
+        margin: 6px 0 8px;
+    }
+
+    .hero-sub {
+        margin: 0;
+        max-width: 420px;
+        color: rgba(255,255,255,.88);
+        line-height: 1.5;
+    }
+
+    .user-welcome-box {
+        background: rgba(255,255,255,.16);
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 16px;
+        padding: 16px;
+        margin: 20px 0;
+        backdrop-filter: blur(8px);
+    }
+
+    .avatar-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+    }
+
+    .role-badge {
+        background: rgba(255,255,255,.25);
+        color: white;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.3);
+        margin-top: 4px;
+    }
+
+    .hero-list {
+        list-style: none;
+        padding: 14px 0 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+    }
+
+        .hero-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            color: rgba(255,255,255,.92);
+        }
+
+        .hero-list .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.95);
+            box-shadow: 0 8px 20px rgba(255,255,255,.18);
+        }
+
+    /* Decorative illustration */
+    .hero-illus {
+        position: relative;
+        margin-top: 14px;
+        height: 180px;
+    }
+
+    .illus-card {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: auto;
+        width: 92%;
+        height: 160px;
+        border-radius: 20px;
+        background: rgba(255,255,255,.18);
+        border: 1px solid rgba(255,255,255,.22);
+        overflow: hidden;
+        backdrop-filter: blur(6px);
+    }
+
+    .illus-row {
+        display: flex;
+        gap: 8px;
+        padding: 14px;
+    }
+
+    .illus-pill {
+        width: 48px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .illus-grid {
+        padding: 0 14px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+        .illus-grid .b {
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.22);
+            border: 1px solid rgba(255,255,255,.18);
+        }
+
+    .illus-wave {
+        position: absolute;
+        left: -10%;
+        right: -10%;
+        bottom: -35%;
+        height: 140px;
+        background: radial-gradient(120px 60px at 20% 30%, rgba(255,255,255,.28), transparent 60%), radial-gradient(150px 70px at 60% 30%, rgba(255,255,255,.24), transparent 60%), radial-gradient(140px 60px at 85% 35%, rgba(255,255,255,.22), transparent 60%);
+        opacity: .9;
+        animation: waveMove 15s ease-in-out infinite alternate;
+    }
+
+    @@keyframes waveMove {
+        0% {
+            transform: translateX(-5px);
+        }
+
+        100% {
+            transform: translateX(5px);
+        }
+    }
+
+    .wind {
+        position: absolute;
+        width: 120px;
+        height: 26px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.16);
+    }
+
+    .w1 {
+        right: 18px;
+        top: 18px;
+        transform: rotate(-8deg);
+        animation: windFloat 8s ease-in-out infinite;
+    }
+
+    .w2 {
+        right: 38px;
+        top: 58px;
+        width: 150px;
+        transform: rotate(-6deg);
+        opacity: .85;
+        animation: windFloat 10s ease-in-out infinite 0.5s;
+    }
+
+    .w3 {
+        right: 26px;
+        top: 104px;
+        width: 100px;
+        transform: rotate(-10deg);
+        opacity: .75;
+        animation: windFloat 12s ease-in-out infinite 1s;
+    }
+
+    @@keyframes windFloat {
+        0%, 100% {
+            transform: translateX(0) rotate(var(--rot, -8deg));
+        }
+
+        50% {
+            transform: translateX(-5px) rotate(calc(var(--rot, -8deg) - 2deg));
+        }
+    }
+
+    /* Right Content Area */
+    .dashboard-content-wrap {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 26px 18px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card {
+        width: 100%;
+        max-width: 900px;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* KPI Cards */
+    .kpi-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(2,6,23,.12);
+        }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(34,197,94,.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.5rem;
+    }
+
+    /* Premium Tabs */
+    .premium-tabs {
+        border-bottom: 2px solid rgba(15,23,42,.06);
+    }
+
+        .premium-tabs .nav-link {
+            border-radius: 12px 12px 0 0;
+            margin: 0 2px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,.5);
+            color: var(--muted);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .premium-tabs .nav-link:hover {
+                background: rgba(34,197,94,.08);
+                border-color: rgba(34,197,94,.15);
+            }
+
+            .premium-tabs .nav-link.active {
+                background: rgba(34,197,94,.12);
+                border-color: rgba(34,197,94,.25);
+                color: var(--eco-green);
+                border-bottom-color: transparent;
+            }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+    }
+
+    /* Premium Table */
+    .premium-table {
+        background: transparent;
+    }
+
+        .premium-table thead th {
+            background: rgba(248,250,252,.85);
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .premium-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+            .premium-table tbody tr:hover {
+                background: rgba(34,197,94,.06);
+            }
+
+    /* Alerts */
+    .premium-alert {
+        border-radius: 14px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    .auth-link {
+        color: var(--eco-teal) !important;
+        text-decoration: none !important;
+    }
+
+        .auth-link:hover {
+            color: #0ea5a6 !important;
+            text-decoration: underline !important;
+        }
+
+    /* Card Hover Effects */
+    .card-hover {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+        border-radius: 16px;
+    }
+
+        .card-hover:hover {
+            border-color: rgba(34,197,94,.35);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(2,6,23,.15);
+        }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-hero {
+        background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.10), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.07), transparent 55%), linear-gradient(135deg, rgba(22,163,74,.85), rgba(20,184,166,.78));
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head h3 {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .kpi-card,
+    [data-bs-theme="dark"] .premium-card,
+    [data-bs-theme="dark"] .card-hover {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .premium-table thead th {
+        background: rgba(15, 23, 42, .45);
+        color: #e2e8f0;
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .premium-table tbody tr:hover {
+        background: rgba(34,197,94,.10);
+    }
+
+    [data-bs-theme="dark"] .premium-tabs .nav-link {
+        background: rgba(2, 6, 23, .35);
+        color: rgba(226, 232, 240, .75);
+    }
+
+        [data-bs-theme="dark"] .premium-tabs .nav-link:hover {
+            background: rgba(34,197,94,.12);
+            border-color: rgba(34,197,94,.20);
+        }
+
+        [data-bs-theme="dark"] .premium-tabs .nav-link.active {
+            background: rgba(34,197,94,.16);
+            border-color: rgba(34,197,94,.25);
+            color: #22c55e;
+        }
+
+    [data-bs-theme="dark"] .premium-alert {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .illus-card {
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.14);
+    }
+
+    [data-bs-theme="dark"] .illus-pill,
+    [data-bs-theme="dark"] .illus-grid .b,
+    [data-bs-theme="dark"] .wind {
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.12);
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium,
+        .auth-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap,
+        .auth-form-wrap {
+            padding: 18px 12px;
+        }
+
+        .hero-illus {
+            height: 150px;
+        }
+
+        .illus-card {
+            height: 130px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 1.75rem;
+        }
+
+        .kpi-card .fs-3 {
+            font-size: 1.75rem !important;
+        }
+
+        .premium-tabs .nav-link {
+            font-size: 0.85rem;
+            padding: 8px 12px;
+        }
+    }
+</style>

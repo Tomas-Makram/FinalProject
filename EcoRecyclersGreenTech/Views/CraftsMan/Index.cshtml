@@ -1,0 +1,868 @@
+﻿@model EcoRecyclersGreenTech.Models.CraftsMan.CraftsManDashboardModel
+
+@{
+    ViewData["Title"] = "CraftsMan Dashboard";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-speedometer2"></i>
+                        </div>
+                        <h3 class="mb-1">CraftsMan Dashboard</h3>
+                        <p class="mb-0 text-muted small">Stores & Pending Orders overview</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Welcome Section -->
+                        <div class="premium-card mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stat-icon bg-primary-subtle text-primary">
+                                        <i class="bi bi-person-badge fs-2"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-1 text-section-title">Welcome back, @Model.UserName</h4>
+                                        <p class="text-muted small mb-0 text-label">Manage your stores and track pending orders</p>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    @if (!Model.IsVerified)
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                            <i class="bi bi-shield-exclamation me-1"></i>
+                                            <span class="fw-semibold">Verification Required</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <i class="bi bi-shield-check me-1"></i>
+                                            <span class="fw-semibold">Verified CraftsMan</span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Public Stores Section -->
+                        <div class="premium-card mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                                <div>
+                                    <h4 class="mb-0 text-section-title">
+                                        <i class="bi bi-shop me-2 text-primary"></i>Public Stores
+                                    </h4>
+                                    <p class="text-muted small mb-0 text-label">
+                                        Browse and discover from verified sellers
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                        <i class="bi bi-grid-3x3-gap me-1"></i>
+                                        Total: @(Model.PublicMaterials + Model.PublicMachines + Model.PublicRentals + Model.PublicAuctions)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Materials -->
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-center text-decoration-none quick-action-card"
+                                       asp-action="PublicMaterialStore">
+                                        <div class="quick-action-icon bg-primary-subtle">
+                                            <i class="bi bi-box-seam fs-2 text-primary"></i>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="fw-semibold text-label mb-1">Material Store</div>
+                                            <small class="text-muted text-label">
+                                                @Model.PublicMaterials available items
+                                            </small>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Machines -->
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-center text-decoration-none quick-action-card"
+                                       asp-action="PublicMachineStore">
+                                        <div class="quick-action-icon bg-success-subtle">
+                                            <i class="bi bi-gear-wide-connected fs-2 text-success"></i>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="fw-semibold text-label mb-1">Machine Store</div>
+                                            <small class="text-muted text-label">
+                                                @Model.PublicMachines available machines
+                                            </small>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Rentals -->
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-center text-decoration-none quick-action-card"
+                                       asp-action="PublicRentalStore">
+                                        <div class="quick-action-icon bg-warning-subtle">
+                                            <i class="bi bi-building fs-2 text-warning"></i>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="fw-semibold text-label mb-1">Rental Store</div>
+                                            <small class="text-muted text-label">
+                                                @Model.PublicRentals rental listings
+                                            </small>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Auctions -->
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-center text-decoration-none quick-action-card"
+                                       asp-action="PublicAuctionStore">
+                                        <div class="quick-action-icon bg-info-subtle">
+                                            <i class="bi bi-gavel fs-2 text-info"></i>
+                                        </div>
+                                        <div class="mt-3">
+                                            <div class="fw-semibold text-label mb-1">Auction Store</div>
+                                            <small class="text-muted text-label">
+                                                @Model.PublicAuctions live auctions
+                                            </small>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- My Pending Orders Section -->
+                        <div class="premium-card mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                                <div>
+                                    <h4 class="mb-0 text-section-title">
+                                        <i class="bi bi-receipt me-2 text-warning"></i>My Pending Orders
+                                    </h4>
+                                    <p class="text-muted small mt-1 mb-0 text-label">Track and manage your active orders</p>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        Total Pending: @Model.TotalMyPendingOrders
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-decoration-none order-card" asp-action="MyMaterialOrders">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="order-icon bg-primary-subtle">
+                                                    <i class="bi bi-box-seam text-primary"></i>
+                                                </div>
+                                                <span class="fw-semibold text-label">Materials</span>
+                                            </div>
+                                            <span class="badge bg-primary">@Model.MyPendingMaterialOrders</span>
+                                        </div>
+                                        <small class="text-muted text-label">Track material order status & delivery</small>
+                                    </a>
+                                </div>
+
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-decoration-none order-card" asp-action="MyMachineOrders">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="order-icon bg-success-subtle">
+                                                    <i class="bi bi-gear text-success"></i>
+                                                </div>
+                                                <span class="fw-semibold text-label">Machines</span>
+                                            </div>
+                                            <span class="badge bg-success">@Model.MyPendingMachineOrders</span>
+                                        </div>
+                                        <small class="text-muted text-label">View processing, shipping and delivery updates</small>
+                                    </a>
+                                </div>
+
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-decoration-none order-card" asp-action="MyRentalOrders">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="order-icon bg-warning-subtle">
+                                                    <i class="bi bi-building text-warning"></i>
+                                                </div>
+                                                <span class="fw-semibold text-label">Rentals</span>
+                                            </div>
+                                            <span class="badge bg-warning text-dark">@Model.MyPendingRentalOrders</span>
+                                        </div>
+                                        <small class="text-muted text-label">Bookings, approvals, and monthly payments</small>
+                                    </a>
+                                </div>
+
+                                <div class="col-xl-3 col-md-6 col-sm-6">
+                                    <a class="premium-card d-block text-decoration-none order-card" asp-action="MyAuctionOrders">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="order-icon bg-info-subtle">
+                                                    <i class="bi bi-gavel text-info"></i>
+                                                </div>
+                                                <span class="fw-semibold text-label">Auctions</span>
+                                            </div>
+                                            <span class="badge bg-info text-dark">@Model.MyPendingAuctionOrders</span>
+                                        </div>
+                                        <small class="text-muted text-label">Your bids, winners, and pending payments</small>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Recent Pending Orders Table -->
+                            <div class="mt-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-clock-history me-2 text-success"></i>Recent Pending Orders
+                                </h5>
+
+                                @if (Model.RecentPending.Any())
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="text-label">#</th>
+                                                    <th class="text-label">Type</th>
+                                                    <th class="text-label">Seller / Owner</th>
+                                                    <th class="text-label">Amount</th>
+                                                    <th class="text-label">Status</th>
+                                                    <th class="text-label">Date</th>
+                                                    <th class="text-end text-label">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var o in Model.RecentPending)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            <span class="badge bg-light text-dark">@o.OrderNumber</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary-subtle text-dark">@o.Type</span>
+                                                        </td>
+                                                        <td class="text-label">@o.SellerOrOwner</td>
+                                                        <td class="fw-bold text-label">@o.Amount.ToString("0.00")</td>
+                                                        <td>
+                                                            <span class="badge bg-warning text-dark">@o.Status</span>
+                                                        </td>
+                                                        <td class="text-muted text-label">
+                                                            @o.OrderDate.ToString("MMM dd, yyyy")
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary"
+                                                               asp-controller="@o.DetailsController"
+                                                               asp-action="@o.DetailsAction"
+                                                               asp-route-id="@o.Id">
+                                                                Details <i class="bi bi-arrow-right ms-1"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="bi bi-cart-x fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+                                        </div>
+                                        <h5 class="h6 text-muted mb-2 text-label">No pending orders</h5>
+                                        <p class="text-muted small text-label">All your orders are complete or you haven't placed any orders yet</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • CraftsMan Dashboard</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM CRAFTSMAN DASHBOARD STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Metric Cards */
+    .metric-card {
+        height: 100%;
+        border: none !important;
+        padding: 16px !important;
+        cursor: pointer;
+    }
+
+        .metric-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: 0 18px 40px rgba(2,6,23,.15) !important;
+        }
+
+    .accent-primary {
+        border-left: 4px solid #4ea1ff !important;
+    }
+
+    .accent-success {
+        border-left: 4px solid var(--eco-green) !important;
+    }
+
+    .accent-warning {
+        border-left: 4px solid #f6c445 !important;
+    }
+
+    .accent-info {
+        border-left: 4px solid #12d6ff !important;
+    }
+
+    .accent-danger {
+        border-left: 4px solid #ff5c7a !important;
+    }
+
+    /* Stat Icon */
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+    }
+
+    /* Order Cards (Improved buttons) */
+    .order-card {
+        padding: 16px !important;
+        border: 1px solid rgba(15,23,42,.08) !important;
+        background: rgba(255,255,255,.9);
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(2,6,23,.12) !important;
+            border-color: rgba(15,23,42,.15) !important;
+        }
+
+    .order-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Quick Action Cards */
+    .quick-action-card {
+        padding: 24px 16px !important;
+        border: 1px solid rgba(15,23,42,.08) !important;
+        background: rgba(255,255,255,.9);
+        transition: all 0.25s ease;
+        cursor: pointer;
+    }
+
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(2,6,23,.15) !important;
+            border-color: rgba(15,23,42,.15) !important;
+        }
+
+    .quick-action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 1.5rem;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Table */
+    .table {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(0,0,0,.02);
+        --bs-table-hover-bg: rgba(0,0,0,.04);
+        border-color: rgba(15,23,42,.08);
+    }
+
+        .table thead th {
+            background-color: rgba(0,0,0,.02);
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.02);
+    }
+
+    /* Buttons */
+    .btn-outline-primary {
+        border-color: rgba(13,110,253,.3);
+        color: #0d6efd;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 500;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: rgba(13,110,253,.1);
+            border-color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+    /* Subtle background classes */
+    .bg-primary-subtle {
+        background-color: rgba(13,110,253,.1) !important;
+    }
+
+    .bg-success-subtle {
+        background-color: rgba(25,135,84,.1) !important;
+    }
+
+    .bg-warning-subtle {
+        background-color: rgba(255,193,7,.1) !important;
+    }
+
+    .bg-info-subtle {
+        background-color: rgba(13,202,240,.1) !important;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        /* Dark Mode Cards */
+        [data-bs-theme="dark"] .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,.25);
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+    [data-bs-theme="dark"] .metric-card:hover {
+        box-shadow: 0 18px 40px rgba(0,0,0,.35) !important;
+        border-color: rgba(148, 163, 184, .2) !important;
+    }
+
+    [data-bs-theme="dark"] .order-card {
+        background: rgba(15, 23, 42, .6) !important;
+        border-color: rgba(148, 163, 184, .12) !important;
+    }
+
+        [data-bs-theme="dark"] .order-card:hover {
+            background: rgba(15, 23, 42, .7) !important;
+            border-color: rgba(148, 163, 184, .2) !important;
+            box-shadow: 0 12px 30px rgba(0,0,0,.35) !important;
+        }
+
+    [data-bs-theme="dark"] .quick-action-card {
+        background: rgba(15, 23, 42, .6) !important;
+        border-color: rgba(148, 163, 184, .12) !important;
+    }
+
+        [data-bs-theme="dark"] .quick-action-card:hover {
+            background: rgba(15, 23, 42, .7) !important;
+            border-color: rgba(148, 163, 184, .2) !important;
+            box-shadow: 0 15px 35px rgba(0,0,0,.35) !important;
+        }
+
+    /* Dark Mode Table */
+    [data-bs-theme="dark"] .table {
+        --bs-table-striped-bg: rgba(255,255,255,.02);
+        --bs-table-hover-bg: rgba(255,255,255,.05);
+        color: #e2e8f0;
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+        [data-bs-theme="dark"] .table thead th {
+            background-color: rgba(255,255,255,.06);
+            border-bottom-color: rgba(148, 163, 184, .2);
+            color: #e2e8f0;
+        }
+
+    [data-bs-theme="dark"] .table-hover tbody tr:hover {
+        background-color: rgba(255,255,255,.08);
+    }
+
+    /* Dark Mode Badges */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(148, 163, 184, 0.2) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-secondary {
+        background-color: rgba(148, 163, 184, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-info {
+        background-color: rgba(56, 189, 248, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-primary {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success {
+        background-color: rgba(34, 197, 94, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Dark Mode Buttons */
+    [data-bs-theme="dark"] .btn-outline-primary {
+        border-color: rgba(59, 130, 246, 0.3);
+        color: #3b82f6;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-primary:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            color: #60a5fa;
+        }
+
+    /* Stat Icon Dark Mode */
+    [data-bs-theme="dark"] .stat-icon {
+        background-color: rgba(255,255,255,.06) !important;
+        border: 1px solid rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .order-icon,
+    [data-bs-theme="dark"] .quick-action-icon {
+        background-color: rgba(255,255,255,.08) !important;
+        border: 1px solid rgba(148, 163, 184, .2);
+    }
+
+    /* Subtle backgrounds dark mode */
+    [data-bs-theme="dark"] .bg-primary-subtle {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .bg-success-subtle {
+        background-color: rgba(34, 197, 94, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .bg-warning-subtle {
+        background-color: rgba(245, 158, 11, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .bg-info-subtle {
+        background-color: rgba(56, 189, 248, 0.15) !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+
+        .col-xl-3, .col-md-3 {
+            width: 50%;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 14px;
+        }
+
+        .auth-body {
+            padding: 0 14px 12px;
+        }
+
+        .col-xl-3, .col-md-3, .col-md-6, .col-sm-6 {
+            width: 100%;
+        }
+
+        .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .quick-action-card {
+            padding: 20px 12px !important;
+        }
+
+        .quick-action-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.3rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .table td, .table th {
+            padding: 8px;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .order-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+    }
+</style>

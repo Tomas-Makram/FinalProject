@@ -1,4 +1,5 @@
-﻿using EcoRecyclersGreenTech.Data.Users;
+﻿using EcoRecyclersGreenTech.Data.Orders;
+using EcoRecyclersGreenTech.Data.Users;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,9 +9,9 @@ namespace EcoRecyclersGreenTech.Data.Stores
 {
     public enum RentalCondition
     {
-        EmptyLand = 1,      // أرض فضاء (سواء صحراوية أو زراعية أو سكنية)
-        Property = 2,       // عقار (مبنى أو محل أو مخزن أو مصنع)
-        CommercialSpace = 3, // مساحة تجارية (مكتب أو صالة عرض)
+        EmptyLand = 1,
+        Property = 2,
+        CommercialSpace = 3,
         Other = 4
     }
 
@@ -18,6 +19,7 @@ namespace EcoRecyclersGreenTech.Data.Stores
     {
         [Key]
         public int RentalID { get; set; }
+
         public int OwnerID { get; set; }
         public User Owner { get; set; } = null!;
 
@@ -30,6 +32,7 @@ namespace EcoRecyclersGreenTech.Data.Stores
 
         [MaxLength(255)]
         public string? Address { get; set; }
+
         public double Area { get; set; }
 
         [Precision(18, 2)]
@@ -43,9 +46,13 @@ namespace EcoRecyclersGreenTech.Data.Stores
         public DateTime AvailableFrom { get; set; }
         public DateTime? AvailableUntil { get; set; }
         public RentalCondition? Condition { get; set; }
+
         public ProductStatus Status { get; set; } = ProductStatus.Available;
         public bool IsFurnished { get; set; }
         public bool HasElectricity { get; set; }
         public bool HasWater { get; set; }
+
+        public int? ReservedForOrderId { get; set; }
+        public DateTime? ReservedAt { get; set; }
     }
 }

@@ -1,0 +1,504 @@
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Privacy Policy";
+    var nonce = HttpContextAccessor.HttpContext?.Items["CSPNonce"] as string ?? "";
+    var updated = "Last updated: February 2026";
+}
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM PRIVACY POLICY STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Main Container */
+    .privacy-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .privacy-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Content Wrapper */
+    .privacy-content-wrap {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    /* Hero Section */
+    .legal-hero {
+        border-radius: 20px;
+        padding: 30px;
+        background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.18), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.12), transparent 55%), linear-gradient(135deg, rgba(34,197,94,.95), rgba(20,184,166,.92));
+        color: #fff;
+        box-shadow: 0 18px 45px rgba(2,6,23,.15);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.16);
+        margin-bottom: 25px;
+    }
+
+        .legal-hero:after {
+            content: "";
+            position: absolute;
+            right: -90px;
+            top: -90px;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.12);
+        }
+
+    /* Cards */
+    .legal-card {
+        border-radius: 18px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+        .legal-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Text Colors - LIGHT MODE */
+    .section-title {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-weight: 900;
+        margin-bottom: 10px;
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+        .section-title i {
+            font-size: 1.15rem;
+        }
+
+    .legal-anchor {
+        scroll-margin-top: 88px;
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    .legal-card ul,
+    .legal-card li,
+    .legal-card p {
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    .legal-hero h2,
+    .legal-hero div,
+    .legal-hero p {
+        color: #fff !important; /* White on green background */
+    }
+
+    .text-muted {
+        color: var(--muted) !important; /* Muted gray */
+    }
+
+    .muted {
+        opacity: .78;
+        color: rgba(255,255,255,.78) !important; /* White with opacity in hero */
+    }
+
+    /* TOC Styling */
+    .toc a {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(15,23,42,.07);
+        background: rgba(255,255,255,.65);
+        color: var(--ink) !important; /* Black in Light Mode */
+        transition: .22s ease;
+    }
+
+        .toc a:hover {
+            transform: translateY(-2px);
+            border-color: rgba(34,197,94,.35);
+            background: rgba(34,197,94,.10);
+        }
+
+    /* Callout Box */
+    .callout {
+        border-radius: 16px;
+        padding: 16px 18px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(34,197,94,.08);
+        color: var(--ink) !important; /* Black in Light Mode */
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* Badges */
+    .badge {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .privacy-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .privacy-content-wrap {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .legal-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .legal-hero {
+        background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.10), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.07), transparent 55%), linear-gradient(135deg, rgba(22,163,74,.85), rgba(20,184,166,.78));
+    }
+
+    /* DARK MODE TEXT COLORS - White Text */
+    [data-bs-theme="dark"] .section-title {
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .legal-anchor {
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .legal-card ul,
+    [data-bs-theme="dark"] .legal-card li,
+    [data-bs-theme="dark"] .legal-card p {
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .toc a {
+        background: rgba(2, 6, 23, .35);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+        [data-bs-theme="dark"] .toc a:hover {
+            background: rgba(34,197,94,.12);
+            border-color: rgba(34,197,94,.25);
+        }
+
+    [data-bs-theme="dark"] .callout {
+        background: rgba(34,197,94,.12);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important; /* White in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important; /* Light gray in Dark Mode */
+    }
+
+    [data-bs-theme="dark"] .muted {
+        color: rgba(255,255,255,.78) !important; /* White with opacity in hero */
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .privacy-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .privacy-content-wrap {
+            padding: 18px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .legal-hero {
+            padding: 20px;
+        }
+
+        .legal-card {
+            padding: 15px !important;
+        }
+    }
+</style>
+
+<div class="privacy-premium">
+    <div class="container">
+        <div class="privacy-shell">
+            <div class="privacy-content-wrap">
+
+                <!-- Hero Section -->
+                <div class="legal-hero">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div>
+                            <h2 class="fw-bold mb-1"><i class="bi bi-shield-lock me-2"></i>Privacy Policy</h2>
+                            <div class="muted">@updated</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark rounded-pill px-3 py-2">
+                                EcoRecyclers GreenTech
+                            </span>
+                        </div>
+                    </div>
+                    <p class="mt-3 mb-0" style="max-width: 900px;">
+                        We respect your privacy. This policy explains what data we collect, why we collect it, how it's used, and the choices you have.
+                    </p>
+                </div>
+
+                <!-- Main Content -->
+                <div class="row g-4">
+                    <!-- TOC -->
+                    <div class="col-lg-4">
+                        <div class="card legal-card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-2"><i class="bi bi-list-check me-2 text-success"></i>Quick Sections</h5>
+                                <div class="toc d-grid gap-2">
+                                    <a href="#collect" class="small">What we collect <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#use" class="small">How we use data <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#share" class="small">Sharing & disclosure <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#payments" class="small">Payments & wallet <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#security" class="small">Security <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#retention" class="small">Retention <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#rights" class="small">Your rights <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#cookies" class="small">Cookies <i class="bi bi-arrow-right"></i></a>
+                                    <a href="#contact" class="small">Contact <i class="bi bi-arrow-right"></i></a>
+                                </div>
+
+                                <div class="callout mt-3 small">
+                                    <div class="fw-bold mb-1"><i class="bi bi-info-circle me-1"></i>Tip</div>
+                                    Update this text anytime to match your legal requirements.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTENT -->
+                    <div class="col-lg-8">
+                        <div class="card legal-card shadow-sm">
+                            <div class="card-body p-4">
+
+                                <section id="collect" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-database text-success"></i>
+                                        <span>1) What information we collect</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li><b>Account data:</b> name, email, phone, user type, verification status.</li>
+                                        <li><b>Profile data:</b> address and (if you choose) location coordinates for distance-based features.</li>
+                                        <li><b>Store/Order data:</b> listings you create, purchases, bids, rentals, and order status history.</li>
+                                        <li><b>Wallet data:</b> balance, reserved balance, ledger entries (for transparency & audit).</li>
+                                        <li><b>Technical data:</b> device info, logs, IP address, basic analytics events.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="use" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-lightning-charge text-primary"></i>
+                                        <span>2) How we use your information</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>To provide the platform features (stores, orders, auctions, rentals).</li>
+                                        <li>To verify users and reduce fraud/spam.</li>
+                                        <li>To process payments and wallet transactions.</li>
+                                        <li>To improve search, recommendations, and user experience.</li>
+                                        <li>To communicate important updates (e.g., order changes, security notices).</li>
+                                    </ul>
+                                </section>
+
+                                <section id="share" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-share text-info"></i>
+                                        <span>3) Sharing & disclosure</span>
+                                    </div>
+                                    <p class="text-muted mb-2">
+                                        We do not sell your personal data. We share limited data only when needed to run the service:
+                                    </p>
+                                    <ul class="mb-0">
+                                        <li><b>With sellers/owners</b> for order fulfillment (name, contact details when required).</li>
+                                        <li><b>With payment providers</b> (e.g., Stripe) to complete transactions.</li>
+                                        <li><b>Legal reasons</b> when required by law, court order, or to protect safety.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="payments" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-credit-card-2-front text-warning"></i>
+                                        <span>4) Payments & wallet</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>Card payments may be handled by third-party processors (e.g., Stripe).</li>
+                                        <li>We store transactional references (IDs) and wallet ledger for reconciliation and dispute handling.</li>
+                                        <li>Refunds/holds are recorded transparently in your wallet/ledger.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="security" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-shield-check text-success"></i>
+                                        <span>5) Security</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>We use encryption where appropriate and protect sensitive fields.</li>
+                                        <li>Access controls and audit logging are used to reduce unauthorized access.</li>
+                                        <li>No system is 100% secure; always protect your password and device.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="retention" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-hourglass-split text-secondary"></i>
+                                        <span>6) Data retention</span>
+                                    </div>
+                                    <p class="mb-0">
+                                        We keep data only as long as necessary to provide the service, comply with legal obligations,
+                                        resolve disputes, and enforce policies.
+                                    </p>
+                                </section>
+
+                                <section id="rights" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-person-check text-primary"></i>
+                                        <span>7) Your rights</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>Access, update, or correct your personal information.</li>
+                                        <li>Request deletion of your account (subject to legal/financial retention needs).</li>
+                                        <li>Opt-out from non-essential messages when applicable.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="cookies" class="legal-anchor mb-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-cookie text-warning"></i>
+                                        <span>8) Cookies</span>
+                                    </div>
+                                    <ul class="mb-0">
+                                        <li>We use cookies/session storage to keep you logged in and save theme preferences.</li>
+                                        <li>Optional analytics cookies may be used to improve product performance.</li>
+                                    </ul>
+                                </section>
+
+                                <section id="contact" class="legal-anchor">
+                                    <div class="section-title">
+                                        <i class="bi bi-envelope-paper text-info"></i>
+                                        <span>9) Contact</span>
+                                    </div>
+                                    <p class="mb-0">
+                                        For privacy questions, contact support via the Settings page or the platform help channel.
+                                    </p>
+                                    <div class="mt-3 d-flex flex-wrap gap-2">
+                                        <a class="btn btn-success auth-btn-success" asp-controller="Home" asp-action="Setting">
+                                            <i class="bi bi-gear me-1"></i>Go to Settings
+                                        </a>
+                                        <a class="btn btn-outline-secondary rounded-pill px-3" asp-controller="Home" asp-action="Index">
+                                            <i class="bi bi-house me-1"></i>Back to Home
+                                        </a>
+                                    </div>
+                                </section>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

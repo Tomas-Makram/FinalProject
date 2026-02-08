@@ -7,7 +7,8 @@
             Available,
             SoldOut,
             Reserved,
-            Inactive
+            Inactive,
+            RemovedByFactory
         }
     }
 }

@@ -16,5 +16,4 @@ namespace EcoRecyclersGreenTech.Data.Users
         public string? SkillType { get; set; }
         public int ExperienceYears { get; set; }
     }
-
 }

@@ -1,0 +1,877 @@
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Orders.MaterialOrderDetailsModel
+@using System.Globalization
+@using EcoRecyclersGreenTech.Data.Orders
+
+@{
+    ViewData["Title"] = $"Order #{Model.OrderId}";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    // Images
+    var imgs = Model.MaterialImages ?? new List<string>();
+    var mainImg = imgs.FirstOrDefault();
+
+    // Title
+    var title = !string.IsNullOrWhiteSpace(Model.ProductType) ? Model.ProductType : "Material";
+
+    // Currency
+    string Money(decimal v) => v.ToString("N2");
+    var cur = "EGP";
+
+    // Maps (address-based)
+    string MapUrlByAddress(string? address, string fallbackQuery)
+    {
+        if (!string.IsNullOrWhiteSpace(address))
+            return "https://www.google.com/maps?q=" + Uri.EscapeDataString(address.Trim());
+
+        return "https://www.google.com/maps?q=" + Uri.EscapeDataString(fallbackQuery);
+    }
+
+    var pickupAddress = (Model.PickupLocation ?? "").Trim();
+    var buyerAddress = (Model.BuyerAddress ?? "").Trim();
+
+    var pickupMap = MapUrlByAddress(pickupAddress, $"Pickup order {Model.OrderId}");
+    var buyerMap = MapUrlByAddress(buyerAddress, $"Buyer {Model.BuyerName} order {Model.OrderId}");
+
+    bool hasPickupLoc = !string.IsNullOrWhiteSpace(pickupAddress);
+    bool hasBuyerLoc = !string.IsNullOrWhiteSpace(buyerAddress);
+
+    // Status badge class
+    string Badge(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "pending" => "bg-warning text-dark",
+            "processing" => "bg-primary",
+            "confirmed" => "bg-info text-dark",
+            "shipped" => "bg-primary",
+            "readyforpickup" => "bg-primary",
+            "pickedup" => "bg-success",
+            "delivered" => "bg-success",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            "refunded" => "bg-secondary",
+            "returned" => "bg-secondary",
+            "deletedbyseller" => "bg-dark",
+            "deletedbybuyer" => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <h3 class="mb-1">Material Order Details</h3>
+                        <p class="mb-0 text-muted small">Order #@Model.OrderId - @Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="MaterialOrders">Material Orders</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Order #@Model.OrderId</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Order Status Badge -->
+                        <div class="premium-card mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <h4 class="mb-0 text-section-title">Order #@Model.OrderId</h4>
+                                    <span class="badge @Badge(Model.OrderStatus.ToString()) px-3 py-2 fs-6">
+                                        @Model.OrderStatus
+                                    </span>
+                                </div>
+                                <a asp-action="MaterialOrders" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to Orders
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+
+                            <!-- LEFT COLUMN: Product Details -->
+                            <div class="col-lg-5">
+                                <!-- Product Gallery -->
+                                <div class="premium-card mb-4">
+                                    <h5 class="mb-3 text-section-title">
+                                        <i class="bi bi-images me-2 text-success"></i>Material Images
+                                    </h5>
+
+                                    @if (imgs.Any())
+                                    {
+                                        var gid = "gal_" + Guid.NewGuid().ToString("N");
+
+                                        <div id="@gid" class="carousel slide" data-bs-ride="carousel">
+                                            <div class="carousel-inner od-gallery">
+                                                @for (int i = 0; i < imgs.Count; i++)
+                                                {
+                                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                        <a href="@imgs[i]" target="_blank" class="d-block">
+                                                            <img src="@imgs[i]" class="d-block w-100 od-gallery-img" alt="img" loading="lazy" />
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            @if (imgs.Count > 1)
+                                            {
+                                                <button class="carousel-control-prev" type="button" data-bs-target="#@gid" data-bs-slide="prev">
+                                                    <span class="carousel-control-prev-icon"></span>
+                                                    <span class="visually-hidden">Prev</span>
+                                                </button>
+                                                <button class="carousel-control-next" type="button" data-bs-target="#@gid" data-bs-slide="next">
+                                                    <span class="carousel-control-next-icon"></span>
+                                                    <span class="visually-hidden">Next</span>
+                                                </button>
+                                            }
+                                        </div>
+
+                                        @if (imgs.Count > 1)
+                                        {
+                                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                                @foreach (var img in imgs.Take(12))
+                                                {
+                                                    <a href="@img" target="_blank" class="od-thumb" title="Open image">
+                                                        <img src="@img" alt="thumb" loading="lazy" />
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="od-empty">
+                                            <div class="text-center text-muted">
+                                                <i class="bi bi-image fs-1 d-block mb-2"></i>
+                                                No images available
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Product Summary -->
+                                <div class="premium-card">
+                                    <h5 class="mb-3 text-section-title">
+                                        <i class="bi bi-box-seam me-2 text-success"></i>Material Details
+                                    </h5>
+
+                                    <div class="d-flex align-items-start gap-3 mb-3">
+                                        <img src="@(mainImg ?? "/images/product-default.png")"
+                                             class="rounded od-main-mini"
+                                             alt="main" />
+
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold fs-6 text-label">@title</div>
+                                            <div class="text-muted small">
+                                                Material ID: <span class="fw-semibold">@Model.MaterialId</span>
+                                            </div>
+
+                                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                                <span class="badge bg-light text-dark border">@((Model.MaterialStatus ?? "-"))</span>
+                                                @if (!string.IsNullOrWhiteSpace(Model.Unit))
+                                                {
+                                                    <span class="badge bg-light text-dark border">@Model.Unit</span>
+                                                }
+                                                <span class="badge bg-light text-dark border">Material</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(Model.Description))
+                                    {
+                                        <div class="mt-3">
+                                            <div class="text-muted small mb-1">Description</div>
+                                            <div class="od-desc text-label">@Model.Description</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- RIGHT COLUMN: Order & Buyer Info -->
+                            <div class="col-lg-7">
+                                <!-- Order Information -->
+                                <div class="premium-card mb-4">
+                                    <h5 class="mb-3 text-section-title">
+                                        <i class="bi bi-receipt me-2 text-success"></i>Order Information
+                                    </h5>
+
+                                    <div class="od-kv">
+                                        <div class="k text-label">Order Status</div>
+                                        <div class="v"><span class="badge @Badge(Model.OrderStatus.ToString())">@Model.OrderStatus</span></div>
+
+                                        <div class="k text-label">Order Date</div>
+                                        <div class="v">@Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</div>
+
+                                        <div class="k text-label">Quantity</div>
+                                        <div class="v">@Model.Quantity</div>
+
+                                        <div class="k text-label">Unit</div>
+                                        <div class="v">@(!string.IsNullOrWhiteSpace(Model.Unit) ? Model.Unit : "—")</div>
+
+                                        <div class="k text-label">Unit Price</div>
+                                        <div class="v">@Money(Model.UnitPrice) @cur</div>
+
+                                        <div class="k text-label">Total</div>
+                                        <div class="v fw-bold">@Money(Model.Total) @cur</div>
+
+                                        <div class="k text-label">Cancel Until</div>
+                                        <div class="v">@((Model.CancelUntil.HasValue) ? Model.CancelUntil.Value.ToString("yyyy-MM-dd HH:mm") : "—")</div>
+
+                                        <div class="k text-label">Expected Arrival</div>
+                                        <div class="v">@((Model.ExpectedArrivalDate.HasValue) ? Model.ExpectedArrivalDate.Value.ToString("yyyy-MM-dd HH:mm") : "—")</div>
+
+                                        <div class="k text-label">Deposit Paid</div>
+                                        <div class="v">@Money(Model.DepositPaid) @cur</div>
+
+                                        <div class="k text-label">Total Price (Wallet)</div>
+                                        <div class="v fw-bold">@Money(Model.TotalPrice) @cur</div>
+                                    </div>
+                                </div>
+
+                                <!-- Locations -->
+                                <div class="premium-card mb-4">
+                                    <h5 class="mb-3 text-section-title">
+                                        <i class="bi bi-geo-alt me-2 text-success"></i>Locations
+                                    </h5>
+
+                                    <div class="row g-3">
+                                        <!-- Pickup Location -->
+                                        <div class="col-12">
+                                            <div class="od-box">
+                                                <div class="od-box-h text-label">
+                                                    <i class="bi bi-box-seam me-2 text-success"></i>Pickup Location (Product)
+                                                </div>
+
+                                                <div class="od-box-t od-wrap text-label">
+                                                    @if (hasPickupLoc)
+                                                    {
+                                                        @pickupAddress
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not provided</span>
+                                                    }
+                                                </div>
+
+                                                <a class="btn btn-sm btn-success auth-btn-success mt-2"
+                                                   target="_blank" rel="noopener"
+                                                   href="@pickupMap">
+                                                    <i class="bi bi-map me-1"></i>Open Map
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <!-- Buyer Location -->
+                                        <div class="col-12">
+                                            <div class="od-box">
+                                                <div class="od-box-h text-label">
+                                                    <i class="bi bi-person-geo-alt me-2 text-success"></i>Buyer Location (User)
+                                                </div>
+
+                                                <div class="od-box-t od-wrap text-label">
+                                                    @if (hasBuyerLoc)
+                                                    {
+                                                        @buyerAddress
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not provided</span>
+                                                    }
+                                                </div>
+
+                                                <a class="btn btn-sm btn-success auth-btn-success mt-2"
+                                                   target="_blank" rel="noopener"
+                                                   href="@buyerMap">
+                                                    <i class="bi bi-map me-1"></i>Open Map
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Buyer Information -->
+                                <div class="premium-card">
+                                    <h5 class="mb-3 text-section-title">
+                                        <i class="bi bi-person-circle me-2 text-success"></i>Buyer Information
+                                    </h5>
+
+                                    <div class="d-flex align-items-center gap-3 mb-4">
+                                        <img src="@(Model.BuyerProfileImg ?? "/images/user-default.png")"
+                                             class="rounded-circle od-avatar"
+                                             alt="buyer" />
+
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold fs-5 text-label">@(!string.IsNullOrWhiteSpace(Model.BuyerName) ? Model.BuyerName : "Buyer")</div>
+                                            <div class="text-muted small">User ID: @Model.BuyerId</div>
+
+                                            <div class="mt-2">
+                                                @if (Model.BuyerVerified)
+                                                {
+                                                    <span class="badge bg-success px-3 py-2">
+                                                        <i class="bi bi-shield-check me-1"></i>Verified
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary px-3 py-2">
+                                                        <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            @if (!string.IsNullOrWhiteSpace(Model.BuyerEmail))
+                                            {
+                                                <a class="btn btn-sm btn-outline-success" href="mailto:@Model.BuyerEmail">
+                                                    <i class="bi bi-envelope me-1"></i>Email
+                                                </a>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.BuyerPhone))
+                                            {
+                                                <a class="btn btn-sm btn-outline-success" href="tel:@Model.BuyerPhone">
+                                                    <i class="bi bi-telephone me-1"></i>Call
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="od-kv">
+                                        <div class="k text-label">Email</div>
+                                        <div class="v">@(!string.IsNullOrWhiteSpace(Model.BuyerEmail) ? Model.BuyerEmail : "—")</div>
+
+                                        <div class="k text-label">Phone</div>
+                                        <div class="v">@(!string.IsNullOrWhiteSpace(Model.BuyerPhone) ? Model.BuyerPhone : "—")</div>
+
+                                        <div class="k text-label">Address</div>
+                                        <div class="v od-wrap">
+                                            @if (hasBuyerLoc)
+                                            {
+                                                @buyerAddress
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not provided</span>
+                                            }
+                                        </div>
+
+                                        <div class="k text-label">Map Location</div>
+                                        <div class="v">
+                                            @if (hasBuyerLoc)
+                                            {
+                                                <a class="btn btn-sm btn-success auth-btn-success"
+                                                   target="_blank" rel="noopener"
+                                                   href="@buyerMap">
+                                                    <i class="bi bi-map me-1"></i>Open Map
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Material Order #@Model.OrderId</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM ORDER DETAILS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Order Details Specific Styles */
+    .od-gallery {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(15,23,42,.08);
+        background: #f8f9fa;
+    }
+
+    .od-gallery-img {
+        height: 380px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    .od-empty {
+        height: 300px;
+        border-radius: 16px;
+        border: 2px dashed rgba(15,23,42,.1);
+        background: rgba(248,249,250,.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .od-thumb {
+        width: 80px;
+        height: 60px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(15,23,42,.08);
+        background: #f8f9fa;
+        box-shadow: 0 8px 16px rgba(0,0,0,.08);
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+
+        .od-thumb:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(0,0,0,.12);
+            border-color: var(--eco-green);
+        }
+
+        .od-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    .od-main-mini {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    .od-avatar {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border: 2px solid var(--eco-green);
+    }
+
+    .od-kv {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 12px 16px;
+        align-items: start;
+    }
+
+        .od-kv .k {
+            color: var(--muted);
+            font-size: .85rem;
+            white-space: nowrap;
+            padding-top: 4px;
+        }
+
+        .od-kv .v {
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+    .od-wrap {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .od-box {
+        border: 1px solid rgba(15,23,42,.1);
+        border-radius: 14px;
+        padding: 16px;
+        background: rgba(248,249,250,.4);
+        transition: all 0.3s ease;
+    }
+
+        .od-box:hover {
+            background: rgba(248,249,250,.6);
+            border-color: rgba(34,197,94,.2);
+        }
+
+    .od-box-h {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        color: var(--ink);
+    }
+
+    .od-box-t {
+        color: var(--ink);
+        font-weight: 400;
+    }
+
+    .od-desc {
+        color: var(--ink);
+        line-height: 1.6;
+        padding: 8px;
+        background: rgba(248,249,250,.3);
+        border-radius: 8px;
+        border-left: 3px solid var(--eco-green);
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 8px 16px !important;
+        font-size: 0.875rem;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65);
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    [data-bs-theme="dark"] .od-gallery {
+        background: rgba(2, 6, 23, .3);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .od-empty {
+        background: rgba(2, 6, 23, .3);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .od-thumb {
+        background: rgba(2, 6, 23, .3);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .od-thumb:hover {
+            border-color: var(--eco-green);
+            background: rgba(2, 6, 23, .5);
+        }
+
+    [data-bs-theme="dark"] .od-kv .k {
+        color: rgba(226, 232, 240, .65);
+    }
+
+    [data-bs-theme="dark"] .od-kv .v {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .od-box {
+        background: rgba(2, 6, 23, .3);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .od-box:hover {
+            background: rgba(2, 6, 23, .5);
+            border-color: rgba(34,197,94,.3);
+        }
+
+    [data-bs-theme="dark"] .od-desc {
+        background: rgba(2, 6, 23, .3);
+        color: #e2e8f0;
+        border-left-color: var(--eco-green);
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .od-gallery-img {
+            height: 300px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .od-kv {
+            grid-template-columns: 1fr;
+        }
+
+        .od-gallery-img {
+            height: 250px;
+        }
+
+        .od-thumb {
+            width: 70px;
+            height: 52px;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+    }
+</style>

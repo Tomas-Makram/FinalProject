@@ -1,5 +1,6 @@
-﻿using EcoRecyclersGreenTech.Models;
-using EcoRecyclersGreenTech.Models.FactoryStore;
+﻿using EcoRecyclersGreenTech.Data.Orders;
+using EcoRecyclersGreenTech.Data.Users;
+using EcoRecyclersGreenTech.Models;
 using EcoRecyclersGreenTech.Models.FactoryStore.Orders;
 using EcoRecyclersGreenTech.Models.FactoryStore.Products;
 using EcoRecyclersGreenTech.Services;
@@ -28,6 +29,8 @@ namespace EcoRecyclersGreenTech.Controllers
             _locationService = locationService;
         }
 
+        #region Helpers
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -43,13 +46,13 @@ namespace EcoRecyclersGreenTech.Controllers
             if (!string.IsNullOrWhiteSpace(role))
                 return role;
 
-            // fallback: session stores TypeName as string (not ID)
+            // session stores TypeName as string
             return HttpContext.Session.GetString("UserTypeName") ?? string.Empty;
         }
 
         private string GetCurrentUserTypeName()
         {
-            // claims أولاً
+            // claims first
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
             if (!string.IsNullOrWhiteSpace(role))
                 return role;
@@ -62,10 +65,7 @@ namespace EcoRecyclersGreenTech.Controllers
             return HttpContext.Session.GetString("UserTypeName") ?? string.Empty;
         }
 
-        private bool IsFactoryUser()
-        {
-            return GetCurrentUserType() == "Factory";
-        }
+        private bool IsFactoryUser() => GetCurrentUserType() == "Factory";
 
         private bool IsVerifiedFactory()
         {
@@ -73,6 +73,129 @@ namespace EcoRecyclersGreenTech.Controllers
             return User.HasClaim(c => c.Type == "IsVerified" && c.Value == "true") || isVerified == "true";
         }
 
+        private string? DecryptOrRaw(string? v)
+        {
+            if (string.IsNullOrWhiteSpace(v)) return null;
+            try { return _dataCiphers.Decrypt(v); }
+            catch { return v; }
+        }
+
+        private async Task<bool> PopulateUserViewBagsAsync(int userId, CancellationToken ct = default)
+        {
+            var user = await _db.Users
+                .Include(u => u.UserType)
+                .Include(u => u.FactoryProfile)
+                .Include(u => u.Wallet)
+                .FirstOrDefaultAsync(u => u.UserId == userId, ct);
+
+            if (user == null)
+            {
+                ViewBag.UserLoggedIn = false;
+                return false;
+            }
+
+            ViewBag.UserLoggedIn = true;
+
+            // Email
+            ViewBag.Email = DecryptOrRaw(user.Email) ?? user.Email ?? "";
+            ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
+            ViewBag.UserName = user.FullName ?? "";
+            ViewBag.IsVerified = user.Verified;
+            ViewBag.NeedsVerification = !user.Verified;
+
+            // Wallet
+            var wallet = await _db.Wallets
+                .AsNoTracking()
+                .Where(w => w.UserId == user.UserId)
+                .Select(w => new { w.Balance, w.ReservedBalance })
+                .FirstOrDefaultAsync(ct);
+
+            ViewBag.WalletBalance = wallet?.Balance ?? 0m;
+            ViewBag.WalletReserved = wallet?.ReservedBalance ?? 0m;
+            ViewBag.WalletCurrency = "EGP";
+
+            if (!user.Verified)
+            {
+                TempData["VerificationMessage"] = $"Welcome {user.FullName}! Please go to settings to verification your account.";
+                TempData["ShowVerificationAlert"] = "true";
+            }
+
+            return true;
+        }
+
+        private async Task PopulateFactoryLocationViewBagsAsync(int factoryId, CancellationToken ct = default)
+        {
+            var user = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == factoryId, ct);
+
+            if (user == null)
+            {
+                ViewBag.FactoryAddress = null;
+                ViewBag.FactoryLat = null;
+                ViewBag.FactoryLng = null;
+                ViewBag.FactoryHasLocation = false;
+                return;
+            }
+
+            bool factoryHasLocation =
+                !string.IsNullOrWhiteSpace(user.Address) ||
+                (user.Latitude.HasValue && user.Longitude.HasValue);
+
+            // keep the same ViewBag names you used in each view.
+            ViewBag.FactoryAddress = user.Address;
+            ViewBag.FactoryLat = user.Latitude;
+            ViewBag.FactoryLng = user.Longitude;
+            ViewBag.FactoryHasLocation = factoryHasLocation;
+        }
+
+        private async Task PopulateFactoryLocationViewBagsForAuctionAsync(int factoryId, CancellationToken ct = default)
+        {
+            // Auction Views were using FactoryLatitude/FactoryLongitude
+            var user = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == factoryId, ct);
+
+            if (user == null)
+            {
+                ViewBag.FactoryAddress = null;
+                ViewBag.FactoryLatitude = null;
+                ViewBag.FactoryLongitude = null;
+                ViewBag.FactoryHasLocation = false;
+                return;
+            }
+
+            bool factoryHasLocation =
+                !string.IsNullOrWhiteSpace(user.Address) ||
+                (user.Latitude.HasValue && user.Longitude.HasValue);
+
+            ViewBag.FactoryAddress = user.Address;
+            ViewBag.FactoryLatitude = user.Latitude;
+            ViewBag.FactoryLongitude = user.Longitude;
+            ViewBag.FactoryHasLocation = factoryHasLocation;
+        }
+
+        private bool ModelHasCustomLocation(string? address, decimal? lat, decimal? lng)
+        {
+            bool hasAddress = !string.IsNullOrWhiteSpace(address);
+            bool hasCoords = lat.HasValue && lng.HasValue;
+            return hasAddress || hasCoords;
+        }
+
+        private async Task<bool> FactoryHasLocationAsync(int factoryId, CancellationToken ct = default)
+        {
+            var user = await _db.Users.AsNoTracking()
+                .Where(u => u.UserId == factoryId)
+                .Select(u => new { u.Address, u.Latitude, u.Longitude })
+                .FirstOrDefaultAsync(ct);
+
+            if (user == null) return false;
+
+            return !string.IsNullOrWhiteSpace(user.Address) ||
+                   (user.Latitude.HasValue && user.Longitude.HasValue);
+        }
+
+        private IActionResult DenyToHome() => RedirectToAction("Index", "Home");
+
+        #endregion
         [HttpGet]
         public async Task<IActionResult> ReverseGeocode(decimal lat, decimal lng, CancellationToken ct)
         {
@@ -80,129 +203,120 @@ namespace EcoRecyclersGreenTech.Controllers
             return Json(new { address });
         }
 
-        /////////////////////////// Dashboard ////////////////////////////////////
+        /////////////////////////// Dashboard ///////////////////////////
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CancellationToken ct)
         {
             if (!IsFactoryUser())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
 
             if (!IsVerifiedFactory())
             {
                 TempData["Warning"] = "Your factory account needs verification to access the store. Please complete your verification.";
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            ViewBag.UserLoggedIn = true;
-
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                // الأفضل Include عشان UserType
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
-
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-//                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName(); // ✅ نفس الاسم اللي في الـ View
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] = $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
+            // ViewBag based on Session user
+            var sessionUserId = HttpContext.Session.GetInt32("UserID");
+            if (sessionUserId.HasValue)
+                await PopulateUserViewBagsAsync(sessionUserId.Value, ct);
             else
-            {
                 ViewBag.UserLoggedIn = false;
-            }
 
             var dashboardData = await _storeService.GetDashboardStatsAsync(factoryId);
             return View(dashboardData);
         }
 
         /////////////////////////// Material Management ///////////////////////////
+
         [HttpGet]
-        public async Task<IActionResult> Materials()
+        public async Task<IActionResult> Materials(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            ViewBag.UserLoggedIn = true;
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             if (factoryId == 0)
             {
                 ViewBag.UserLoggedIn = false;
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            // ✅ الأفضل Include عشان تجيب UserType.TypeName بدون Query تاني
-            var user = await _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == factoryId);
-
-            if (user != null)
-            {
-                ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-
-                // ✅ توحيد اسم الـ ViewBag اللي هنستخدمه في الـ View
-                ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                ViewBag.UserName = user.FullName ?? "";
-                ViewBag.IsVerified = user.Verified;
-                ViewBag.NeedsVerification = !user.Verified;
-
-                if (!user.Verified)
-                {
-                    TempData["VerificationMessage"] =
-                        $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                    TempData["ShowVerificationAlert"] = "true";
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
+            // set viewbags
+            await PopulateUserViewBagsAsync(factoryId, ct);
 
             var materials = await _storeService.GetMaterialsAsync(factoryId);
             return View("Material/Materials", materials);
         }
 
         [HttpGet]
-        public IActionResult AddMaterial()
+        public async Task<IActionResult> AddMaterial(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
-            return View("Material/AddMaterial");
+            var factoryId = GetCurrentUserId();
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+
+
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            // use factory location if exists
+            var useFactoryLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            var model = new MaterialProductDetailsModel
+            {
+                UseFactoryLocation = useFactoryLocation
+            };
+
+            return View("Material/AddMaterial", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddMaterial(MaterialModel newMaterial)
+        public async Task<IActionResult> AddMaterial(MaterialProductDetailsModel newMaterial, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            if (!ModelState.IsValid || newMaterial.Quantity < newMaterial.MinOrderQuantity)
-                return View("Material/AddMaterial", newMaterial);
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
+
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+            bool factoryHasLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            // Min order validation (nullable)
+            if (newMaterial.MinOrderQuantity.HasValue)
+            {
+                if (newMaterial.MinOrderQuantity.Value < 0)
+                    ModelState.AddModelError(nameof(newMaterial.MinOrderQuantity), "Minimum order quantity cannot be negative.");
+
+                if (newMaterial.MinOrderQuantity.Value > newMaterial.Quantity)
+                    ModelState.AddModelError(nameof(newMaterial.MinOrderQuantity), "Minimum order quantity cannot be greater than available quantity.");
+            }
+
+            // Location validation
+            if (newMaterial.UseFactoryLocation)
+            {
+                if (!factoryHasLocation)
+                    ModelState.AddModelError(nameof(newMaterial.UseFactoryLocation),
+                        "Factory location is not set. Please choose custom pickup location and enter it.");
+            }
+            else
+            {
+                if (!ModelHasCustomLocation(newMaterial.Address, newMaterial.Latitude, newMaterial.Longitude))
+                    ModelState.AddModelError(nameof(newMaterial.Address), "Please provide pickup address or coordinates.");
+            }
+
+            if (!ModelState.IsValid)
+                return View("Material/AddMaterial", newMaterial);
 
             if (!await _storeService.CanFactoryAddProductAsync(factoryId))
             {
                 TempData["Error"] = "Your factory account is not authorized to add products.";
-                return RedirectToAction("Materials");
+                return RedirectToAction(nameof(Materials));
             }
 
             var success = await _storeService.AddMaterialAsync(newMaterial, factoryId);
@@ -210,7 +324,7 @@ namespace EcoRecyclersGreenTech.Controllers
             if (success)
             {
                 TempData["Success"] = "Material added successfully!";
-                return RedirectToAction("Materials");
+                return RedirectToAction(nameof(Materials));
             }
 
             TempData["Error"] = "Failed to add material. Please try again.";
@@ -218,10 +332,10 @@ namespace EcoRecyclersGreenTech.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditMaterial(int id)
+        public async Task<IActionResult> EditMaterial(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             var material = await _storeService.GetMaterialByIdAsync(id, factoryId);
@@ -229,70 +343,98 @@ namespace EcoRecyclersGreenTech.Controllers
             if (material == null)
             {
                 TempData["Error"] = "Material not found or you don't have permission to edit it.";
-                return RedirectToAction("Materials");
+                return RedirectToAction(nameof(Materials));
             }
 
-            ViewBag.UserLoggedIn = true;
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
 
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                // الأفضل Include عشان UserType
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
+            var hasAnyOrders = await _db.MaterialOrders.AsNoTracking()
+                .AnyAsync(o => o.MaterialStoreID == id, ct);
 
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName(); // ✅ نفس الاسم اللي في الـ View
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] = $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
-
-            // Can modify?
-            if (!await _storeService.CanFactoryModifyProductAsync(id, factoryId, "Material"))
-            {
-                TempData["Warning"] = "This material has active orders. Some fields cannot be modified.";
-                ViewBag.CanModify = false;
-            }
-            else
-            {
-                ViewBag.CanModify = true;
-            }
+            ViewBag.HasAnyOrders = hasAnyOrders;
+            ViewBag.CanModify = !hasAnyOrders;
+            ViewBag.CanEditPriceQty = true;
+            ViewBag.OldQuantity = material.Quantity;
 
             return View("Material/EditMaterial", material);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditMaterial(int id, MaterialModel editMaterial)
+        public async Task<IActionResult> EditMaterial(int id, MaterialProductDetailsModel editMaterial, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+            bool factoryHasLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            var hasAnyOrders = await _db.MaterialOrders.AsNoTracking()
+                .AnyAsync(o => o.MaterialStoreID == id, ct);
+
+            ViewBag.HasAnyOrders = hasAnyOrders;
+            ViewBag.CanModify = !hasAnyOrders;
+            ViewBag.CanEditPriceQty = true;
+
+            // old qty from DB
+            var oldQty = await _db.MaterialStores.AsNoTracking()
+                .Where(m => m.MaterialID == id && m.SellerID == factoryId)
+                .Select(m => (int?)m.Quantity)
+                .FirstOrDefaultAsync(ct);
+
+            if (!oldQty.HasValue)
+            {
+                TempData["Error"] = "Material not found or you don't have permission to edit it.";
+                return RedirectToAction(nameof(Materials));
+            }
+
+            ViewBag.OldQuantity = oldQty.Value;
+
+            // Location validation
+            if (editMaterial.UseFactoryLocation && !factoryHasLocation)
+                ModelState.AddModelError(nameof(editMaterial.UseFactoryLocation), "Factory location is not set. Please choose custom pickup location.");
+
+            if (!editMaterial.UseFactoryLocation)
+            {
+                if (!ModelHasCustomLocation(editMaterial.Address, editMaterial.Latitude, editMaterial.Longitude))
+                    ModelState.AddModelError(nameof(editMaterial.Address), "Please provide pickup address or coordinates.");
+            }
+
+            // Rules based on orders
+            if (hasAnyOrders)
+            {
+                // remove locked fields only
+                ModelState.Remove(nameof(editMaterial.ProductType));
+                ModelState.Remove(nameof(editMaterial.Unit));
+                ModelState.Remove(nameof(editMaterial.MinOrderQuantity));
+                ModelState.Remove(nameof(editMaterial.Status));
+                ModelState.Remove(nameof(editMaterial.CancelWindowDays));
+                ModelState.Remove(nameof(editMaterial.DeliveryDays));
+
+                if (editMaterial.Quantity <= oldQty.Value)
+                    ModelState.AddModelError(nameof(editMaterial.Quantity),
+                        $"With existing orders, quantity must be greater than current quantity ({oldQty.Value}).");
+
+                if (editMaterial.Price <= 0)
+                    ModelState.AddModelError(nameof(editMaterial.Price), "Price must be greater than 0.");
+            }
+            else
+            {
+                if (editMaterial.MinOrderQuantity.HasValue && editMaterial.MinOrderQuantity.Value > editMaterial.Quantity)
+                    ModelState.AddModelError(nameof(editMaterial.MinOrderQuantity), "Minimum order quantity cannot be greater than available quantity.");
+            }
 
             if (!ModelState.IsValid)
                 return View("Material/EditMaterial", editMaterial);
 
-            var factoryId = GetCurrentUserId();
             var success = await _storeService.UpdateMaterialAsync(id, editMaterial, factoryId);
 
             if (success)
             {
                 TempData["Success"] = "Material updated successfully!";
-                return RedirectToAction("Materials");
+                return RedirectToAction(nameof(Materials));
             }
 
             TempData["Error"] = "Failed to update material. Please try again.";
@@ -301,7 +443,133 @@ namespace EcoRecyclersGreenTech.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteMaterial(DeleteProductModel deleteMaterial)
+        public async Task<IActionResult> ChangeMaterialOrderStatus(int orderId, string status, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+            {
+                TempData["Error"] = "Access denied.";
+                return RedirectToAction(nameof(MaterialOrders));
+            }
+
+            var factoryId = GetCurrentUserId();
+            if (factoryId == 0)
+            {
+                TempData["Error"] = "Invalid factory.";
+                return RedirectToAction(nameof(MaterialOrders));
+            }
+
+            if (!Enum.TryParse<EnumsOrderStatus>(status, true, out var newStatus))
+            {
+                TempData["Error"] = "Invalid status value.";
+                return RedirectToAction(nameof(MaterialOrders));
+            }
+
+            var res = await _storeService.ChangeMaterialOrderStatusAsync(factoryId, orderId, newStatus, ct);
+
+            TempData[res.Success ? "Success" : "Error"] = res.Message;
+            return RedirectToAction(nameof(MaterialOrders));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MaterialOrders(CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+            var orders = await _storeService.GetMaterialOrdersForFactoryAsync(factoryId, take: 500);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            return View("Material/MaterialOrders", orders);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MaterialOrderDetails(int id, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+
+            var row = await _db.MaterialOrders.AsNoTracking()
+                .Include(o => o.MaterialStore)
+                    .ThenInclude(m => m.Seller)
+                .FirstOrDefaultAsync(o => o.MaterialOrderID == id, ct);
+
+            if (row == null || row.MaterialStore == null)
+                return NotFound();
+
+            if (row.MaterialStore.SellerID != factoryId)
+                return Forbid();
+
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            var buyer = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == row.BuyerID, ct);
+
+            var seller = row.MaterialStore.Seller;
+
+            var imgs = new[]
+            {
+                row.MaterialStore.ProductImgURL1,
+                row.MaterialStore.ProductImgURL2,
+                row.MaterialStore.ProductImgURL3
+            }
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!.Trim())
+            .Distinct()
+            .ToList();
+
+            var buyerEmail = buyer != null ? DecryptOrRaw(buyer.Email) : null;
+            var buyerPhone = buyer != null ? DecryptOrRaw(buyer.phoneNumber) : null;
+
+            var factoryEmail = seller != null ? DecryptOrRaw(seller.Email) : null;
+            var factoryPhone = seller != null ? DecryptOrRaw(seller.phoneNumber) : null;
+
+            var vm = new MaterialOrderDetailsModel
+            {
+                OrderId = row.MaterialOrderID,
+                OrderStatus = row.Status,
+                OrderDate = row.OrderDate,
+                Quantity = row.Quantity,
+                UnitPrice = row.UnitPrice,
+                CancelUntil = row.CancelUntil,
+                ExpectedArrivalDate = row.ExpectedArrivalDate,
+                PickupLocation = row.PickupLocation,
+
+                MaterialId = row.MaterialStore.MaterialID,
+                ProductType = row.MaterialStore.ProductType,
+                Description = row.MaterialStore.Description,
+                MaterialPrice = row.MaterialStore.Price,
+                MaterialAvailableQty = row.MaterialStore.Quantity,
+                Unit = row.MaterialStore.Unit,
+                MaterialStatus = row.MaterialStore.Status.ToString(),
+                MaterialImages = imgs,
+
+                BuyerId = buyer?.UserId ?? row.BuyerID,
+                BuyerName = buyer?.FullName ?? "Buyer",
+                BuyerEmail = buyerEmail,
+                BuyerPhone = buyerPhone,
+                BuyerAddress = buyer?.Address,
+                BuyerProfileImg = buyer?.UserProfileImgURL,
+                BuyerVerified = buyer?.Verified ?? false,
+
+                FactoryId = seller?.UserId ?? factoryId,
+                FactoryName = seller?.FullName ?? "Factory",
+                FactoryAddress = seller?.Address,
+                FactoryEmail = factoryEmail,
+                FactoryPhone = factoryPhone,
+                FactoryProfileImg = seller?.UserProfileImgURL,
+                FactoryVerified = seller?.Verified ?? false
+            };
+
+            // keep same view path as your code
+            return View("Material/MaterialOrderDetails", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMaterial(int id, int? deleteQty, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
             {
@@ -309,105 +577,89 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Materials));
             }
 
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .Where(e => !string.IsNullOrWhiteSpace(e))
-                    .ToList();
-
-                TempData["Error"] = errors.Any()
-                    ? string.Join(" | ", errors)
-                    : "Invalid delete request.";
-
-                return RedirectToAction(nameof(Materials));
-            }
-
             var factoryId = GetCurrentUserId();
-            var result = await _storeService.DeleteMaterialAsync(deleteMaterial.Id, factoryId);
+            var res = await _storeService.DeleteMaterialAsync(factoryId, id, ct);
 
-            TempData[result.Success ? "Success" : "Error"] = result.Message;
-
+            TempData[res.Success ? "Success" : "Error"] = res.Message;
             return RedirectToAction(nameof(Materials));
         }
 
-        /////////////////////////// Machines Management ///////////////////////////
+        ///////////////////////// Machines Management ///////////////////////////
 
         [HttpGet]
-        public async Task<IActionResult> Machines()
+        public async Task<IActionResult> Machines(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            ViewBag.UserLoggedIn = true;
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             if (factoryId == 0)
             {
                 ViewBag.UserLoggedIn = false;
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            // ✅ نفس ستايل Materials: Include UserType + ViewBags موحدة
-            var user = await _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == factoryId);
-
-            if (user != null)
-            {
-                ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                ViewBag.UserName = user.FullName ?? "";
-                ViewBag.IsVerified = user.Verified;
-                ViewBag.NeedsVerification = !user.Verified;
-
-                if (!user.Verified)
-                {
-                    TempData["VerificationMessage"] =
-                        $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                    TempData["ShowVerificationAlert"] = "true";
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
+            await PopulateUserViewBagsAsync(factoryId, ct);
 
             var machines = await _storeService.GetMachinesAsync(factoryId);
             return View("Machine/Machines", machines);
         }
 
         [HttpGet]
-        public IActionResult AddMachine()
+        public async Task<IActionResult> AddMachine(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
-            return View("Machine/AddMachine", new MachineModel());
+            var factoryId = GetCurrentUserId();
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            var useFactoryLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            var model = new MachineProductDetailsModel
+            {
+                UseFactoryLocation = useFactoryLocation
+            };
+
+            return View("Machine/AddMachine", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddMachine(MachineModel newMachine)
+        public async Task<IActionResult> AddMachine(MachineProductDetailsModel newMachine, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
-            // ✅ Manual validation (لو عايزها هنا كمان) — لكن عندنا IValidatableObject في VM فمش لازم
-            if (newMachine.MinOrderQuantity.HasValue && newMachine.MinOrderQuantity.Value > newMachine.Quantity)
+            var factoryId = GetCurrentUserId();
+
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+            bool factoryHasLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            if (newMachine.MinOrderQuantity.HasValue)
             {
-                ModelState.AddModelError(nameof(newMachine.MinOrderQuantity),
-                    "Minimum order quantity cannot be greater than available quantity.");
+                if (newMachine.MinOrderQuantity.Value < 0)
+                    ModelState.AddModelError(nameof(newMachine.MinOrderQuantity), "Minimum order quantity cannot be negative.");
+
+                if (newMachine.MinOrderQuantity.Value > newMachine.Quantity)
+                    ModelState.AddModelError(nameof(newMachine.MinOrderQuantity), "Minimum order quantity cannot be greater than available quantity.");
+            }
+
+            if (newMachine.UseFactoryLocation)
+            {
+                if (!factoryHasLocation)
+                    ModelState.AddModelError(nameof(newMachine.UseFactoryLocation),
+                        "Factory location is not set. Please choose custom pickup location and enter it.");
+            }
+            else
+            {
+                if (!ModelHasCustomLocation(newMachine.Address, newMachine.Latitude, newMachine.Longitude))
+                    ModelState.AddModelError(nameof(newMachine.Address), "Please provide pickup address or coordinates.");
             }
 
             if (!ModelState.IsValid)
-            {
-                // ✅ يظهر للمستخدم في ValidationSummary + تحت الحقول
                 return View("Machine/AddMachine", newMachine);
-            }
-
-            var factoryId = GetCurrentUserId();
 
             if (!await _storeService.CanFactoryAddProductAsync(factoryId))
             {
@@ -415,33 +667,23 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Machines));
             }
 
-            try
-            {
-                var success = await _storeService.AddMachineAsync(newMachine, factoryId);
+            var success = await _storeService.AddMachineAsync(newMachine, factoryId);
 
-                if (success)
-                {
-                    TempData["Success"] = "Machine added successfully!";
-                    return RedirectToAction(nameof(Machines));
-                }
-
-                // ✅ ده خطأ عام من السيرفيس
-                ModelState.AddModelError(string.Empty, "Failed to add machine. Please try again.");
-                return View("Machine/AddMachine", newMachine);
-            }
-            catch (Exception ex)
+            if (success)
             {
-                _logger.LogError(ex, "Error adding machine");
-                ModelState.AddModelError(string.Empty, "Unexpected error occurred while adding the machine.");
-                return View("Machine/AddMachine", newMachine);
+                TempData["Success"] = "Machine added successfully!";
+                return RedirectToAction(nameof(Machines));
             }
+
+            TempData["Error"] = "Failed to add machine. Please try again.";
+            return View("Machine/AddMachine", newMachine);
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditMachine(int id)
+        public async Task<IActionResult> EditMachine(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             var machine = await _storeService.GetMachineByIdAsync(id, factoryId);
@@ -452,61 +694,89 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Machines));
             }
 
-            ViewBag.UserLoggedIn = true;
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
 
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
+            var hasAnyOrders = await _db.MachineOrders.AsNoTracking()
+                .AnyAsync(o => o.MachineStoreID == id, ct);
 
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] =
-                            $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
-
-            // ✅ نفس فكرة Material: منع تعديل بعض الحقول لو فيه Orders
-            if (!await _storeService.CanFactoryModifyProductAsync(id, factoryId, "Machine"))
-            {
-                TempData["Warning"] = "This machine has active orders. Some fields cannot be modified.";
-                ViewBag.CanModify = false;
-            }
-            else
-            {
-                ViewBag.CanModify = true;
-            }
+            ViewBag.HasAnyOrders = hasAnyOrders;
+            ViewBag.CanModify = !hasAnyOrders;
+            ViewBag.CanEditPriceQty = true;
+            ViewBag.OldQuantity = machine.Quantity;
 
             return View("Machine/EditMachine", machine);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditMachine(int id, MachineModel editMachine)
+        public async Task<IActionResult> EditMachine(int id, MachineProductDetailsModel editMachine, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("AccessDenied", "Home");
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+            bool factoryHasLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            var hasAnyOrders = await _db.MachineOrders.AsNoTracking()
+                .AnyAsync(o => o.MachineStoreID == id, ct);
+
+            ViewBag.HasAnyOrders = hasAnyOrders;
+            ViewBag.CanModify = !hasAnyOrders;
+            ViewBag.CanEditPriceQty = true;
+
+            var oldQty = await _db.MachineStores.AsNoTracking()
+                .Where(m => m.MachineID == id && m.SellerID == factoryId)
+                .Select(m => (int?)m.Quantity)
+                .FirstOrDefaultAsync(ct);
+
+            if (!oldQty.HasValue)
+            {
+                TempData["Error"] = "Machine not found or you don't have permission to edit it.";
+                return RedirectToAction(nameof(Machines));
+            }
+
+            ViewBag.OldQuantity = oldQty.Value;
+
+            if (editMachine.UseFactoryLocation && !factoryHasLocation)
+                ModelState.AddModelError(nameof(editMachine.UseFactoryLocation), "Factory location is not set. Please choose custom pickup location.");
+
+            if (!editMachine.UseFactoryLocation)
+            {
+                if (!ModelHasCustomLocation(editMachine.Address, editMachine.Latitude, editMachine.Longitude))
+                    ModelState.AddModelError(nameof(editMachine.Address), "Please provide pickup address or coordinates.");
+            }
+
+            if (hasAnyOrders)
+            {
+                ModelState.Remove(nameof(editMachine.MachineType));
+                ModelState.Remove(nameof(editMachine.MinOrderQuantity));
+                ModelState.Remove(nameof(editMachine.Status));
+                ModelState.Remove(nameof(editMachine.ManufactureDate));
+                ModelState.Remove(nameof(editMachine.Condition));
+                ModelState.Remove(nameof(editMachine.Brand));
+                ModelState.Remove(nameof(editMachine.Model));
+                ModelState.Remove(nameof(editMachine.WarrantyMonths));
+                ModelState.Remove(nameof(editMachine.CancelWindowDays));
+                ModelState.Remove(nameof(editMachine.DeliveryDays));
+
+                if (editMachine.Quantity <= oldQty.Value)
+                    ModelState.AddModelError(nameof(editMachine.Quantity),
+                        $"With existing orders, quantity must be greater than current quantity ({oldQty.Value}).");
+
+                if (editMachine.Price <= 0)
+                    ModelState.AddModelError(nameof(editMachine.Price), "Price must be greater than 0.");
+            }
+            else
+            {
+                if (editMachine.MinOrderQuantity.HasValue && editMachine.MinOrderQuantity.Value > editMachine.Quantity)
+                    ModelState.AddModelError(nameof(editMachine.MinOrderQuantity), "Minimum order quantity cannot be greater than available quantity.");
+            }
 
             if (!ModelState.IsValid)
                 return View("Machine/EditMachine", editMachine);
 
-            var factoryId = GetCurrentUserId();
             var success = await _storeService.UpdateMachineAsync(id, editMachine, factoryId);
 
             if (success)
@@ -521,7 +791,134 @@ namespace EcoRecyclersGreenTech.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteMachine(DeleteProductModel deleteMaterial)
+        public async Task<IActionResult> ChangeMachineOrderStatus(int orderId, string status, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+            {
+                TempData["Error"] = "Access denied.";
+                return RedirectToAction(nameof(MachineOrders));
+            }
+
+            var factoryId = GetCurrentUserId();
+            if (factoryId == 0)
+            {
+                TempData["Error"] = "Invalid factory.";
+                return RedirectToAction(nameof(MachineOrders));
+            }
+
+            if (!Enum.TryParse<EnumsOrderStatus>(status, true, out var newStatus))
+            {
+                TempData["Error"] = "Invalid status value.";
+                return RedirectToAction(nameof(MachineOrders));
+            }
+
+            var res = await _storeService.ChangeMachineOrderStatusAsync(factoryId, orderId, newStatus, ct);
+
+            TempData[res.Success ? "Success" : "Error"] = res.Message;
+            return RedirectToAction(nameof(MachineOrders));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MachineOrders(CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+            var orders = await _storeService.GetMachineOrdersForFactoryAsync(factoryId, take: 500);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            return View("Machine/MachineOrders", orders);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MachineOrderDetails(int id, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+
+            var row = await _db.MachineOrders.AsNoTracking()
+                .Include(o => o.MachineStore)
+                    .ThenInclude(m => m.Seller)
+                .FirstOrDefaultAsync(o => o.MachineOrderID == id, ct);
+
+            if (row == null || row.MachineStore == null)
+                return NotFound();
+
+            if (row.MachineStore.SellerID != factoryId)
+                return Forbid();
+
+            var buyer = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == row.BuyerID, ct);
+
+            var seller = row.MachineStore.Seller;
+
+            var imgs = new[]
+            {
+                row.MachineStore.MachineImgURL1,
+                row.MachineStore.MachineImgURL2,
+                row.MachineStore.MachineImgURL3
+            }
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!.Trim())
+            .Distinct()
+            .ToList();
+
+            var buyerEmail = buyer != null ? DecryptOrRaw(buyer.Email) : null;
+            var buyerPhone = buyer != null ? DecryptOrRaw(buyer.phoneNumber) : null;
+
+            var factoryEmail = seller != null ? DecryptOrRaw(seller.Email) : null;
+            var factoryPhone = seller != null ? DecryptOrRaw(seller.phoneNumber) : null;
+
+            var vm = new MachineOrderDetailsModel
+            {
+                OrderId = row.MachineOrderID,
+                OrderStatus = row.Status.ToString(),
+                OrderDate = row.OrderDate,
+                Quantity = row.Quantity,
+                UnitPrice = row.UnitPrice,
+                CancelUntil = row.CancelUntil,
+                ExpectedArrivalDate = row.ExpectedArrivalDate,
+                PickupLocation = row.PickupLocation,
+
+                TotalPrice = row.TotalPrice,
+                DepositPaid = row.DepositPaid,
+
+                MachineId = row.MachineStore.MachineID,
+                MachineType = row.MachineStore.MachineType,
+                Description = row.MachineStore.Description,
+                MachinePrice = row.MachineStore.Price,
+                MachineAvailableQty = row.MachineStore.Quantity,
+                MachineStatus = row.MachineStore.Status.ToString(),
+                MachineImages = imgs,
+
+                BuyerId = buyer?.UserId ?? row.BuyerID,
+                BuyerName = buyer?.FullName ?? "Buyer",
+                BuyerEmail = buyerEmail,
+                BuyerPhone = buyerPhone,
+                BuyerAddress = buyer?.Address,
+                BuyerProfileImg = buyer?.UserProfileImgURL,
+                BuyerVerified = buyer?.Verified ?? false,
+
+                FactoryId = seller?.UserId ?? factoryId,
+                FactoryName = seller?.FullName ?? "Factory",
+                FactoryAddress = seller?.Address,
+                FactoryEmail = factoryEmail,
+                FactoryPhone = factoryPhone,
+                FactoryProfileImg = seller?.UserProfileImgURL,
+                FactoryVerified = seller?.Verified ?? false
+            };
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            // keep same view path as your code
+            return View("Machine/MachineOrderDetails", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMachine(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
             {
@@ -529,98 +926,57 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Machines));
             }
 
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .Where(e => !string.IsNullOrWhiteSpace(e))
-                    .ToList();
-
-                TempData["Error"] = errors.Any()
-                    ? string.Join(" | ", errors)
-                    : "Invalid delete request.";
-
-                return RedirectToAction(nameof(Machines));
-            }
-
             var factoryId = GetCurrentUserId();
+            var res = await _storeService.DeleteMachineAsync(factoryId, id, ct);
 
-            // ✅ الأفضل: خليه ServiceResult زي Materials (لو انت عدلت الـService)
-            // لو لسه DeleteMachineAsync بيرجع bool، هنخليه TempData بناءً عليه:
-            var success = await _storeService.DeleteMachineAsync(deleteMaterial.Id, factoryId);
-
-            TempData[success.Success ? "Success" : "Error"] = success.Message;
-                //? "Machine deleted successfully!"
-                //: "Failed to delete machine.";
-
+            TempData[res.Success ? "Success" : "Error"] = res.Message;
             return RedirectToAction(nameof(Machines));
         }
 
         /////////////////////////// Rentals Management ///////////////////////////
 
         [HttpGet]
-        public async Task<IActionResult> Rentals()
+        public async Task<IActionResult> Rentals(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            ViewBag.UserLoggedIn = true;
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             if (factoryId == 0)
             {
                 ViewBag.UserLoggedIn = false;
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            var user = await _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == factoryId);
-
-            if (user != null)
-            {
-                ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                ViewBag.UserName = user.FullName ?? "";
-                ViewBag.IsVerified = user.Verified;
-                ViewBag.NeedsVerification = !user.Verified;
-
-                if (!user.Verified)
-                {
-                    TempData["VerificationMessage"] =
-                        $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                    TempData["ShowVerificationAlert"] = "true";
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
+            await PopulateUserViewBagsAsync(factoryId, ct);
 
             var rentals = await _storeService.GetRentalsAsync(factoryId);
             return View("Rental/Rentals", rentals);
         }
 
         [HttpGet]
-        public IActionResult AddRental()
+        public async Task<IActionResult> AddRental(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
-            // ✅ default
-            return View("Rental/AddRental", new RentalModel());
+            var factoryId = GetCurrentUserId();
+            await PopulateFactoryLocationViewBagsAsync(factoryId, ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+            var useFactoryLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            return View("Rental/AddRental", new RentalProductDetailsModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddRental(RentalModel newRental, CancellationToken ct)
+        public async Task<IActionResult> AddRental(RentalProductDetailsModel newRental, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             if (!ModelState.IsValid)
-                return View(newRental);
+                return View("Rental/AddRental", newRental);
 
             var factoryId = GetCurrentUserId();
 
@@ -651,98 +1007,117 @@ namespace EcoRecyclersGreenTech.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditRental(int id)
+        public async Task<IActionResult> EditRental(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
                 return RedirectToAction("AccessDenied", "Home");
 
             var factoryId = GetCurrentUserId();
-            var rental = await _storeService.GetRentalByIdAsync(id, factoryId);
 
+            var rental = await _storeService.GetRentalByIdAsync(id, factoryId);
             if (rental == null)
             {
                 TempData["Error"] = "Rental property not found or you don't have permission to edit it.";
                 return RedirectToAction(nameof(Rentals));
             }
 
-            ViewBag.UserLoggedIn = true;
+            var canModify = !await _db.RentalOrders.AsNoTracking()
+                .AnyAsync(o => o.RentalStoreID == id &&
+                              (o.Status == EnumsOrderStatus.Pending || o.Status == EnumsOrderStatus.Confirmed), ct);
 
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
-
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] =
-                            $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
-
-            if (!await _storeService.CanFactoryModifyProductAsync(id, factoryId, "Rental"))
-            {
-                TempData["Warning"] = "This rental has active orders. Some fields cannot be modified.";
-                ViewBag.CanModify = false;
-            }
-            else
-            {
-                ViewBag.CanModify = true;
-            }
+            ViewBag.CanModify = canModify;
 
             return View("Rental/EditRental", rental);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditRental(int id, RentalModel editRental, CancellationToken ct)
+        public async Task<IActionResult> EditRental(int id, RentalProductDetailsModel editRental, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
                 return RedirectToAction("AccessDenied", "Home");
 
-            if (!ModelState.IsValid)
-                return View("Rental/EditRental", editRental);
-
             var factoryId = GetCurrentUserId();
 
-            try
-            {
-                var result = await _storeService.UpdateRentalAsync(id, editRental, factoryId, ct);
-                if (result.Success)
-                {
-                    TempData["Success"] = result.Message;
-                    return RedirectToAction(nameof(Rentals));
-                }
+            var result = await _storeService.UpdateRentalAsync(id, editRental, factoryId, ct);
 
-                ModelState.AddModelError(string.Empty, result.Message);
-                return View("Rental/EditRental", editRental);
-            }
-            catch (Exception ex)
+            var rental = await _storeService.GetRentalByIdAsync(id, factoryId);
+            if (rental == null)
             {
-                _logger.LogError(ex, "Error updating rental");
-                ModelState.AddModelError(string.Empty, "Unexpected error occurred while updating the rental property.");
+                ModelState.AddModelError(string.Empty, "Rental not found.");
+                ViewBag.CanModify = true;
                 return View("Rental/EditRental", editRental);
             }
+
+            ViewBag.CanModify = await _db.RentalOrders.AsNoTracking()
+                .AnyAsync(o => o.RentalOrderID == id && o.Status != EnumsOrderStatus.Cancelled, ct);
+
+            if (result.Success)
+                ViewBag.Success = result.Message;
+            else
+                ViewBag.Warning = result.Message;
+
+            return View("Rental/EditRental", rental);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteRental(DeleteProductModel deleteRental)
+        public async Task<IActionResult> ChangeRentalOrderStatus(int orderId, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            var res = await _storeService.ChangeRentalOrderStatusAsync(ownerId, orderId, ct);
+
+            TempData[res.Success ? "Success" : "Error"] = res.Message;
+            return RedirectToAction(nameof(RentalOrders));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RentalOrders(CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            var groups = await _storeService.GetRentalOrdersForFactoryAsync(ownerId, take: 400, ct: ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(ownerId, ct);
+
+            return View("Rental/RentalOrders", groups);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RentalOrderDetails(int rentalId, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            var orders = await _storeService.GetRentalOrderDetailsOwnerAsync(ownerId, rentalId, take: 400, ct: ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(ownerId, ct);
+
+            if (orders == null || orders.Count == 0)
+                return NotFound();
+
+            return View("Rental/RentalOrderDetails", orders);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRentalOrderBuyerInfo(int rentalId, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return Json(new { success = false, message = "Access denied." });
+
+            var ownerId = GetCurrentUserId();
+            var rows = await _storeService.GetOrdersForRentalForOwnerAsync(ownerId, rentalId, ct);
+
+            return Json(new { success = true, rentalId, rows });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteRental(int rentalId, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
             {
@@ -769,7 +1144,7 @@ namespace EcoRecyclersGreenTech.Controllers
 
             try
             {
-                var result = await _storeService.DeleteRentalAsync(deleteRental.Id, factoryId);
+                var result = await _storeService.DeleteRentalAsync(rentalId, factoryId, ct);
                 TempData[result.Success ? "Success" : "Error"] = result.Message;
                 return RedirectToAction(nameof(Rentals));
             }
@@ -784,69 +1159,74 @@ namespace EcoRecyclersGreenTech.Controllers
         /////////////////////////// Auctions Management ///////////////////////////
 
         [HttpGet]
-        public async Task<IActionResult> Auctions()
+        public async Task<IActionResult> Auctions(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            ViewBag.UserLoggedIn = true;
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             if (factoryId == 0)
             {
                 ViewBag.UserLoggedIn = false;
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            // ✅ نفس ستايل Materials/Machines
-            var user = await _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == factoryId);
-
-            if (user != null)
-            {
-                ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                ViewBag.UserName = user.FullName ?? "";
-                ViewBag.IsVerified = user.Verified;
-                ViewBag.NeedsVerification = !user.Verified;
-
-                if (!user.Verified)
-                {
-                    TempData["VerificationMessage"] =
-                        $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                    TempData["ShowVerificationAlert"] = "true";
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
+            await PopulateUserViewBagsAsync(factoryId, ct);
 
             var auctions = await _storeService.GetAuctionsAsync(factoryId);
             return View("Auction/Auctions", auctions);
         }
 
         [HttpGet]
-        public IActionResult AddAuction()
+        public async Task<IActionResult> AddAuction(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
-            return View("Auction/AddAuction", new AuctionModel());
+            var factoryId = GetCurrentUserId();
+            await PopulateFactoryLocationViewBagsForAuctionAsync(factoryId, ct);
+
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
+
+            var useFactoryLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            var model = new AuctionProductDetailsModel
+            {
+                UseFactoryLocation = useFactoryLocation
+            };
+
+            return View("Auction/AddAuction", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddAuction(AuctionModel newAuction)
+        public async Task<IActionResult> AddAuction(AuctionProductDetailsModel newAuction, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
+
+            var factoryId = GetCurrentUserId();
+            await PopulateFactoryLocationViewBagsForAuctionAsync(factoryId, ct);
+
+            bool factoryHasLocation = (bool)(ViewBag.FactoryHasLocation ?? false);
+
+            if (newAuction.EndDate.HasValue && newAuction.EndDate.Value <= newAuction.StartDate)
+                ModelState.AddModelError(nameof(newAuction.EndDate), "End date/time must be after start date/time.");
+
+            if (newAuction.UseFactoryLocation)
+            {
+                if (!factoryHasLocation)
+                    ModelState.AddModelError(nameof(newAuction.UseFactoryLocation),
+                        "Factory location is not set. Please choose custom pickup location and enter it.");
+            }
+            else
+            {
+                if (!ModelHasCustomLocation(newAuction.Address, newAuction.Latitude, newAuction.Longitude))
+                    ModelState.AddModelError(nameof(newAuction.Address), "Please provide pickup address or coordinates.");
+            }
 
             if (!ModelState.IsValid)
                 return View("Auction/AddAuction", newAuction);
-
-            var factoryId = GetCurrentUserId();
 
             if (!await _storeService.CanFactoryAddProductAsync(factoryId))
             {
@@ -854,29 +1234,20 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Auctions));
             }
 
-            try
-            {
-                var success = await _storeService.AddAuctionAsync(newAuction, factoryId);
+            var success = await _storeService.AddAuctionAsync(newAuction, factoryId);
 
-                if (success)
-                {
-                    TempData["Success"] = "Auction added successfully!";
-                    return RedirectToAction(nameof(Auctions));
-                }
-
-                ModelState.AddModelError(string.Empty, "Failed to add auction. Please try again.");
-                return View("Auction/AddAuction", newAuction);
-            }
-            catch (Exception ex)
+            if (success)
             {
-                _logger.LogError(ex, "Error adding auction");
-                ModelState.AddModelError(string.Empty, "Unexpected error occurred while adding the auction.");
-                return View("Auction/AddAuction", newAuction);
+                TempData["Success"] = "Auction added successfully!";
+                return RedirectToAction(nameof(Auctions));
             }
+
+            TempData["Error"] = "Failed to add auction. Please try again.";
+            return View("Auction/AddAuction", newAuction);
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditAuction(int id)
+        public async Task<IActionResult> EditAuction(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
                 return RedirectToAction("AccessDenied", "Home");
@@ -890,38 +1261,11 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Auctions));
             }
 
-            ViewBag.UserLoggedIn = true;
+            var hasActiveOrders = await _db.AuctionOrders.AsNoTracking()
+                .AnyAsync(o => o.AuctionStoreID == id &&
+                              (o.Status == EnumsOrderStatus.Pending || o.Status == EnumsOrderStatus.Confirmed), ct);
 
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
-
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] =
-                            $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
-
-            // ✅ نفس فكرة Material/Machine: منع تعديل بعض الحقول لو فيه Orders
-            if (!await _storeService.CanFactoryModifyProductAsync(id, factoryId, "Auction"))
+            if (hasActiveOrders)
             {
                 TempData["Warning"] = "This auction has active orders. Some fields cannot be modified.";
                 ViewBag.CanModify = false;
@@ -936,10 +1280,10 @@ namespace EcoRecyclersGreenTech.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditAuction(int id, AuctionModel editAuction)
+        public async Task<IActionResult> EditAuction(int id, AuctionProductDetailsModel editAuction, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             if (!ModelState.IsValid)
                 return View("Auction/EditAuction", editAuction);
@@ -967,9 +1311,48 @@ namespace EcoRecyclersGreenTech.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> AuctionOrders(CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            var groups = await _storeService.GetAuctionOrdersForFactoryAsync(ownerId, take: 400, ct: ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(ownerId, ct);
+            return View("Auction/AuctionOrders", groups);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AuctionOrderDetails(int auctionId, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            var orders = await _storeService.GetAuctionOrdersByAuctionIdForFactoryAsync(ownerId, auctionId, ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(ownerId, ct);
+
+            return View("Auction/AuctionOrderDetails", orders);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteAuction(DeleteProductModel deleteAuction)
+        public async Task<IActionResult> ChangeAuctionOrderStatus(int auctionId, int? winnerOrderId, CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            var res = await _storeService.ConfirmAuctionWinnerAsync(ownerId, auctionId, winnerOrderId, ct);
+
+            TempData[res.Success ? "Success" : "Error"] = res.Message;
+            return RedirectToAction(nameof(AuctionOrderDetails), new { auctionId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAuction(DeleteProductModel deleteAuction, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
             {
@@ -996,10 +1379,7 @@ namespace EcoRecyclersGreenTech.Controllers
 
             try
             {
-                // ✅ نفس فكرة Machine (لو عندك DeleteAuctionAsync بيرجع ServiceResult)
-                // لو بيرجع bool بس: هنعدّل تحت
-                var result = await _storeService.DeleteAuctionAsync(deleteAuction.Id, factoryId);
-
+                var result = await _storeService.DeleteAuctionAsync(deleteAuction.Id, factoryId, ct);
                 TempData[result.Success ? "Success" : "Error"] = result.Message;
                 return RedirectToAction(nameof(Auctions));
             }
@@ -1014,101 +1394,52 @@ namespace EcoRecyclersGreenTech.Controllers
         /////////////////////////// Jobs Management ///////////////////////////
 
         [HttpGet]
-        public async Task<IActionResult> Jobs()
+        public async Task<IActionResult> Jobs(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            ViewBag.UserLoggedIn = true;
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             if (factoryId == 0)
             {
                 ViewBag.UserLoggedIn = false;
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            // ✅ نفس ستايل Materials/Machines/Rentals
-            var user = await _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == factoryId);
-
-            if (user != null)
-            {
-                ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                ViewBag.UserName = user.FullName ?? "";
-                ViewBag.IsVerified = user.Verified;
-                ViewBag.NeedsVerification = !user.Verified;
-
-                if (!user.Verified)
-                {
-                    TempData["VerificationMessage"] =
-                        $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                    TempData["ShowVerificationAlert"] = "true";
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
+            await PopulateUserViewBagsAsync(factoryId, ct);
 
             var jobs = await _storeService.GetJobsAsync(factoryId);
-            return View("Job/Jobs" , jobs);
+            return View("Job/Jobs", jobs);
         }
 
         [HttpGet]
-        public async Task<IActionResult> AddJob()
+        public async Task<IActionResult> AddJob(CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
-
-            ViewBag.UserLoggedIn = true;
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             if (factoryId == 0)
             {
                 ViewBag.UserLoggedIn = false;
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
             }
 
-            var user = await _db.Users
-                .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == factoryId);
+            await PopulateUserViewBagsAsync(factoryId, ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(factoryId, ct);
 
-            if (user != null)
-            {
-                ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                ViewBag.Type = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                ViewBag.UserName = user.FullName ?? "";
-                ViewBag.IsVerified = user.Verified;
-                ViewBag.NeedsVerification = !user.Verified;
-
-                if (!user.Verified)
-                {
-                    TempData["VerificationMessage"] =
-                        $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                    TempData["ShowVerificationAlert"] = "true";
-                }
-            }
-            else
-            {
-                ViewBag.UserLoggedIn = false;
-            }
-
-            // ✅ default زي AddMachine/AddRental
-            return View("Job/AddJob", new JobModel());
+            return View("Job/AddJob", new JobProductDetailsModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddJob(JobModel newJob, CancellationToken ct)
+        public async Task<IActionResult> AddJob(JobProductDetailsModel newJob, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             if (!ModelState.IsValid)
-                return View(newJob);
+                return View("Job/AddJob", newJob);
 
             var factoryId = GetCurrentUserId();
 
@@ -1120,7 +1451,6 @@ namespace EcoRecyclersGreenTech.Controllers
 
             try
             {
-                // ✅ ServiceResult زي Rentals
                 var result = await _storeService.AddJobAsync(newJob, factoryId, ct);
 
                 if (result.Success)
@@ -1139,12 +1469,12 @@ namespace EcoRecyclersGreenTech.Controllers
                 return View("Job/AddJob", newJob);
             }
         }
- 
+
         [HttpGet]
-        public async Task<IActionResult> EditJob(int id)
+        public async Task<IActionResult> EditJob(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
             var job = await _storeService.GetJobByIdAsync(id, factoryId);
@@ -1155,38 +1485,14 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Jobs));
             }
 
-            ViewBag.UserLoggedIn = true;
-
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
-
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] =
-                            $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
+            // keep same behavior: these viewbags were based on session user
+            var sessionUserId = HttpContext.Session.GetInt32("UserID");
+            if (sessionUserId.HasValue)
+                await PopulateUserViewBagsAsync(sessionUserId.Value, ct);
             else
-            {
                 ViewBag.UserLoggedIn = false;
-            }
 
-            // ✅ Lock editing if has any orders
-            var hasOrders = await _db.JobOrders.AsNoTracking().AnyAsync(o => o.JobStoreID == id);
+            var hasOrders = await _db.JobOrders.AsNoTracking().AnyAsync(o => o.JobStoreID == id, ct);
             ViewBag.CanModify = !hasOrders;
 
             job.Id = id;
@@ -1195,12 +1501,11 @@ namespace EcoRecyclersGreenTech.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditJob(int id, JobModel editJob, CancellationToken ct)
+        public async Task<IActionResult> EditJob(int id, JobProductDetailsModel editJob, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
-            // ✅ prevent update if job has orders
             var hasOrders = await _db.JobOrders.AsNoTracking().AnyAsync(o => o.JobStoreID == id, ct);
             if (hasOrders)
             {
@@ -1215,7 +1520,6 @@ namespace EcoRecyclersGreenTech.Controllers
 
             try
             {
-                // ✅ uses your service update (already modified from previous message)
                 var result = await _storeService.UpdateJobAsync(id, editJob, factoryId, ct);
 
                 if (result.Success)
@@ -1240,12 +1544,11 @@ namespace EcoRecyclersGreenTech.Controllers
         public async Task<IActionResult> UpdateJobOrderStatus(int jobId, int jobOrderId, string status, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
-            if (factoryId == 0) return RedirectToAction("Index", "Home");
+            if (factoryId == 0) return DenyToHome();
 
-            // ✅ تأكد job تبع المصنع
             var owns = await _db.JobStores.AsNoTracking()
                 .AnyAsync(j => j.JobID == jobId && j.PostedBy == factoryId, ct);
 
@@ -1278,45 +1581,33 @@ namespace EcoRecyclersGreenTech.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> JobOrders(CancellationToken ct)
+        {
+            if (!IsFactoryUser() || !IsVerifiedFactory())
+                return DenyToHome();
+
+            var ownerId = GetCurrentUserId();
+            //var groups = await _storeService.GetJobOrdersForFactoryAsync(ownerId, ct: ct);
+            ViewBag.UserLoggedIn = await PopulateUserViewBagsAsync(ownerId, ct);
+            return View("Job/JobOrders");
+        }
+
+        [HttpGet]
         public async Task<IActionResult> JobDetails(int id, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
-                return RedirectToAction("Index", "Home");
+                return DenyToHome();
 
             var factoryId = GetCurrentUserId();
-            if (factoryId == 0) return RedirectToAction("Index", "Home");
+            if (factoryId == 0) return DenyToHome();
 
-            ViewBag.UserLoggedIn = true;
-
-            var userId = HttpContext.Session.GetInt32("UserID");
-            if (userId.HasValue)
-            {
-                var user = await _db.Users
-                    .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == userId.Value);
-
-                if (user != null)
-                {
-                    ViewBag.Email = _dataCiphers.Decrypt(user.Email!);
-                    ViewBag.UserType = user.UserType?.TypeName ?? GetCurrentUserTypeName();
-                    ViewBag.UserName = user.FullName ?? "";
-                    ViewBag.IsVerified = user.Verified;
-                    ViewBag.NeedsVerification = !user.Verified;
-
-                    if (!user.Verified)
-                    {
-                        TempData["VerificationMessage"] =
-                            $"Welcome {user.FullName}! Please go to settings to verification your account.";
-                        TempData["ShowVerificationAlert"] = "true";
-                    }
-                }
-            }
+            // keep same behavior: viewbags from session
+            var sessionUserId = HttpContext.Session.GetInt32("UserID");
+            if (sessionUserId.HasValue)
+                await PopulateUserViewBagsAsync(sessionUserId.Value, ct);
             else
-            {
                 ViewBag.UserLoggedIn = false;
-            }
 
-            // Job نفسه
             var job = await _storeService.GetJobByIdAsync(id, factoryId);
             if (job == null)
             {
@@ -1324,13 +1615,9 @@ namespace EcoRecyclersGreenTech.Controllers
                 return RedirectToAction(nameof(Jobs));
             }
 
-            // هل فيه Orders؟
             var hasOrders = await _db.JobOrders.AsNoTracking().AnyAsync(o => o.JobStoreID == id, ct);
 
-            // Orders + Users
             var orders = await _storeService.GetJobOrdersForFactoryAsync(id, factoryId, ct);
-
-            // Decrypt emails داخل controller (أفضل من view)
             foreach (var o in orders)
             {
                 if (!string.IsNullOrWhiteSpace(o.Email))
@@ -1345,12 +1632,12 @@ namespace EcoRecyclersGreenTech.Controllers
                 Orders = orders
             };
 
-            return View("Job/JobDetails", vm); // Views/Factory/JobDetails.cshtml
+            return View("Job/JobDetails", vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteJob(DeleteProductModel deleteJob)
+        public async Task<IActionResult> DeleteJob(DeleteProductModel deleteJob, CancellationToken ct)
         {
             if (!IsFactoryUser() || !IsVerifiedFactory())
             {
@@ -1377,7 +1664,6 @@ namespace EcoRecyclersGreenTech.Controllers
 
             try
             {
-                // ✅ ServiceResult زي Rentals/Auctions
                 var result = await _storeService.DeleteJobAsync(deleteJob.Id, factoryId);
                 TempData[result.Success ? "Success" : "Error"] = result.Message;
                 return RedirectToAction(nameof(Jobs));
@@ -1388,93 +1674,6 @@ namespace EcoRecyclersGreenTech.Controllers
                 TempData["Error"] = "An error occurred while deleting the job posting.";
                 return RedirectToAction(nameof(Jobs));
             }
-        }
-
-        // ==================== PUBLIC MARKETPLACE ====================
-        [AllowAnonymous]
-        [HttpGet]
-        public async Task<IActionResult> Marketplace(string? type = null)
-        {
-            var filter = new SearchFilterModel
-            {
-                ProductType = type
-            };
-
-            ViewBag.ProductType = type;
-
-            switch (type?.ToLower())
-            {
-                case "materials":
-                    var materials = await _storeService.GetPublicMaterialsAsync(filter);
-                    return View("Marketplace/Materials", materials);
-
-                case "machines":
-                    var machines = await _storeService.GetPublicMachinesAsync(filter);
-                    return View("Marketplace/Machines", machines);
-
-                case "rentals":
-                    var rentals = await _storeService.GetPublicRentalsAsync(filter);
-                    return View("Marketplace/Rentals", rentals);
-
-                case "auctions":
-                    var auctions = await _storeService.GetPublicAuctionsAsync(filter);
-                    return View("Marketplace/Auctions", auctions);
-
-                case "jobs":
-                    var jobs = await _storeService.GetPublicJobsAsync(filter);
-                    return View("Marketplace/Jobs", jobs);
-
-                default:
-                    var allProducts = new
-                    {
-                        Materials = await _storeService.GetPublicMaterialsAsync(),
-                        Machines = await _storeService.GetPublicMachinesAsync(),
-                        Rentals = await _storeService.GetPublicRentalsAsync(),
-                        Auctions = await _storeService.GetPublicAuctionsAsync(),
-                        Jobs = await _storeService.GetPublicJobsAsync()
-                    };
-                    return View("Marketplace/Index", allProducts);
-            }
-        }
-
-        // ==================== STATUS CHANGE ====================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleProductStatus([FromBody] StatusChangeModel model)
-        {
-            if (!IsFactoryUser() || !IsVerifiedFactory())
-                return Json(new { success = false, message = "Access denied" });
-
-            var factoryId = GetCurrentUserId();
-            var success = await _storeService.ToggleProductStatusAsync(model.Id, model.Status!, factoryId, model.ProductType!);
-
-            return Json(new
-            {
-                success = success,
-                message = success ? $"Status updated to {model.Status}" : "Failed to update status"
-            });
-        }
-
-        // ==================== AJAX ENDPOINTS ====================
-        [HttpGet]
-        public async Task<IActionResult> GetDashboardStats()
-        {
-            if (!IsFactoryUser() || !IsVerifiedFactory())
-                return Json(new { error = "Access denied" });
-
-            var factoryId = GetCurrentUserId();
-            var stats = await _storeService.GetDashboardStatsAsync(factoryId);
-
-            return Json(new
-            {
-                totalProducts = stats.TotalProducts,
-                activeMaterials = stats.ActiveMaterials,
-                activeMachines = stats.ActiveMachines,
-                activeRentals = stats.ActiveRentals,
-                activeAuctions = stats.ActiveAuctions,
-                activeJobs = stats.ActiveJobs,
-                pendingOrders = stats.PendingOrders
-            });
         }
     }
 }

@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "ContainingType": "EcoRecyclersGreenTech.Controllers.PaymentsController",
+    "Method": "Cancel",
+    "RelativePath": "api/payments/cancel",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EcoRecyclersGreenTech.Controllers.PaymentsController",
+    "Method": "StripeWebhook",
+    "RelativePath": "api/payments/stripe-webhook",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EcoRecyclersGreenTech.Controllers.PaymentsController",
+    "Method": "Success",
+    "RelativePath": "api/payments/success",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]

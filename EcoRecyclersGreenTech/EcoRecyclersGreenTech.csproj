@@ -22,7 +22,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="10.0.2" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders.TagHelpers" Version="1.3.0" />
+    <PackageReference Include="Stripe" Version="1.12.0" />
+    <PackageReference Include="Stripe.net" Version="50.2.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 

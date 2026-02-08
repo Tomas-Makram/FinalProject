@@ -6,7 +6,7 @@ namespace EcoRecyclersGreenTech.Data.Users
     public class User
     {
         [Key]
-        public int UserID { get; set; }
+        public int UserId { get; set; }
 
         public string? UserProfileImgURL { get; set; } = null;
         public string? FullName { get; set; }
@@ -81,5 +81,9 @@ namespace EcoRecyclersGreenTech.Data.Users
         // Account security
         public bool Blocked { get; set; } = false;
         public int FailedLoginAttempts { get; set; } = 0;
+
+        // Accounting Paying
+        public ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
+        public Wallet? Wallet { get; set; }
     }
 }

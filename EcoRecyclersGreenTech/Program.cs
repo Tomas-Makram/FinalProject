@@ -1,56 +1,60 @@
 ﻿using EcoRecyclersGreenTech.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using EcoRecyclersGreenTech.Services;
+using EcoRecyclersGreenTech.Data.Users;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
-using EcoRecyclersGreenTech.Data.Users;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
-
 builder.Services.AddHttpContextAccessor();
 
-// Add services to send Emails
+// Emails
 builder.Services.AddTransient<IEmailSender, MailService>();
-
-// Add services to Emails Templates
 builder.Services.AddScoped<IEmailTemplateService, MailService>();
 
-// Added service for Dark/Light Mode (Theme)
+// App Services
 builder.Services.AddSingleton<IThemeService, ThemeService>();
-
-// Added service for Upload Images
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
-
-// Added Service for send otp
 builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<StripePaymentService>();
 
-// Added Service Location
-builder.Services.AddHttpClient<ILocationService, LocationService>();
-
-// Register services
 builder.Services.AddScoped<IFactoryStoreService, FactoryStoreService>();
-
-// AI Search 
 builder.Services.AddScoped<IFilterAIService, FilterAIService>();
 
 // Password Hasher
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-// Add Session Security
+//// Pricing Options
+//builder.Services.Configure<PricingOptions>(opt =>
+//{
+//    opt.PlatformFeePercent = 0.02m; // 2%
+//    opt.DepositPercent = 0.10m;     // 10%
+//});
+
+// Location Service (HttpClient)
+builder.Services.AddHttpClient<ILocationService, LocationService>();
+
+// Database
+builder.Services.AddDbContext<DBContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Connection"))
+);
+
+// Session
 builder.Services.AddSession(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.IsEssential = true;
     options.IdleTimeout = TimeSpan.FromMinutes(30);
 });
 
-// Data Protection Configuration
+// Data Protection (Persist Keys)
 var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "data-protection-keys");
 Directory.CreateDirectory(keysFolder);
 
@@ -58,31 +62,29 @@ builder.Services.AddDataProtection()
     .SetApplicationName("EcoRecyclersGreenTech")
     .PersistKeysToFileSystem(new DirectoryInfo(keysFolder));
 
-// Authentication Cookies
+// Authentication (Cookies)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Home/Error";
+
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SameSite = SameSiteMode.Lax;   // ✅ يسمح بالرجوع من Stripe
+        options.Cookie.IsEssential = true;
+
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
     });
 
-// Register Custom Services
+// Custom Services
 builder.Services.AddScoped<IDataCiphers, DataCiphers>();
 builder.Services.AddScoped<DataHasher, PasswordHasherService>();
 
-
-// Database Connection
-builder.Services.AddDbContext<DBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Connection"))
-);
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -96,6 +98,11 @@ app.UseRouting();
 app.UseSession();
 
 // Routing Secure
+
+// Authentication/Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.Use(async (context, next) =>
 {
     bool sessionEmpty = !context.Session.GetInt32("UserID").HasValue;
@@ -109,10 +116,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseAuthentication();
-app.UseAuthorization();
-
-// Middleware Security (Routing)
+// Middleware Security Headers (CSP + Routing)
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
 app.MapControllerRoute(

@@ -1,0 +1,870 @@
+﻿@model (EcoRecyclersGreenTech.Data.Orders.RentalOrder order, EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel item)
+
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Rental Order Details";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var order = Model.order;
+    var item = Model.item;
+
+    var st = order.Status.ToString();
+    var canDeletePending = (ViewBag.CanDeletePending as bool?) == true;
+
+    var isPending = order.Status == EcoRecyclersGreenTech.Data.Orders.EnumsOrderStatus.Pending;
+    var isCanceled = order.Status == EcoRecyclersGreenTech.Data.Orders.EnumsOrderStatus.Cancelled;
+
+    var currency = (ViewBag.WalletCurrency as string) ?? "EGP";
+
+    string orderBadge(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "pending" => "bg-warning text-dark",
+            "confirmed" => "bg-info text-dark",
+            "processing" => "bg-primary",
+            "readyforpickup" => "bg-primary",
+            "pickedup" => "bg-success",
+            "shipped" => "bg-primary",
+            "delivered" => "bg-success",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            "refunded" => "bg-secondary",
+            "returned" => "bg-secondary",
+            "paymentreceived" => "bg-success",
+            "disputed" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    // Contact
+    var sellerEmail = (item.SellerEmail ?? "").Trim();
+    var sellerPhone = (item.SellerPhone ?? "").Trim();
+    var hasContact = !string.IsNullOrWhiteSpace(sellerEmail) || !string.IsNullOrWhiteSpace(sellerPhone);
+
+    // ✅ Location Links
+    string? rentalMapsUrl = null;
+    if (item.RentalLatitude.HasValue && item.RentalLongitude.HasValue)
+    {
+        var lat = item.RentalLatitude.Value.ToString(CultureInfo.InvariantCulture);
+        var lng = item.RentalLongitude.Value.ToString(CultureInfo.InvariantCulture);
+        rentalMapsUrl = $"https://www.google.com/maps?q={lat},{lng}";
+    }
+
+    string? factoryMapsUrl = null;
+    if (item.FactoryLatitude.HasValue && item.FactoryLongitude.HasValue)
+    {
+        var lat = item.FactoryLatitude.Value.ToString(CultureInfo.InvariantCulture);
+        var lng = item.FactoryLongitude.Value.ToString(CultureInfo.InvariantCulture);
+        factoryMapsUrl = $"https://www.google.com/maps?q={lat},{lng}";
+    }
+
+    // Images
+    var rentalImgs = (item.ImageUrls ?? new List<string>())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Select(x => x.Trim())
+        .Distinct()
+        .ToList();
+
+    var factoryImgs = (item.FactoryImageUrls ?? new List<string>())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Select(x => x.Trim())
+        .Distinct()
+        .ToList();
+
+    var rentalTitle = !string.IsNullOrWhiteSpace(item.Name) ? item.Name : "Rental";
+    var factoryTitle = !string.IsNullOrWhiteSpace(item.FactoryName) ? item.FactoryName : (item.SellerName ?? "Factory");
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-file-text"></i>
+                        </div>
+                        <h3 class="mb-1 text-section-title">@ViewData["Title"]</h3>
+                        <p class="mb-0 text-muted small text-label">Order #<span class="fw-semibold">@order.RentalOrderID</span> • <span class="badge @orderBadge(st)">@st</span></p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index" asp-controller="CraftsMan">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="MyRentalOrders">My Rental Orders</a></li>
+                                <li class="breadcrumb-item active text-label" aria-current="page">@ViewData["Title"]</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="premium-card alert alert-success mb-4">
+                                @TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="premium-card alert alert-danger mb-4">
+                                @TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <!-- Content -->
+                        <div class="row g-4">
+                            <!-- LEFT: ORDER -->
+                            <div class="col-lg-5">
+                                <div class="premium-card">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <h5 class="mb-0 text-section-title">Order Information</h5>
+                                        <span class="badge @orderBadge(st)">@st</span>
+                                    </div>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-6">
+                                            <div class="text-muted small text-label">Order Date</div>
+                                            <div class="fw-semibold text-label">@order.OrderDate.ToString("yyyy-MM-dd")</div>
+                                            <div class="text-muted small text-label">@order.OrderDate.ToString("HH:mm")</div>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <div class="text-muted small text-label">Months Paid</div>
+                                            <div class="fw-semibold text-label">@order.MonthsPaid</div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-3" />
+
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <div>
+                                            <div class="text-muted small text-label">Amount Paid</div>
+                                            <div class="fw-bold fs-5 text-label">
+                                                @order.AmountPaid.ToString("N2")
+                                                <span class="text-muted fs-6">@currency</span>
+                                            </div>
+                                        </div>
+                                        <i class="bi bi-receipt fs-3 text-muted"></i>
+                                    </div>
+
+                                    <!-- Delete Button -->
+                                    @if (canDeletePending && isPending)
+                                    {
+                                        <form asp-action="CancelRentalOrder" method="post" class="d-grid">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="orderId" value="@order.RentalOrderID" />
+                                            <button class="btn btn-outline-danger"
+                                                    onclick="return confirm('Delete this pending request? You will be refunded.');">
+                                                <i class="bi bi-trash me-1"></i> Cancel Request
+                                            </button>
+                                        </form>
+
+                                        <div class="text-muted small mt-2 text-label">
+                                            You can delete only while status is <b>Pending</b>.
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted small text-label">
+                                            You can delete only while status is <b>Pending</b>.
+                                        </div>
+                                    }
+
+                                    @if (isCanceled)
+                                    {
+                                        <div class="alert alert-warning mt-3 mb-0">
+                                            <div class="fw-semibold text-label">This rental has already been rented.</div>
+                                            <div class="small text-label">
+                                                Another customer confirmed the order first, so your request was canceled.
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- RIGHT: RENTAL + FACTORY -->
+                            <div class="col-lg-7">
+                                <!-- Rental Card -->
+                                <div class="premium-card mb-4">
+                                    <div class="d-flex align-items-start justify-content-between gap-2">
+                                        <div>
+                                            <h5 class="mb-1 text-section-title">Rental Details</h5>
+                                            <div class="fw-semibold text-label">@rentalTitle</div>
+
+                                            @if (!string.IsNullOrWhiteSpace(item.RentalAddress))
+                                            {
+                                                <div class="text-muted small text-label">
+                                                    <i class="bi bi-geo-alt me-1"></i>@item.RentalAddress
+                                                </div>
+                                            }
+
+                                            <!-- Rental Location Link -->
+                                            <div class="mt-2">
+                                                @if (!string.IsNullOrWhiteSpace(rentalMapsUrl))
+                                                {
+                                                    <a class="btn btn-sm btn-outline-primary" href="@rentalMapsUrl" target="_blank" rel="noopener">
+                                                        <i class="bi bi-map me-1"></i> View Rental Location
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small text-label">Rental location not available.</span>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="text-end">
+                                            <div class="text-muted small text-label">Price / month</div>
+                                            <div class="fw-bold fs-5 text-label">
+                                                @item.Price.ToString("N2")
+                                                <span class="text-muted fs-6">@currency</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-3" />
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-4">
+                                            <div class="text-muted small text-label">Area</div>
+                                            <div class="fw-semibold text-label">@((item.RentalArea.HasValue) ? item.RentalArea.Value.ToString("N2") : "—")</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-muted small text-label">Available From</div>
+                                            <div class="fw-semibold text-label">@item.AvailableFrom?.ToString("yyyy-MM-dd")</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-muted small text-label">Available Until</div>
+                                            <div class="fw-semibold text-label">@item.AvailableUntil?.ToString("yyyy-MM-dd")</div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-3" />
+
+                                    <div class="text-muted small mb-2 text-label">Utilities</div>
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        @{
+                                            var hasElec = item.HasElectricity ?? false;
+                                            var hasWater = item.HasWater ?? false;
+                                            var isFurnished = item.IsFurnished ?? false;
+                                        }
+
+                                        <span class="badge @(hasElec ? "bg-success-subtle text-success border" : "bg-light text-dark border")">
+                                            <i class="bi bi-lightning-charge me-1"></i>@(hasElec ? "Electricity" : "No Electricity")
+                                        </span>
+                                        <span class="badge @(hasWater ? "bg-success-subtle text-success border" : "bg-light text-dark border")">
+                                            <i class="bi bi-droplet me-1"></i>@(hasWater ? "Water" : "No Water")
+                                        </span>
+                                        <span class="badge @(isFurnished ? "bg-success-subtle text-success border" : "bg-light text-dark border")">
+                                            <i class="bi bi-house-check me-1"></i>@(isFurnished ? "Furnished" : "Not Furnished")
+                                        </span>
+
+                                        @if (!string.IsNullOrWhiteSpace(item.RentalCondition))
+                                        {
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="bi bi-info-circle me-1"></i>@item.RentalCondition
+                                            </span>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                                    {
+                                        <hr class="my-3" />
+                                        <div class="text-muted small mb-1 text-label">Description</div>
+                                        <div class="text-label">@item.Description</div>
+                                    }
+
+                                    @if (rentalImgs.Any())
+                                    {
+                                        <hr class="my-3" />
+                                        <div class="text-muted small mb-2 text-label">Rental Images</div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach (var img in rentalImgs)
+                                            {
+                                                <a href="@img" target="_blank" rel="noopener">
+                                                    <img src="@img" class="rounded border"
+                                                         style="width:84px;height:72px;object-fit:cover;" />
+                                                </a>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Factory Card -->
+                                <div class="premium-card">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div class="d-flex align-items-start gap-3">
+                                            @if (!string.IsNullOrWhiteSpace(item.SellerProfileImgUrl))
+                                            {
+                                                <img src="@item.SellerProfileImgUrl"
+                                                     class="rounded-circle border"
+                                                     style="width:52px;height:52px;object-fit:cover;"
+                                                     alt="Owner" />
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle border d-flex align-items-center justify-content-center text-muted"
+                                                     style="width:52px;height:52px;">
+                                                    <i class="bi bi-person fs-4"></i>
+                                                </div>
+                                            }
+
+                                            <div>
+                                                <h5 class="mb-1 text-section-title">Factory Details</h5>
+
+                                                <div class="fw-semibold text-label">
+                                                    <i class="bi bi-buildings me-1"></i>@factoryTitle
+                                                    @if (item.IsVerifiedSeller)
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success ms-2">Verified</span>
+                                                    }
+                                                </div>
+
+                                                @if (!string.IsNullOrWhiteSpace(item.SellerName))
+                                                {
+                                                    <div class="text-muted small text-label">
+                                                        <i class="bi bi-person me-1"></i>Owner:
+                                                        <span class="fw-semibold">@item.SellerName</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-3" />
+
+                                    <!-- Factory Location -->
+                                    <div class="mb-3">
+                                        <div class="text-muted small mb-1 text-label">Factory Location</div>
+
+                                        @if (!string.IsNullOrWhiteSpace(item.FactoryAddress))
+                                        {
+                                            <div class="fw-semibold text-label">
+                                                <i class="bi bi-geo-alt me-1"></i>@item.FactoryAddress
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted text-label">—</div>
+                                        }
+
+                                        <div class="mt-2">
+                                            @if (!string.IsNullOrWhiteSpace(factoryMapsUrl))
+                                            {
+                                                <a class="btn btn-sm btn-outline-primary" href="@factoryMapsUrl" target="_blank" rel="noopener">
+                                                    <i class="bi bi-map me-1"></i> View Factory Location
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small text-label">Factory location not available.</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact -->
+                                    <div class="mb-3">
+                                        <div class="text-muted small mb-1 text-label">Contact</div>
+
+                                        @if (hasContact)
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @if (!string.IsNullOrWhiteSpace(sellerEmail))
+                                                {
+                                                    <a class="btn btn-sm btn-outline-dark" href="mailto:@sellerEmail">
+                                                        <i class="bi bi-envelope me-1"></i>@sellerEmail
+                                                    </a>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(sellerPhone))
+                                                {
+                                                    <a class="btn btn-sm btn-outline-dark" href="tel:@sellerPhone">
+                                                        <i class="bi bi-telephone me-1"></i>@sellerPhone
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                <span class="badge bg-light text-dark border">
+                                                    <i class="bi bi-shield-lock me-1"></i>Contact not available
+                                                </span>
+                                                <span class="text-muted small text-label">Contact details may be hidden for privacy.</span>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Factory Images -->
+                                    <div>
+                                        <div class="text-muted small mb-2 text-label">Factory Images</div>
+
+                                        @if (factoryImgs.Any())
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (var u in factoryImgs)
+                                                {
+                                                    <a href="@u" target="_blank" rel="noopener">
+                                                        <img src="@u"
+                                                             class="rounded border"
+                                                             style="width:98px;height:76px;object-fit:cover;" />
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted small text-label">No factory images.</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted text-label">© @DateTime.Now.Year EcoRecyclers GreenTech • @ViewData["Title"]</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM RENTAL ORDER DETAILS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn-outline-primary {
+        border-color: rgba(14, 165, 233, 0.3);
+        color: #0ea5e9;
+        border-radius: 8px;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: rgba(14, 165, 233, 0.1);
+            border-color: #0ea5e9;
+            transform: translateY(-1px);
+        }
+
+    .btn-outline-danger {
+        border-color: rgba(220,53,69,.3);
+        color: #dc3545;
+        border-radius: 8px;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: rgba(220,53,69,.1);
+            border-color: #dc3545;
+            transform: translateY(-1px);
+        }
+
+    .btn-outline-dark {
+        border-color: rgba(30, 41, 59, 0.3);
+        color: #1e293b;
+        border-radius: 8px;
+    }
+
+        .btn-outline-dark:hover {
+            background-color: rgba(30, 41, 59, 0.1);
+            border-color: #1e293b;
+            transform: translateY(-1px);
+        }
+
+    /* Badges */
+    .badge.bg-light {
+        background-color: rgba(241, 245, 249, 0.9) !important;
+        color: var(--ink) !important;
+        border: 1px solid rgba(148, 163, 184, 0.3) !important;
+    }
+
+    .badge.bg-success-subtle {
+        background-color: rgba(34, 197, 94, 0.15) !important;
+        color: #16a34a !important;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,.25);
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+    /* Dark Mode Buttons */
+    [data-bs-theme="dark"] .btn-outline-primary {
+        border-color: rgba(14, 165, 233, 0.3);
+        color: #38bdf8;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-primary:hover {
+            background-color: rgba(14, 165, 233, 0.1);
+            border-color: #38bdf8;
+            color: #7dd3fc;
+        }
+
+    [data-bs-theme="dark"] .btn-outline-danger {
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-danger:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #f87171;
+        }
+
+    [data-bs-theme="dark"] .btn-outline-dark {
+        border-color: rgba(148, 163, 184, 0.3);
+        color: #cbd5e1;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-dark:hover {
+            background-color: rgba(148, 163, 184, 0.1);
+            border-color: #cbd5e1;
+            color: #f1f5f9;
+        }
+
+    /* Dark Mode Badges */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(30, 41, 59, 0.5) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success-subtle {
+        background-color: rgba(34, 197, 94, 0.25) !important;
+        color: #86efac !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-info {
+        background-color: rgba(56, 189, 248, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-primary {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success {
+        background-color: rgba(34, 197, 94, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-danger {
+        background-color: rgba(239, 68, 68, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-secondary {
+        background-color: rgba(148, 163, 184, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 14px;
+        }
+
+        .auth-body {
+            padding: 0 14px 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+    }
+</style>

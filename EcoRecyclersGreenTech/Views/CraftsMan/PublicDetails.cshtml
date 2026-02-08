@@ -1,0 +1,1918 @@
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Details";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var type = (Model.Type ?? "").Trim();
+    var title = type == "Job" ? (Model.JobType ?? "Job") : (Model.Name ?? type);
+
+    var images = (Model.ImageUrls ?? new List<string>())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Select(x => x.Trim())
+        .Distinct()
+        .ToList();
+
+    var factoryImgs = (Model.FactoryImageUrls ?? new List<string>())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Select(x => x.Trim())
+        .Distinct()
+        .ToList();
+
+    // Order info (optional)
+    var myOrderId = (int?)ViewBag.MyOrderId;
+    var myOrderStatus = (ViewBag.MyOrderStatus as string ?? "").Trim();
+    var myOrderStatusNorm = myOrderStatus.ToLowerInvariant();
+
+    // Auction extras from controller
+    var topBid = (decimal?)(ViewBag.TopBid) ?? 0m;
+    var myBidAmount = (decimal?)(ViewBag.MyBidAmount);
+    var myDepositPaid = (decimal?)(ViewBag.MyDepositPaid);
+    var auctionDepositPercent = (decimal?)(ViewBag.AuctionDepositPercent) ?? 0.30m;
+    if (auctionDepositPercent <= 0m) { auctionDepositPercent = 0.30m; }
+
+    // Contact
+    var sellerEmail = (ViewBag.SellerEmail as string ?? "").Trim();
+    var sellerPhone = (ViewBag.SellerPhone as string ?? "").Trim();
+    var hasContact = !string.IsNullOrWhiteSpace(sellerEmail) || !string.IsNullOrWhiteSpace(sellerPhone);
+
+    // Wallet
+    var walletBalance = (decimal?)(ViewBag.WalletBalance) ?? 0m;
+    var walletAvailable = (decimal?)(ViewBag.WalletAvailable) ?? walletBalance; // optional
+    var walletCurrency = (ViewBag.WalletCurrency as string) ?? "EGP";
+
+    // Back
+    string backAction = type switch
+    {
+        "Material" => "PublicMaterialStore",
+        "Machine" => "PublicMachineStore",
+        "Rental" => "PublicRentalStore",
+        "Auction" => "PublicAuctionStore",
+        "Job" => "PublicJobStore",
+        _ => "Index"
+    };
+
+    // Badges
+    string badgeStatus(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "available" => "bg-success",
+            "soldout" or "sold out" => "bg-secondary",
+            "reserved" => "bg-warning text-dark",
+            "inactive" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+    string orderBadge(string status)
+    {
+        var s = (status ?? "").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "pending" => "bg-warning text-dark",
+            "confirmed" => "bg-info text-dark",
+            "processing" => "bg-primary",
+            "readyforpickup" => "bg-primary",
+            "shipped" => "bg-primary",
+            "pickedup" => "bg-success",
+            "delivered" => "bg-success",
+            "completed" => "bg-success",
+            "cancelled" => "bg-danger",
+            "refunded" => "bg-secondary",
+            "returned" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    // ✅ تحديد موقع المنتج بناءً على النوع
+    string? productAddress = null;
+    decimal? productLat = null;
+    decimal? productLng = null;
+
+    switch (type)
+    {
+        case "Material":
+            productAddress = !string.IsNullOrWhiteSpace(Model.MaterialPickupAddress) ? Model.MaterialPickupAddress : null;
+            productLat = Model.MaterialLatitude;
+            productLng = Model.MaterialLongitude;
+            break;
+        case "Rental":
+            productAddress = !string.IsNullOrWhiteSpace(Model.RentalAddress) ? Model.RentalAddress : null;
+            productLat = Model.RentalLatitude;
+            productLng = Model.RentalLongitude;
+            break;
+        case "Job":
+            productAddress = !string.IsNullOrWhiteSpace(Model.JobLocation) ? Model.JobLocation : null;
+            productLat = Model.JobLatitude;
+            productLng = Model.JobLongitude;
+            break;
+        case "Machine":
+            productAddress = !string.IsNullOrWhiteSpace(Model.FactoryAddress) ? Model.FactoryAddress
+                          : (!string.IsNullOrWhiteSpace(Model.SellerAddress) ? Model.SellerAddress : null);
+            productLat = Model.FactoryLatitude ?? Model.SellerLatitude;
+            productLng = Model.FactoryLongitude ?? Model.SellerLongitude;
+            break;
+        case "Auction":
+            productAddress = !string.IsNullOrWhiteSpace(Model.FactoryAddress) ? Model.FactoryAddress
+                          : (!string.IsNullOrWhiteSpace(Model.SellerAddress) ? Model.SellerAddress : null);
+            productLat = Model.FactoryLatitude ?? Model.SellerLatitude;
+            productLng = Model.FactoryLongitude ?? Model.SellerLongitude;
+            break;
+        default:
+            productAddress = !string.IsNullOrWhiteSpace(Model.FactoryAddress) ? Model.FactoryAddress
+                          : (!string.IsNullOrWhiteSpace(Model.SellerAddress) ? Model.SellerAddress : null);
+            productLat = Model.FactoryLatitude ?? Model.SellerLatitude;
+            productLng = Model.FactoryLongitude ?? Model.SellerLongitude;
+            break;
+    }
+
+    // ✅ موقع المصنع (ثابت)
+    string? factoryAddress = !string.IsNullOrWhiteSpace(Model.FactoryAddress) ? Model.FactoryAddress
+                         : (!string.IsNullOrWhiteSpace(Model.SellerAddress) ? Model.SellerAddress : null);
+
+    // ✅ دالة لإنشاء رابط خرائط جوجل
+    string? MapsUrl(decimal? lat, decimal? lng)
+    {
+        if (!lat.HasValue || !lng.HasValue) return null;
+        var la = lat.Value.ToString(CultureInfo.InvariantCulture);
+        var lo = lng.Value.ToString(CultureInfo.InvariantCulture);
+        return $"https://www.google.com/maps?q={la},{lo}";
+    }
+
+    var factoryMapsUrl = MapsUrl(Model.FactoryLatitude, Model.FactoryLongitude);
+    var productMapsUrl = MapsUrl(productLat, productLng);
+
+    // Order UI setup
+    bool needsQuantity = type is "Material" or "Machine";
+    bool isRental = type == "Rental";
+    int rentalMonths = 3;
+
+    string orderAction = type switch
+    {
+        "Material" => "CreateMaterialOrder",
+        "Machine" => "CreateMachineOrder",
+        "Rental" => "CreateRentalOrder",
+        "Auction" => "CreateAuctionOrder",
+        "Job" => "CreateJobOrder",
+        _ => "CreateMaterialOrder"
+    };
+
+    // Default button settings (we will override ONLY for Auction below)
+    string orderBtnText = type switch
+    {
+        "Material" => "Place Order",
+        "Machine" => "Place Order",
+        "Rental" => "Send Rental Request",
+        "Auction" => "Place Bid",
+        "Job" => "Apply",
+        _ => "Place Order"
+    };
+
+    string orderBtnIcon = type switch
+    {
+        "Rental" => "bi-send",
+        "Auction" => "bi-hammer",
+        "Job" => "bi-send",
+        _ => "bi-bag-plus"
+    };
+
+    string primaryBtnClass = type switch
+    {
+        "Machine" => "btn-success",
+        "Rental" => "btn-warning",
+        "Auction" => "btn-info",
+        "Job" => "btn-secondary",
+        _ => "btn-primary"
+    };
+
+    bool rentalHasOrder = isRental && myOrderId.HasValue;
+    bool canDeleteRental = isRental && myOrderId.HasValue && myOrderStatusNorm == "pending";
+
+    decimal minOrder = Model.MinOrderQuantity ?? 1m;
+    int stock = Model.AvailableQuantity;
+    decimal unitPrice = Model.Price;
+
+    // ✅ Auction timing (UTC)
+    var nowUtc = DateTime.UtcNow;
+    var aStart = Model.AuctionStartDate;
+    var aEnd = Model.AuctionEndDate;
+
+    bool auctionHasStart = aStart.HasValue;
+    bool auctionHasEnd = aEnd.HasValue;
+
+    bool auctionNotStarted = (type == "Auction") && auctionHasStart && nowUtc < aStart.Value;
+    bool auctionEnded = (type == "Auction") && (Model.IsAuctionEnded == true || (auctionHasEnd && nowUtc >= aEnd.Value));
+    bool auctionLive = (type == "Auction") && !auctionNotStarted && !auctionEnded;
+
+    // ✅ progress %
+    double auctionProgressPct = 0;
+    if (type == "Auction" && auctionHasStart && auctionHasEnd && aEnd.Value > aStart.Value)
+    {
+        var total = (aEnd.Value - aStart.Value).TotalSeconds;
+        var elapsed = (nowUtc - aStart.Value).TotalSeconds;
+        auctionProgressPct = (elapsed / total) * 100.0;
+        if (auctionProgressPct < 0) auctionProgressPct = 0;
+        if (auctionProgressPct > 100) auctionProgressPct = 100;
+    }
+
+    string HumanLeft(DateTime targetUtc)
+    {
+        var ts = targetUtc - nowUtc;
+        if (ts.TotalSeconds <= 0) return "now";
+        if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}d {ts.Hours}h";
+        if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+        return $"{ts.Minutes}m";
+    }
+
+    string LocalDT(DateTime? d) => d.HasValue ? d.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm") : "-";
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi @(type switch {
+                                "Material" => "bi-box",
+                                "Machine" => "bi-gear",
+                                "Rental" => "bi-building",
+                                "Auction" => "bi-hammer",
+                                "Job" => "bi-briefcase",
+                                _ => "bi-box"
+                            })"></i>
+                        </div>
+                        <h3 class="mb-1">@title Details</h3>
+                        <p class="mb-0 text-muted small">View and order this @type.ToLower()</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="@backAction">@type Store</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">@title</li>
+                            </ol>
+                        </nav>
+
+                        <div class="row g-4">
+
+                            <!-- LEFT COLUMN -->
+                            <div class="col-lg-7">
+
+                                <!-- Gallery -->
+                                <div class="premium-card mb-4">
+                                    @{
+                                        var gid = "g" + Guid.NewGuid().ToString("N");
+                                    }
+
+                                    @if (images.Any())
+                                    {
+                                        <div id="@gid" class="carousel slide" data-bs-ride="carousel">
+                                            <div class="carousel-inner rounded-4">
+                                                @for (int i = 0; i < images.Count; i++)
+                                                {
+                                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                        <img src="@images[i]" class="d-block w-100"
+                                                             alt="Image"
+                                                             style="height:460px; object-fit:cover;">
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            @if (images.Count > 1)
+                                            {
+                                                <button class="carousel-control-prev" type="button" data-bs-target="#@gid" data-bs-slide="prev">
+                                                    <span class="carousel-control-prev-icon"></span>
+                                                    <span class="visually-hidden">Previous</span>
+                                                </button>
+                                                <button class="carousel-control-next" type="button" data-bs-target="#@gid" data-bs-slide="next">
+                                                    <span class="carousel-control-next-icon"></span>
+                                                    <span class="visually-hidden">Next</span>
+                                                </button>
+                                            }
+                                        </div>
+
+                                        @if (images.Count > 1)
+                                        {
+                                            <div class="d-flex gap-2 flex-wrap mt-3">
+                                                @foreach (var u in images)
+                                                {
+                                                    <a href="@u" target="_blank" class="text-decoration-none">
+                                                        <img src="@u" class="rounded-3 border thumb" alt="thumb" />
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="border rounded-4 bg-light-subtle d-flex align-items-center justify-content-center" style="height:260px;">
+                                            <div class="text-center">
+                                                <i class="bi bi-image fs-1 text-muted mb-3"></i>
+                                                <p class="text-muted text-label">No images available</p>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Details -->
+                                <div class="premium-card">
+                                    <!-- Product Details (Material Summary) -->
+                                    @if (type == "Material")
+                                    {
+                                        <div class="mb-4">
+                                            <h5 class="text-section-title mb-3">
+                                                <i class="bi bi-boxes me-2 text-primary"></i>Product Details
+                                            </h5>
+
+                                            <div class="kv mt-2">
+                                                <div class="k text-label">Price</div>
+                                                <div class="v text-label">@Model.Price.ToString("N2") @walletCurrency</div>
+
+                                                <div class="k text-label">Stock</div>
+                                                <div class="v text-label">@Model.AvailableQuantity @(Model.Unit ?? "")</div>
+
+                                                <div class="k text-label">Min Order</div>
+                                                <div class="v text-label">@minOrder.ToString(CultureInfo.InvariantCulture)</div>
+
+                                                <div class="k text-label">Orders</div>
+                                                <div class="v text-label">@Model.OrdersCount</div>
+
+                                                <div class="k text-label">Expected Arrival</div>
+                                                <div class="v text-label">@((Model.ExpectedArrivalDate?.ToString("yyyy-MM-dd")) ?? "-")</div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- ✅ Auction Details -->
+                                    @if (type == "Auction")
+                                    {
+                                        <div class="mb-4">
+                                            <h5 class="text-section-title mb-3">
+                                                <i class="bi bi-hammer me-2 text-warning"></i>Auction Details
+                                            </h5>
+
+                                            <div class="mt-2">
+
+                                                <!-- Status line -->
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                                    @if (auctionEnded)
+                                                    {
+                                                        <span class="badge bg-danger">
+                                                            <i class="bi bi-calendar-x me-1"></i>Ended
+                                                        </span>
+                                                    }
+                                                    else if (auctionNotStarted)
+                                                    {
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="bi bi-lock me-1"></i>Not started
+                                                        </span>
+                                                        <span class="text-muted small text-label">Opens in <b>@HumanLeft(aStart!.Value)</b></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-broadcast me-1"></i>Live
+                                                        </span>
+                                                        @if (auctionHasEnd)
+                                                        {
+                                                            <span class="text-muted small text-label">Ends in <b>@HumanLeft(aEnd!.Value)</b></span>
+                                                        }
+                                                    }
+                                                </div>
+
+                                                <!-- Progress -->
+                                                @if (auctionHasStart && auctionHasEnd)
+                                                {
+                                                    var nearEnd = auctionProgressPct >= 80 && auctionProgressPct < 100;
+                                                    var barClass = auctionNotStarted ? "bg-secondary" : (auctionEnded ? "bg-danger" : (nearEnd ? "bg-warning" : "bg-success"));
+
+                                                    <div class="small text-muted mb-2 text-label">Auction progress</div>
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar @barClass"
+                                                             role="progressbar"
+                                                             style="width:@auctionProgressPct.ToString("0.##", CultureInfo.InvariantCulture)%"
+                                                             aria-valuenow="@auctionProgressPct.ToString("0", CultureInfo.InvariantCulture)"
+                                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between mt-2 small text-muted text-label">
+                                                        <span>Start: <b>@LocalDT(aStart)</b></span>
+                                                        <span>End: <b>@LocalDT(aEnd)</b></span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="premium-card alert alert-warning mb-0 mt-2">
+                                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                                        Auction timing is not fully configured (missing start/end).
+                                                    </div>
+                                                }
+
+                                                <!-- Key values -->
+                                                <div class="kv mt-4">
+                                                    <div class="k text-label">Start price</div>
+                                                    <div class="v text-label">@Model.Price.ToString("N2") @walletCurrency</div>
+
+                                                    <div class="k text-label">Quantity</div>
+                                                    <div class="v text-label">@Model.AvailableQuantity @(Model.Unit ?? "")</div>
+
+                                                    <div class="k text-label">Top bid</div>
+                                                    <div class="v text-label">
+                                                        @topBid.ToString("N2") @walletCurrency
+                                                        @if (topBid <= 0)
+                                                        {
+                                                            <span class="text-muted small ms-1 text-label">(No bids yet)</span>
+                                                        }
+                                                    </div>
+
+                                                    <div class="k text-label">Deposit</div>
+                                                    <div class="v text-label">
+                                                        <span class="badge bg-info text-dark">
+                                                            @(Math.Round(auctionDepositPercent * 100m, 0))%
+                                                        </span>
+                                                        <span class="text-muted small ms-1 text-label">of your bid amount</span>
+                                                    </div>
+
+                                                    @if (myBidAmount.HasValue)
+                                                    {
+                                                        <div class="k text-label">Your bid</div>
+                                                        <div class="v text-label">@myBidAmount.Value.ToString("N2") @walletCurrency</div>
+                                                    }
+                                                    @if (myDepositPaid.HasValue)
+                                                    {
+                                                        <div class="k text-label">Deposit paid</div>
+                                                        <div class="v text-label">@myDepositPaid.Value.ToString("N2") @walletCurrency</div>
+                                                    }
+                                                </div>
+
+                                                @if (!auctionLive)
+                                                {
+                                                    if (auctionNotStarted)
+                                                    {
+                                                        <div class="premium-card alert alert-info mt-3 mb-0">
+                                                            <div class="fw-semibold text-label">
+                                                                <i class="bi bi-info-circle me-1"></i>
+                                                                Auction has not started yet.
+                                                            </div>
+                                                            <div class="small text-muted mt-1 text-label">
+                                                                It will open at <b>@LocalDT(aStart)</b>.
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else if (auctionEnded)
+                                                    {
+                                                        <div class="premium-card alert alert-secondary mt-3 mb-0">
+                                                            <div class="fw-semibold text-label">
+                                                                <i class="bi bi-flag-checkered me-1"></i>
+                                                                Auction ended.
+                                                            </div>
+                                                            <div class="small text-muted mt-1 text-label">
+                                                                You can't place new bids now.
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- Locations -->
+                                    <div class="mb-4">
+                                        <h5 class="text-section-title mb-3">
+                                            <i class="bi bi-geo-alt me-2 text-success"></i>Locations
+                                        </h5>
+
+                                        <div class="kv mt-2">
+                                            <!-- Product -->
+                                            <div class="k text-label">
+                                                @(type switch
+                                                {
+                                                    "Material" => "Pickup Location",
+                                                    "Rental" => "Rental Location",
+                                                    "Job" => "Job Location",
+                                                    "Machine" => "Machine Location",
+                                                    "Auction" => "Auction Location",
+                                                    _ => "Product Location"
+                                                })
+                                            </div>
+                                            <div class="v v-wrap text-label">
+                                                @if (!string.IsNullOrWhiteSpace(productAddress))
+                                                {
+                                                    @productAddress
+                                                    @if (!string.IsNullOrWhiteSpace(productMapsUrl))
+                                                    {
+                                                        <div class="mt-2">
+                                                            <a class="btn btn-sm btn-outline-primary" target="_blank" href="@productMapsUrl" rel="noopener">
+                                                                <i class="bi bi-box-arrow-up-right me-1"></i>View on Google Maps
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted text-label">Not specified</span>
+                                                    @if (type == "Material")
+                                                    {
+                                                        <div class="text-muted small mt-1 text-label">
+                                                            <i class="bi bi-info-circle"></i> Usually same as factory location
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+
+                                            <!-- Factory -->
+                                            <div class="k text-label">Factory Location</div>
+                                            <div class="v v-wrap text-label">
+                                                @(!string.IsNullOrWhiteSpace(factoryAddress) ? factoryAddress : "Not specified")
+                                                @if (!string.IsNullOrWhiteSpace(factoryMapsUrl))
+                                                {
+                                                    <div class="mt-2">
+                                                        <a class="btn btn-sm btn-outline-primary" target="_blank" href="@factoryMapsUrl" rel="noopener">
+                                                            <i class="bi bi-box-arrow-up-right me-1"></i>View on Google Maps
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Description -->
+                                    @if (!string.IsNullOrWhiteSpace(Model.Description))
+                                    {
+                                        <div>
+                                            <h5 class="text-section-title mb-3">
+                                                <i class="bi bi-card-text me-2 text-warning"></i>Description
+                                            </h5>
+                                            <div class="text-muted text-label">@Model.Description</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- RIGHT COLUMN -->
+                            <div class="col-lg-5">
+                                <!-- ORDER CARD -->
+                                <div class="premium-card sticky-order"
+                                     id="orderCard"
+                                     data-type="@type"
+                                     data-isrental="@(isRental ? "1" : "0")"
+                                     data-unitprice="@unitPrice.ToString(CultureInfo.InvariantCulture)"
+                                     data-wallet="@walletAvailable.ToString(CultureInfo.InvariantCulture)"
+                                     data-currency="@walletCurrency"
+                                     data-months="@rentalMonths"
+                                     data-minorder="@minOrder.ToString(CultureInfo.InvariantCulture)"
+                                     data-stock="@stock"
+                                     data-auctiondep="@auctionDepositPercent.ToString(CultureInfo.InvariantCulture)"
+                                     data-auctionlive="@(auctionLive ? "1" : "0")"
+                                     data-auctionnotstarted="@(auctionNotStarted ? "1" : "0")"
+                                     data-auctionended="@(auctionEnded ? "1" : "0")">
+
+                                    <h5 class="text-section-title mb-3">
+                                        <i class="bi bi-bag-check me-2 text-success"></i>Order
+                                    </h5>
+
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <p class="text-muted small text-label">
+                                                @if (type == "Auction")
+                                                {
+                                                    <span>Enter your bid. We will calculate the deposit you must pay to place it.</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Confirm quantity then proceed to payment.</span>
+                                                }
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="text-muted small text-label">Wallet</div>
+                                            <div class="fw-bold text-label">@walletAvailable.ToString("N2") @walletCurrency</div>
+                                        </div>
+                                    </div>
+
+                                    @if (type == "Rental" && rentalHasOrder)
+                                    {
+                                        <div class="premium-card alert alert-info mb-3">
+                                            <div class="fw-semibold text-label">You already sent a rental request.</div>
+                                            <div class="small mt-2 text-label">
+                                                Order #: <span class="fw-bold">@myOrderId</span>
+                                                @if (!string.IsNullOrWhiteSpace(myOrderStatus))
+                                                {
+                                                    <span class="ms-2 badge @orderBadge(myOrderStatus)">@myOrderStatus</span>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        @if (canDeleteRental)
+                                        {
+                                            <form asp-action="DeleteRentalOrder" method="post" class="d-grid">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="orderId" value="@myOrderId" />
+                                                <button type="submit" class="btn btn-outline-danger"
+                                                        onclick="return confirm('Delete this rental request?');">
+                                                    <i class="bi bi-trash me-1"></i>Delete Request
+                                                </button>
+                                            </form>
+                                            <div class="text-muted small mt-2 text-label">You can delete only while status is <b>Pending</b>.</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted small text-label">You can't delete after status changes.</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @* ✅ Auction: hide form if not live *@
+                                        @if (type == "Auction" && !auctionLive)
+                                        {
+                                            <div class="premium-card alert @(auctionNotStarted ? "alert-info" : "alert-secondary") mb-0">
+                                                @if (auctionNotStarted)
+                                                {
+                                                    <div class="fw-semibold text-label">
+                                                        <i class="bi bi-lock me-1"></i>
+                                                        Auction opens at <b>@LocalDT(aStart)</b>
+                                                    </div>
+                                                    <div class="small mt-1 text-muted text-label">Come back when it starts to place your bid.</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="fw-semibold text-label">
+                                                        <i class="bi bi-flag-checkered me-1"></i>
+                                                        Auction ended
+                                                    </div>
+                                                    <div class="small mt-1 text-muted text-label">Bidding is closed.</div>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <form id="orderForm" asp-action="@orderAction" method="post" class="mt-2">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@Model.Id" />
+
+                                                <input type="hidden" name="payMode" id="payMode" value="stripe" />
+                                                <input type="hidden" name="walletAmount" id="walletAmountHidden" value="0" />
+                                                <input type="hidden" name="payAmount" id="payAmountHidden" value="0" />
+                                                <input type="hidden" name="bidAmount" id="bidAmountHidden" value="0" />
+
+                                                @* ✅ Auction bid input (MODIFIED) *@
+                                                @if (type == "Auction")
+                                                {
+                                                    var minBid = Math.Max(0m, topBid > 0m ? topBid + 0.01m : Model.Price);
+
+                                                    @* ✅ expose minBid to JS (MODIFIED) *@
+                                                    <script nonce="@nonce">
+                                                        window.__auctionMinBid = @minBid.ToString(CultureInfo.InvariantCulture);
+                                                    </script>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label mb-2 text-label">Your bid amount</label>
+                                                        <input id="bidInput" class="form-control"
+                                                               type="number" step="0.01"
+                                                               min="@minBid.ToString(CultureInfo.InvariantCulture)"
+                                                               placeholder="Enter your bid (must be ≥ @minBid.ToString("N2"))"
+                                                               required />
+                                                        <div class="d-flex justify-content-between small text-muted mt-2 text-label">
+                                                            <span>Min: <b>@minBid.ToString("N2")</b></span>
+                                                            <span>Top: <b>@topBid.ToString("N2")</b></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="premium-card alert alert-light border mb-3">
+                                                        <div class="d-flex justify-content-between">
+                                                            <span class="text-muted text-label">Required deposit</span>
+                                                            <span class="fw-bold text-label" id="auctionDepositPreview">-</span>
+                                                        </div>
+                                                    </div>
+                                                }
+
+                                                @* Quantity (Material/Machine) - unchanged except syntax fix *@
+                                                @if (needsQuantity)
+                                                {
+                                                    <div class="mb-3">
+                                                        <label class="form-label mb-2 text-label">Quantity</label>
+                                                        <input id="qtyInput" name="quantity" class="form-control"
+                                                               type="number"
+                                                               min="@minOrder.ToString(CultureInfo.InvariantCulture)"
+                                                               max="@stock"
+                                                               value="@minOrder.ToString(CultureInfo.InvariantCulture)"
+                                                               required />
+                                                        <div class="d-flex justify-content-between small text-muted mt-2 text-label">
+                                                            <span>Min: <b>@minOrder</b></span>
+                                                            <span>Stock: <b>@stock</b></span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <input type="hidden" id="qtyInput" name="quantity" value="1" />
+                                                }
+
+                                                <button id="openPayModalBtn" class="auth-btn-primary w-100" type="button">
+                                                    <i class="bi @orderBtnIcon me-2"></i>@orderBtnText
+                                                </button>
+
+                                                <div class="mt-3 small text-muted text-label">
+                                                    @if (type == "Rental")
+                                                    {
+                                                        <span>Total price for @rentalMonths months will be calculated.</span>
+                                                    }
+                                                    else if (type == "Material" || type == "Machine")
+                                                    {
+                                                        <span>Minimum 10% deposit required. You can pay deposit or full amount.</span>
+                                                    }
+                                                    else if (type == "Auction")
+                                                    {
+                                                        <span>You must pay the required deposit to place your bid.</span>
+                                                    }
+                                                </div>
+                                            </form>
+
+                                            @if (TempData["Success"] != null)
+                                            {
+                                                <div class="premium-card alert alert-success mt-3 mb-0">@TempData["Success"]</div>
+                                            }
+                                            @if (TempData["Error"] != null)
+                                            {
+                                                <div class="premium-card alert alert-danger mt-3 mb-0">@TempData["Error"]</div>
+                                            }
+                                        }
+                                    }
+                                </div>
+
+                                <!-- ✅ Factory Details Card -->
+                                <div class="premium-card mt-4">
+                                    <h5 class="text-section-title mb-3">
+                                        <i class="bi bi-buildings me-2 text-primary"></i>Factory Details
+                                    </h5>
+
+                                    <!-- Seller / Factory -->
+                                    <div class="d-flex align-items-start gap-3 mb-3">
+                                        @if (!string.IsNullOrWhiteSpace(Model.SellerProfileImgUrl))
+                                        {
+                                            <img src="@Model.SellerProfileImgUrl" class="rounded-circle border avatar" alt="Seller" />
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle border d-flex align-items-center justify-content-center text-muted avatar">
+                                                <i class="bi bi-person fs-4"></i>
+                                            </div>
+                                        }
+
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold text-label">
+                                                @(string.IsNullOrWhiteSpace(Model.FactoryName) ? "Factory" : Model.FactoryName)
+                                                @if (Model.IsVerifiedSeller)
+                                                {
+                                                    <span class="badge bg-success ms-2">Verified</span>
+                                                }
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(Model.SellerName))
+                                            {
+                                                <div class="text-muted small mt-1 text-label">
+                                                    <i class="bi bi-person me-1"></i>Owner:
+                                                    <span class="fw-semibold">@Model.SellerName</span>
+                                                </div>
+                                            }
+
+                                            <div class="text-muted small mt-1 text-label">
+                                                <i class="bi bi-clock me-1"></i>Created: @Model.CreatedAt.ToString("yyyy-MM-dd")
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Factory Images -->
+                                    <div class="mb-3">
+                                        <h6 class="fw-semibold mb-2 text-label">
+                                            <i class="bi bi-images me-2 text-info"></i>Factory Images
+                                        </h6>
+
+                                        @if (factoryImgs.Any())
+                                        {
+                                            <div class="d-flex gap-2 flex-wrap mt-2">
+                                                @foreach (var u in factoryImgs)
+                                                {
+                                                    <a href="@u" target="_blank" class="text-decoration-none">
+                                                        <img src="@u" class="rounded-3 border factory-thumb" alt="factory" />
+                                                    </a>
+                                                }
+                                            </div>
+                                            <div class="text-muted small mt-2 text-label">Click any image to open it.</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted small text-label">No factory images.</div>
+                                        }
+                                    </div>
+
+                                    <!-- Contact -->
+                                    <div>
+                                        <h6 class="fw-semibold mb-2 text-label">
+                                            <i class="bi bi-telephone me-2 text-success"></i>Contact Factory
+                                        </h6>
+
+                                        @if (hasContact)
+                                        {
+                                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                                @if (!string.IsNullOrWhiteSpace(sellerEmail))
+                                                {
+                                                    <a class="btn btn-sm btn-outline-primary" href="mailto:@sellerEmail">
+                                                        <i class="bi bi-envelope me-1"></i>@sellerEmail
+                                                    </a>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(sellerPhone))
+                                                {
+                                                    <a class="btn btn-sm btn-outline-primary" href="tel:@sellerPhone">
+                                                        <i class="bi bi-telephone me-1"></i>@sellerPhone
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted small text-label">Contact details may be hidden for privacy.</div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • @title Details</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="payModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-label">
+                    <i class="bi bi-credit-card me-2"></i>Payment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="payAlertBox" class="alert alert-warning d-none"></div>
+
+                @if (isRental)
+                {
+                    <div class="alert alert-info mb-3">
+                        <div class="fw-semibold text-label">Rental period: <b>@rentalMonths months</b></div>
+                        <div class="small text-label">Total = Monthly price × months.</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning mb-3" id="nonRentalInfo">
+                        <div class="fw-semibold text-label">Minimum payment is <b>10%</b> deposit.</div>
+                        <div class="small text-label">You can pay deposit or any amount up to total.</div>
+                    </div>
+                }
+
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted text-label" id="lblUnitPrice">Unit price</span>
+                        <span class="fw-bold text-label" id="mUnitPrice">-</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-1" id="qtyRow">
+                        <span class="text-muted text-label">Quantity</span>
+                        <span class="fw-bold text-label" id="mQty">-</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-1 d-none" id="bidRow">
+                        <span class="text-muted text-label">Bid amount</span>
+                        <span class="fw-bold text-label" id="mBid">-</span>
+                    </div>
+
+                    <hr class="my-2" />
+
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted text-label">Total</span>
+                        <span class="fw-bold text-label" id="mTotal">-</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-1" id="depositRow">
+                        <span class="text-muted text-label" id="lblDeposit">Deposit</span>
+                        <span class="fw-bold text-danger text-label" id="mDeposit">-</span>
+                    </div>
+                </div>
+
+                <div class="border rounded p-3">
+                    <label class="form-label mb-1 text-label" id="lblPayNow">Pay now</label>
+                    <input id="payNowInput" type="number" class="form-control" min="0" step="0.01" value="0" />
+                    <div class="text-muted small mt-1 text-label">
+                        Min: <span class="fw-bold" id="mMin">-</span> |
+                        Max: <span class="fw-bold" id="mMax">-</span>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-muted small text-label">
+                    Wallet balance: <b id="mWallet">-</b>
+                </div>
+
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="payOption" id="optStripe" value="stripe" checked>
+                    <label class="form-check-label text-label" for="optStripe">Stripe only</label>
+                </div>
+
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="payOption" id="optSplit" value="split" @(walletAvailable > 0 ? "" : "disabled")>
+                    <label class="form-check-label text-label" for="optSplit">
+                        Wallet + Stripe
+                        @if (walletAvailable <= 0)
+                        {
+                            <span class="text-muted small">(Wallet is empty)</span>
+                        }
+                    </label>
+                </div>
+
+                <div id="splitBox" class="mt-3 border rounded p-3 d-none">
+                    <label class="form-label mb-1 text-label">Use from wallet</label>
+                    <input id="walletUseInput" type="number" class="form-control" min="0" step="0.01" value="0" />
+                    <div class="text-muted small mt-1 text-label">
+                        Stripe remaining: <b id="mStripeRemain">-</b>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Back</button>
+                <button type="button" id="confirmPayBtn" class="auth-btn-success">
+                    <i class="bi bi-check2-circle me-1"></i>Confirm & Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM DETAILS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Buttons */
+    .auth-btn-primary {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 12px 24px !important;
+        font-size: 1rem;
+    }
+
+        .auth-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    .btn-outline-primary {
+        border-color: rgba(13,110,253,.3);
+        color: #0d6efd;
+        border-radius: 8px;
+        padding: 6px 12px;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: rgba(13,110,253,.1);
+            border-color: #0d6efd;
+        }
+
+    .btn-outline-danger {
+        border-color: rgba(220,53,69,.3);
+        color: #dc3545;
+        border-radius: 8px;
+        padding: 10px 20px;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: rgba(220,53,69,.1);
+            border-color: #dc3545;
+        }
+
+    /* Avatar and Thumbnails */
+    .avatar {
+        width: 52px;
+        height: 52px;
+        object-fit: cover;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    .thumb {
+        width: 72px;
+        height: 56px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    .factory-thumb {
+        width: 92px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Key-Value Grid */
+    .kv {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 12px 16px;
+        align-items: start;
+    }
+
+    .k {
+        color: var(--muted);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        padding-top: 2px;
+    }
+
+    .v {
+        font-weight: 600;
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
+
+    .v-wrap {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    /* Sticky Order Card */
+    .sticky-order {
+        position: sticky;
+        top: 20px;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 16px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .modal-header, .modal-footer {
+        border-color: rgba(15,23,42,.08);
+    }
+
+    /* Form Controls */
+    .form-control, .form-select {
+        border: 1px solid rgba(15,23,42,.12);
+        background-color: rgba(255,255,255,.9);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--eco-green);
+            box-shadow: 0 0 0 .25rem rgba(22,163,74,.18);
+            background-color: rgba(255,255,255,1);
+        }
+
+    /* Progress Bar */
+    .progress {
+        border-radius: 10px;
+        background-color: rgba(15,23,42,.08);
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,.25);
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+    /* Dark Mode Images */
+    [data-bs-theme="dark"] .avatar,
+    [data-bs-theme="dark"] .thumb,
+    [data-bs-theme="dark"] .factory-thumb {
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+    /* Dark Mode Form Controls */
+    [data-bs-theme="dark"] .form-control,
+    [data-bs-theme="dark"] .form-select {
+        background-color: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, .2);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background-color: rgba(15, 23, 42, 0.8);
+            border-color: var(--eco-green);
+            color: #e2e8f0;
+            box-shadow: 0 0 0 .25rem rgba(22,163,74,.25);
+        }
+
+    /* Dark Mode Buttons */
+    [data-bs-theme="dark"] .btn-outline-primary {
+        border-color: rgba(59, 130, 246, 0.3);
+        color: #3b82f6;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-primary:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            color: #60a5fa;
+        }
+
+    [data-bs-theme="dark"] .btn-outline-danger {
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-danger:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #f87171;
+        }
+
+    /* Dark Mode Modal */
+    [data-bs-theme="dark"] .modal-content {
+        background: rgba(15, 23, 42, .95);
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .modal-header,
+    [data-bs-theme="dark"] .modal-footer {
+        border-color: rgba(148, 163, 184, .1);
+    }
+
+    /* Dark Mode Badges */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(148, 163, 184, 0.2) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-secondary {
+        background-color: rgba(148, 163, 184, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-info {
+        background-color: rgba(56, 189, 248, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-primary {
+        background-color: rgba(59, 130, 246, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success {
+        background-color: rgba(34, 197, 94, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-danger {
+        background-color: rgba(239, 68, 68, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Progress Bar Dark Mode */
+    [data-bs-theme="dark"] .progress {
+        background-color: rgba(255,255,255,.08);
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+
+        .sticky-order {
+            position: static;
+        }
+
+        .kv {
+            grid-template-columns: 120px 1fr;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 14px;
+        }
+
+        .auth-body {
+            padding: 0 14px 12px;
+        }
+
+        .kv {
+            grid-template-columns: 100px 1fr;
+            gap: 8px 12px;
+        }
+
+        .thumb {
+            width: 60px;
+            height: 50px;
+        }
+
+        .factory-thumb {
+            width: 80px;
+            height: 60px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .kv {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .k, .v {
+            width: 100%;
+        }
+
+        .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 8px !important;
+        }
+    }
+</style>
+
+<script nonce="@nonce">
+    (function () {
+        document.addEventListener('DOMContentLoaded', function () {
+
+            if (typeof bootstrap === "undefined") {
+                console.error("Bootstrap JS is not loaded.");
+                return;
+            }
+
+            const card = document.getElementById('orderCard');
+            const btnOpen = document.getElementById('openPayModalBtn');
+            const qtyInput = document.getElementById('qtyInput');
+            const bidInput = document.getElementById('bidInput');
+
+            const modalEl = document.getElementById('payModal');
+            const orderForm = document.getElementById('orderForm');
+
+            if (!card || !btnOpen || !modalEl || !orderForm) return;
+
+            const modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+
+            const type = (card.dataset.type || '').trim();
+            const isRental = card.dataset.isrental === '1';
+
+            const unitPrice = parseFloat(card.dataset.unitprice || '0') || 0;
+            const wallet = parseFloat(card.dataset.wallet || '0') || 0;
+            const currency = card.dataset.currency || 'EGP';
+            const months = parseInt(card.dataset.months || '3', 10) || 3;
+            const minOrder = parseFloat(card.dataset.minorder || '1') || 1;
+            const stock = parseInt(card.dataset.stock || '0', 10) || 0;
+
+            // ✅ Auction deposit percent from ViewBag (dynamic)
+            const auctionDep = parseFloat(card.dataset.auctiondep || '0.3') || 0.3;
+
+            // ✅ Auction min bid from server (MODIFIED)
+            const auctionMinBid = Number(window.__auctionMinBid || 0);
+
+            // modal fields
+            const mUnitPrice = document.getElementById('mUnitPrice');
+            const mQty = document.getElementById('mQty');
+            const mTotal = document.getElementById('mTotal');
+            const mDeposit = document.getElementById('mDeposit');
+            const mMin = document.getElementById('mMin');
+            const mMax = document.getElementById('mMax');
+            const mWallet = document.getElementById('mWallet');
+
+            const mBid = document.getElementById('mBid');
+            const bidRow = document.getElementById('bidRow');
+
+            const qtyRow = document.getElementById('qtyRow');
+            const depositRow = document.getElementById('depositRow');
+
+            const payNowInput = document.getElementById('payNowInput');
+            const optStripe = document.getElementById('optStripe');
+            const optSplit = document.getElementById('optSplit');
+            const splitBox = document.getElementById('splitBox');
+            const walletUseInput = document.getElementById('walletUseInput');
+            const mStripeRemain = document.getElementById('mStripeRemain');
+
+            const payModeHidden = document.getElementById('payMode');
+            const walletAmountHidden = document.getElementById('walletAmountHidden');
+            const payAmountHidden = document.getElementById('payAmountHidden');
+            const bidAmountHidden = document.getElementById('bidAmountHidden');
+
+            const confirmBtn = document.getElementById('confirmPayBtn');
+            const payAlertBox = document.getElementById('payAlertBox');
+
+            const auctionDepositPreview = document.getElementById('auctionDepositPreview');
+            const nonRentalInfo = document.getElementById('nonRentalInfo');
+            const lblDeposit = document.getElementById('lblDeposit');
+            const lblUnitPrice = document.getElementById('lblUnitPrice');
+            const lblPayNow = document.getElementById('lblPayNow');
+
+            if (!payNowInput || !confirmBtn) return;
+
+            let isUpdating = false;
+
+            function fmt(n) {
+                return (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + currency;
+            }
+            function clamp(x, a, b) {
+                x = Number(x);
+                if (!Number.isFinite(x)) x = a;
+                return Math.max(a, Math.min(b, x));
+            }
+            function showAlert(msg) {
+                if (!payAlertBox) return;
+                payAlertBox.textContent = msg;
+                payAlertBox.classList.remove('d-none');
+            }
+            function hideAlert() {
+                if (!payAlertBox) return;
+                payAlertBox.textContent = '';
+                payAlertBox.classList.add('d-none');
+            }
+            function round2(n) {
+                n = Number(n) || 0;
+                return Math.round(n * 100) / 100;
+            }
+
+            function readQty() {
+                if (!qtyInput) return 1;
+                let q = parseFloat(qtyInput.value || '1');
+                if (!Number.isFinite(q) || q <= 0) q = 1;
+
+                if (type === 'Material' || type === 'Machine') {
+                    const minQ = minOrder > 0 ? minOrder : 1;
+                    const maxQ = stock > 0 ? stock : q;
+                    q = clamp(q, minQ, maxQ);
+                    if (qtyInput.value !== String(q)) qtyInput.value = String(q);
+                }
+                return q;
+            }
+
+            // ✅ MODIFIED: allow empty until user enters, and keep 2 decimals
+            function readBid() {
+                if (!bidInput) return 0;
+                let raw = (bidInput.value || '').trim();
+                if (!raw) return 0;
+
+                let b = parseFloat(raw);
+                if (!Number.isFinite(b) || b <= 0) b = 0;
+
+                b = round2(b);
+                const fixed = b > 0 ? b.toFixed(2) : '';
+                if (bidInput.value !== fixed) bidInput.value = fixed;
+
+                return b;
+            }
+
+            function compute(fromPayInput) {
+                if (isUpdating) return null;
+                isUpdating = true;
+                hideAlert();
+
+                const q = readQty();
+                const isAuction = type === 'Auction';
+
+                let total = 0, deposit = 0, minPay = 0, maxPay = 0;
+                let bid = 0;
+
+                if (isAuction) {
+                    // ✅ Auction: user chooses BID, we calculate deposit
+                    bid = readBid();
+
+                    if (bid <= 0) {
+                        total = 0; deposit = 0; minPay = 0; maxPay = 0;
+                    } else {
+                        total = bid;
+                        deposit = round2(bid * auctionDep);
+
+                        // الدفع = deposit فقط
+                        minPay = deposit;
+                        maxPay = deposit;
+                    }
+
+                    // ✅ UI for auction modal (MODIFIED)
+                    if (nonRentalInfo) {
+                        nonRentalInfo.classList.remove('alert-warning');
+                        nonRentalInfo.classList.add('alert-info');
+                        nonRentalInfo.innerHTML = `
+                                    <div class="fw-semibold">Deposit required is <b>${Math.round(auctionDep * 100)}%</b> of your bid.</div>
+                                    <div class="small">You must pay the full deposit to place your bid.</div>
+                                `;
+                    }
+
+                    if (lblUnitPrice) lblUnitPrice.textContent = 'Bid';
+                    if (lblPayNow) lblPayNow.textContent = 'Deposit to pay now';
+                    if (lblDeposit) lblDeposit.textContent = `Deposit (${Math.round(auctionDep * 100)}%)`;
+
+                    if (bidRow) bidRow.classList.remove('d-none');
+                    if (qtyRow) qtyRow.classList.add('d-none');
+
+                    // ✅ Hide deposit row to avoid duplication (since Pay Now = Deposit) (MODIFIED)
+                    if (depositRow) depositRow.classList.add('d-none');
+                }
+                else if (isRental) {
+                    total = unitPrice * months;
+                    deposit = total;
+                    minPay = total;
+                    maxPay = total;
+                    if (bidRow) bidRow.classList.add('d-none');
+                    if (qtyRow) qtyRow.classList.add('d-none');
+                    if (depositRow) depositRow.classList.remove('d-none');
+                } else {
+                    total = unitPrice * q;
+                    deposit = total * 0.10;
+                    minPay = deposit;
+                    maxPay = total;
+                    if (bidRow) bidRow.classList.add('d-none');
+                    if (qtyRow) qtyRow.classList.remove('d-none');
+                    if (depositRow) depositRow.classList.remove('d-none');
+                }
+
+                total = round2(total);
+                deposit = round2(deposit);
+                minPay = round2(minPay);
+                maxPay = round2(maxPay);
+
+                if (mUnitPrice) {
+                    if (type === 'Auction') mUnitPrice.textContent = fmt(bid); // ✅ show bid here (MODIFIED)
+                    else mUnitPrice.textContent = fmt(unitPrice);
+                }
+
+                if (mTotal) {
+                    if (type === 'Auction') mTotal.textContent = fmt(bid); // ✅ total = bid (MODIFIED)
+                    else mTotal.textContent = fmt(total);
+                }
+
+                if (mWallet) mWallet.textContent = fmt(wallet);
+                if (mMin) mMin.textContent = fmt(minPay);
+                if (mMax) mMax.textContent = fmt(maxPay);
+
+                if (mQty && (type === 'Material' || type === 'Machine')) mQty.textContent = String(q);
+                if (mDeposit) mDeposit.textContent = fmt(deposit);
+
+                if (mBid && isAuction) mBid.textContent = fmt(bid);
+
+                if (auctionDepositPreview && isAuction) {
+                    auctionDepositPreview.textContent = fmt(deposit);
+                }
+
+                payNowInput.min = minPay.toFixed(2);
+                payNowInput.max = maxPay.toFixed(2);
+                payNowInput.step = "0.01";
+
+                if (isRental || isAuction) {
+                    // ✅ fixed
+                    payNowInput.value = maxPay.toFixed(2);
+                    payNowInput.readOnly = true;
+                } else {
+                    payNowInput.readOnly = false;
+
+                    let payNow = parseFloat(payNowInput.value || '0');
+                    if (!Number.isFinite(payNow) || payNow <= 0) payNow = minPay;
+                    const clamped = clamp(payNow, minPay, maxPay);
+
+                    if (!fromPayInput || payNow < minPay || payNow > maxPay) {
+                        const v = clamped.toFixed(2);
+                        if (payNowInput.value !== v) payNowInput.value = v;
+                    }
+                }
+
+                // Split UI
+                if (optSplit && optSplit.checked && splitBox && walletUseInput && mStripeRemain) {
+                    splitBox.classList.remove('d-none');
+
+                    const payNow = parseFloat(payNowInput.value || '0') || 0;
+                    const maxWalletUse = Math.min(wallet, payNow);
+
+                    walletUseInput.max = maxWalletUse.toFixed(2);
+
+                    let w = parseFloat(walletUseInput.value || '0');
+                    if (!Number.isFinite(w) || w < 0) w = 0;
+                    w = clamp(w, 0, maxWalletUse);
+
+                    const wStr = w.toFixed(2);
+                    if (walletUseInput.value !== wStr) walletUseInput.value = wStr;
+
+                    mStripeRemain.textContent = fmt(payNow - w);
+                } else {
+                    if (splitBox) splitBox.classList.add('d-none');
+                    if (walletUseInput) walletUseInput.value = '0';
+                    if (mStripeRemain) mStripeRemain.textContent = fmt(parseFloat(payNowInput.value || '0'));
+                }
+
+                isUpdating = false;
+                return { q, total, deposit, minPay, maxPay, bid };
+            }
+
+            // Open modal
+            btnOpen.addEventListener('click', function () {
+                if (type === 'Material' || type === 'Machine') {
+                    const q = readQty();
+                    if (stock > 0 && q > stock) {
+                        showAlert('Quantity exceeds available stock.');
+                        return;
+                    }
+                }
+
+                // ✅ Auction validation: must be >= minBid (MODIFIED)
+                if (type === 'Auction') {
+                    const b = readBid();
+                    if (!b || b <= 0) {
+                        showAlert('Please enter a valid bid amount.');
+                        return;
+                    }
+                    if (auctionMinBid > 0 && b < auctionMinBid) {
+                        showAlert(`Bid must be at least ${auctionMinBid.toFixed(2)} ${currency}.`);
+                        return;
+                    }
+                }
+
+                compute(false);
+                modal.show();
+            });
+
+            // Events
+            if (qtyInput) qtyInput.addEventListener('input', function () { compute(false); });
+            if (bidInput) bidInput.addEventListener('input', function () { compute(false); });
+
+            if (optStripe) optStripe.addEventListener('change', function () { compute(false); });
+            if (optSplit) optSplit.addEventListener('change', function () { compute(false); });
+            if (walletUseInput) walletUseInput.addEventListener('input', function () { compute(false); });
+
+            // Confirm
+            confirmBtn.addEventListener('click', function () {
+                const c = compute(true);
+                if (!c) return;
+
+                const payNow = parseFloat(payNowInput.value || '0');
+                if (!Number.isFinite(payNow) || payNow <= 0) {
+                    showAlert('Please enter a valid payment amount.');
+                    return;
+                }
+                if (payNow < c.minPay || payNow > c.maxPay) {
+                    showAlert('Payment amount is not valid for this order.');
+                    return;
+                }
+
+                payAmountHidden.value = payNow.toFixed(2);
+
+                if (type === 'Auction') {
+                    // ✅ send bidAmount too
+                    if (!c.bid || c.bid <= 0) {
+                        showAlert('Bid amount is required.');
+                        return;
+                    }
+                    if (auctionMinBid > 0 && c.bid < auctionMinBid) {
+                        showAlert(`Bid must be at least ${auctionMinBid.toFixed(2)} ${currency}.`);
+                        return;
+                    }
+                    bidAmountHidden.value = c.bid.toFixed(2);
+                }
+
+                if (optSplit && optSplit.checked) {
+                    payModeHidden.value = 'split';
+
+                    let w = parseFloat(walletUseInput?.value || '0');
+                    if (!Number.isFinite(w) || w < 0) w = 0;
+                    w = clamp(w, 0, Math.min(wallet, payNow));
+                    walletAmountHidden.value = w.toFixed(2);
+                } else {
+                    payModeHidden.value = 'stripe';
+                    walletAmountHidden.value = '0';
+                }
+
+                orderForm.submit();
+            });
+
+            // Init
+            compute(false);
+        });
+    })();
+</script>

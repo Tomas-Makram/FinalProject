@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using Stripe;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EcoRecyclersGreenTech.Data.Users
@@ -23,5 +25,12 @@ namespace EcoRecyclersGreenTech.Data.Users
         // Type And Description
         public string? FactoryType { get; set; }
         public string? Description { get; set; }
+
+        // Wallet and Parentage
+        [Precision(18, 2)]
+        public decimal? TotalBalanceOrderWaiting { get; set; } = 0;
+
+        [Precision(18, 2)]
+        public decimal? TotalBalancePercentageRequests { get; set; } = 0;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using EcoRecyclersGreenTech.Data.Users;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using static EcoRecyclersGreenTech.Data.Stores.EnumsProductStatus;
 
 namespace EcoRecyclersGreenTech.Data.Stores
@@ -25,5 +26,23 @@ namespace EcoRecyclersGreenTech.Data.Stores
         public DateTime? EndDate { get; set; }
         public ProductStatus Status { get; set; } = ProductStatus.Available;
         public string? Description { get; set; }
+        
+        public int? ConfirmedOrderId { get; set; }
+        public DateTime? ConfirmedAt { get; set; }
+
+        [Precision(18, 2)]
+        public decimal? CurrentTopBid { get; set; }
+
+        public int? CurrentTopBidderId { get; set; }
+
+        // GPS Coordinates
+        [Column(TypeName = "decimal(9,6)")]
+        public decimal? Latitude { get; set; }
+
+        [Column(TypeName = "decimal(9,6)")]
+        public decimal? Longitude { get; set; }
+
+        [MaxLength(255)]
+        public string? Address { get; set; }
     }
 }

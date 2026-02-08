@@ -1,0 +1,712 @@
+﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.Orders.RentalOrderDetailsModel>
+
+@{
+    ViewData["Title"] = "Rental Order Details";
+    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var first = Model?.FirstOrDefault();
+    var rentalId = first?.RentalId ?? 0;
+    var address = first?.RentalAddress ?? "Rental";
+
+    string Badge(string st)
+    {
+        st = (st ?? "").Trim().ToLower();
+        if (st == "pending") return "bg-warning text-dark";
+        if (st == "confirmed") return "bg-info text-dark";
+        if (st == "completed") return "bg-success";
+        if (st == "cancelled") return "bg-danger";
+        if (st == "refunded") return "bg-secondary";
+        return "bg-secondary";
+    }
+
+    int RankStatus(string st)
+    {
+        st = (st ?? "").Trim().ToLower();
+        return st switch
+        {
+            "pending" => 1,
+            "confirmed" => 2,
+            "processing" => 3,
+            "shipped" => 4,
+            "readyforpickup" => 5,
+            "pickedup" => 6,
+            "delivered" => 7,
+            "completed" => 8,
+            "cancelled" => 9,
+            "refunded" => 10,
+            _ => 50
+        };
+    }
+
+    // ✅ Pending أولاً ثم Confirmed ثم باقي الحالات + أحدث تاريخ أولاً داخل كل مجموعة
+    var orders = (Model ?? new List<EcoRecyclersGreenTech.Models.FactoryStore.Orders.RentalOrderDetailsModel>())
+        .OrderBy(o => RankStatus(o.Status))
+        .ThenByDescending(o => o.OrderDate)
+        .ToList();
+}
+
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
+
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 class="mb-1">Rental Order Details</h3>
+                        <p class="mb-0 text-muted small">Rental #@rentalId — @address</p>
+                    </div>
+
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="RentalOrders">Rental Orders</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Rental #@rentalId Orders</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+
+                        <!-- Rental Summary -->
+                        <div class="premium-card mb-4">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-3">
+                                    @{
+                                        var cover = first?.ImageUrls?.FirstOrDefault();
+                                        if (string.IsNullOrWhiteSpace(cover)) cover = "/images/placeholder.png";
+                                    }
+                                    <img src="@cover" class="w-100 rounded rental-cover-img" alt="Rental Cover" />
+                                </div>
+
+                                <div class="col-md-9">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                        <h4 class="mb-0 text-section-title">@address</h4>
+                                        <span class="badge bg-success px-3 py-2">
+                                            $@(first != null ? first.PricePerMonth.ToString("N2") : "0.00") / month
+                                        </span>
+                                    </div>
+
+                                    <div class="text-muted small text-label mb-2">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        @(first?.AvailableFrom.HasValue == true ? first.AvailableFrom.Value.ToString("yyyy-MM-dd") : "-")
+                                        →
+                                        @(first?.AvailableUntil.HasValue == true ? first.AvailableUntil.Value.ToString("yyyy-MM-dd") : "-")
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2 mt-3">
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-receipt me-1"></i>@orders.Count Orders
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Orders Table -->
+                        <div class="premium-card">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                                <h4 class="mb-0 text-section-title">
+                                    <i class="bi bi-list-check me-2 text-success"></i>Orders (@orders.Count)
+                                </h4>
+                                <a asp-action="RentalOrders" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to Orders
+                                </a>
+                            </div>
+
+                            @if (orders.Count == 0)
+                            {
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    <div class="text-label">No orders found for this rental.</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead>
+                                            <tr class="text-label">
+                                                <th style="width:110px;">Order #</th>
+                                                <th>Buyer</th>
+                                                <th style="width:150px;">Status</th>
+                                                <th style="width:170px;">Date</th>
+                                                <th class="text-end" style="width:380px;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var o in orders)
+                                            {
+                                                var collapseId = $"buyer_{o.RentalOrderId}";
+                                                var st = (o.Status ?? "").Trim();
+                                                var isPending = st.Equals("Pending", StringComparison.OrdinalIgnoreCase);
+                                                var isConfirmed = st.Equals("Confirmed", StringComparison.OrdinalIgnoreCase);
+
+                                                <tr class="text-label">
+                                                    <td><span class="badge bg-light text-dark">@o.RentalOrderId</span></td>
+
+                                                    <td>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <img src="@(string.IsNullOrWhiteSpace(o.BuyerProfileImgUrl) ? "/images/user-default.png" : o.BuyerProfileImgUrl)"
+                                                                 class="rounded-circle border od-avatar-small" alt="Buyer" />
+                                                            <div>
+                                                                <div class="fw-semibold">@o.BuyerName</div>
+                                                                <div class="text-muted small">
+                                                                    UserID: @o.BuyerId
+                                                                    @* لو عندك BuyerVerified *@
+                                                                    @if ((o as dynamic)?.BuyerVerified == true)
+                                                                    {
+                                                                        <span class="badge bg-success ms-2">Verified</span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <button class="btn btn-sm btn-link px-0 mt-1 text-label"
+                                                                type="button"
+                                                                data-bs-toggle="collapse"
+                                                                data-bs-target="#@collapseId">
+                                                            <i class="bi bi-chevron-down me-1"></i>View buyer details
+                                                        </button>
+
+                                                        <div class="collapse" id="@collapseId">
+                                                            <div class="border rounded p-3 mt-2 bg-light od-buyer-details">
+                                                                <div class="row g-2 small text-label">
+                                                                    <div class="col-md-6">
+                                                                        <div class="text-muted">Email</div>
+                                                                        <div class="fw-semibold">@(((o as dynamic)?.BuyerEmail as string) ?? "-")</div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="text-muted">Phone</div>
+                                                                        <div class="fw-semibold">@(((o as dynamic)?.BuyerPhone as string) ?? "-")</div>
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <div class="text-muted">Address</div>
+                                                                        <div class="fw-semibold od-wrap">@(((o as dynamic)?.BuyerAddress as string) ?? "-")</div>
+                                                                    </div>
+
+                                                                    <div class="col-12 mt-2">
+                                                                        <div class="text-muted">Payment</div>
+                                                                        <div class="fw-semibold">
+                                                                            Paid: @(((o as dynamic)?.TotalPaid as decimal?)?.ToString("N2") ?? "-")
+                                                                            | Held: @(((o as dynamic)?.HeldAmount as decimal?)?.ToString("N2") ?? "-")
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    <td><span class="badge @Badge(o.Status)">@o.Status</span></td>
+                                                    <td class="text-muted">@o.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+
+                                                    <td class="text-end">
+                                                        @* ✅ Confirm يظهر فقط لو Pending *@
+                                                        @if (isPending)
+                                                        {
+                                                            <form asp-action="ChangeRentalOrderStatus" method="post" class="d-inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="rentalId" value="@rentalId" />
+                                                                <input type="hidden" name="orderId" value="@o.RentalOrderId" />
+
+                                                                <button type="submit" class="btn btn-sm btn-success auth-btn-success">
+                                                                    <i class="bi bi-check-circle me-1"></i>Confirm
+                                                                </button>
+                                                            </form>
+                                                        }
+
+                                                        @* ✅ Reject يظهر فقط لو Confirmed *@
+                                                        @if (isConfirmed)
+                                                        {
+                                                            <form asp-action="ChangeRentalOrderStatus" method="post" class="d-inline ms-1">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="rentalId" value="@rentalId" />
+                                                                <input type="hidden" name="orderId" value="@o.RentalOrderId" />
+
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                    <i class="bi bi-x-circle me-1"></i>Reject
+                                                                </button>
+                                                            </form>
+                                                        }
+
+                                                        @* أي حالة غير Pending/Confirmed: مفيش أزرار *@
+                                                        @if (!isPending && !isConfirmed)
+                                                        {
+                                                            <span class="text-muted small text-label">—</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="text-muted small mt-3 text-label">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Confirm will approve ONE request and cancel/refund all other pending requests.
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Rental #@rentalId Orders</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style nonce="@nonce">
+    /* ===================== PREMIUM RENTAL ORDERS DETAILS STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    .od-wrap {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    /* Images */
+    .rental-cover-img {
+        height: 170px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    .od-avatar-small {
+        width: 38px;
+        height: 38px;
+        object-fit: cover;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Buyer Details */
+    .od-buyer-details {
+        background: rgba(248,249,250,.5) !important;
+        border: 1px solid rgba(15,23,42,.08);
+        border-radius: 12px;
+    }
+
+    /* Table Styles */
+    .table {
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: rgba(0,0,0,.02);
+        --bs-table-hover-bg: rgba(25, 135, 84, 0.06);
+        margin-bottom: 0;
+    }
+
+        .table thead th {
+            border-bottom: 2px solid rgba(15,23,42,.08);
+            font-weight: 600;
+            color: var(--ink);
+            padding: 12px 16px;
+            background: rgba(240,253,250,.4);
+        }
+
+        .table tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            border-color: rgba(15,23,42,.05);
+        }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 6px 12px !important;
+        font-size: 0.8125rem;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] h1,
+    [data-bs-theme="dark"] h2,
+    [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] h4,
+    [data-bs-theme="dark"] h5,
+    [data-bs-theme="dark"] h6 {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important;
+    }
+
+    /* Table Dark Mode */
+    [data-bs-theme="dark"] .table thead th {
+        background: rgba(2, 6, 23, .6);
+        border-bottom-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .table tbody td {
+        border-color: rgba(148, 163, 184, .08);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .rental-cover-img {
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .od-avatar-small {
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .od-buyer-details {
+        background: rgba(2, 6, 23, .3) !important;
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    /* Badge Dark Mode */
+    [data-bs-theme="dark"] .badge.bg-light {
+        background-color: rgba(148, 163, 184, 0.2) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .table thead th,
+        .table tbody td {
+            padding: 10px 12px;
+            font-size: 0.875rem;
+        }
+
+        .rental-cover-img {
+            height: 140px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 16px;
+        }
+
+        .auth-body {
+            padding: 0 16px 14px;
+        }
+
+        .table-responsive {
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        .rental-cover-img {
+            height: 120px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
+    }
+</style>

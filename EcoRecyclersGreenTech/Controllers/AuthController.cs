@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Net;
 using System.Globalization;
+using EcoRecyclersGreenTech.Data.Users;
+using Stripe.Terminal;
 
 namespace EcoRecyclersGreenTech.Controllers
 {
@@ -21,6 +23,7 @@ namespace EcoRecyclersGreenTech.Controllers
         private readonly ILocationService _locationService;
         private readonly ILogger<AuthController> _logger; // Using Validate AntiForgery Token Key
         private readonly int maxInputIncorrectPassword = 20; // Max Input incorrect Password after that block account 
+        const decimal welcomeBonus = 50m; // Welcome bonus
 
         public AuthController(DBContext db, DataHasher passwordHasher, IDataCiphers dataProtection, ILogger<AuthController> logger, IEmailTemplateService emailTemplate, IOtpService otpService, ILocationService locationService)
         {
@@ -74,7 +77,7 @@ namespace EcoRecyclersGreenTech.Controllers
                 if (user.Blocked)
                 {
                     ViewBag.Error = "Your account is blocked. Contact support.";
-                    _logger.LogWarning("Blocked account login attempt: {UserId}", user.UserID);
+                    _logger.LogWarning("Blocked account login attempt: {UserId}", user.UserId);
                     return View();
                 }
 
@@ -95,7 +98,7 @@ namespace EcoRecyclersGreenTech.Controllers
                     var decryptedPhone = user.phoneNumber != null ? _dataProtection.Decrypt(user.phoneNumber) : null;
 
                     HttpContext.Session.SetString("UserEmail", decryptedEmail);
-                    HttpContext.Session.SetInt32("UserID", user.UserID);
+                    HttpContext.Session.SetInt32("UserID", user.UserId);
                     HttpContext.Session.SetString("UserName", user.FullName ?? "");
                     HttpContext.Session.SetInt32("UserTypeID", user.UserTypeID);
                     HttpContext.Session.SetString("PhoneNumber", decryptedPhone ?? "");
@@ -103,7 +106,7 @@ namespace EcoRecyclersGreenTech.Controllers
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, decryptedEmail),
-                        new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+                        new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                         new Claim("IsVerified", user.Verified ? "true" : "false"),
                         new Claim(ClaimTypes.Role, user.UserType.TypeName),
                         new Claim("UserType", user.UserType.TypeName)
@@ -161,7 +164,9 @@ namespace EcoRecyclersGreenTech.Controllers
                 return View(signup);
             }
 
+            // =========================
             // Location extraction
+            // =========================
             var loc = _locationService.ExtractAndValidateFromForm(
                 signup.user.Latitude?.ToString(CultureInfo.InvariantCulture),
                 signup.user.Longitude?.ToString(CultureInfo.InvariantCulture),
@@ -235,7 +240,9 @@ namespace EcoRecyclersGreenTech.Controllers
                 }
             }
 
-            // Normalize + pre-validate BEFORE any transaction
+            // =========================
+            // Normalize + pre-validate
+            // =========================
             signup.user.Email = signup.user.Email?.Trim().ToLowerInvariant();
             signup.user.phoneNumber = signup.user.phoneNumber?.Trim();
 
@@ -263,7 +270,9 @@ namespace EcoRecyclersGreenTech.Controllers
                 return View(signup);
             }
 
+            // =========================
             // Encrypt/hash
+            // =========================
             signup.user.HashPassword = _passwordHasher.HashData(signup.user.HashPassword);
             signup.user.HashEmail = emailHash;
 
@@ -275,7 +284,9 @@ namespace EcoRecyclersGreenTech.Controllers
 
             signup.user.Email = _dataProtection.Encrypt(signup.user.Email);
 
+            // =========================
             // Defaults
+            // =========================
             signup.user.JoinDate = DateTime.UtcNow;
             signup.user.Verified = false;
             signup.user.Blocked = false;
@@ -301,7 +312,9 @@ namespace EcoRecyclersGreenTech.Controllers
             signup.user.OtpVerifyBlockedUntil = null;
             signup.user.ResetOtpVerifyBlockedUntil = null;
 
-            // Validate type + get TypeID from fixed table
+            // =========================
+            // Validate type + get TypeID
+            // =========================
             var typeName = signup.type.TypeName?.Trim();
 
             if (string.IsNullOrWhiteSpace(typeName))
@@ -321,7 +334,9 @@ namespace EcoRecyclersGreenTech.Controllers
                 return View(signup);
             }
 
+            // =========================
             // DB work with ExecutionStrategy + Transaction
+            // =========================
             var strategy = _db.Database.CreateExecutionStrategy();
 
             string? decryptedEmailAfterCommit = null;
@@ -333,15 +348,57 @@ namespace EcoRecyclersGreenTech.Controllers
                     await using var transaction = await _db.Database.BeginTransactionAsync();
                     try
                     {
-                        // Insert User first (to get UserID)
+                        // =========================
+                        // Insert User first (to get UserId)
+                        // =========================
                         signup.user.UserTypeID = userTypeId;
 
                         _db.Users.Add(signup.user);
                         await _db.SaveChangesAsync();
 
-                        var newUserId = signup.user.UserID;
+                        var newUserId = signup.user.UserId;
 
+                        // =========================
+                        // ✅ Create Wallet for this new user
+                        // =========================
+                        var wallet = new Wallet
+                        {
+                            UserId = newUserId,
+                            Balance = 0m,
+                            ReservedBalance = 0m,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _db.Wallets.Add(wallet);
+                        await _db.SaveChangesAsync(); // to generate wallet.Id
+
+                        // =========================
+                        // ✅ Optional: Welcome Bonus
+                        // =========================
+                        if (welcomeBonus > 0m)
+                        {
+                            wallet.Balance += welcomeBonus;
+
+                            var welcomeTxn = new WalletTransaction
+                            {
+                                WalletId = wallet.Id,
+                                Type = WalletTxnType.Bonus,
+                                Status = WalletTxnStatus.Succeeded,
+                                Amount = welcomeBonus,
+                                BalanceAfter = wallet.Balance,
+                                Currency = "EGP",
+                                Note = "Welcome bonus",
+                                IdempotencyKey = $"welcome-bonus-{newUserId}",
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _db.WalletTransactions.Add(welcomeTxn);
+                            await _db.SaveChangesAsync();
+                        }
+
+                        // =========================
                         // Insert profile by type (with FK UserID)
+                        // =========================
                         if (typeName == "Individual")
                         {
                             if (signup.individual == null)
@@ -392,7 +449,9 @@ namespace EcoRecyclersGreenTech.Controllers
                     }
                 });
 
+                // =========================
                 // Email after commit (non-critical)
+                // =========================
                 try
                 {
                     await _emailTemplate.SendEmailAsync(
@@ -466,7 +525,7 @@ namespace EcoRecyclersGreenTech.Controllers
                 }
 
                 // Generate OTP (OtpService handles global + per-flow limits/cooldown)
-                var otpCode = await _otpService.SendOTPResetPassword(user.UserID);
+                var otpCode = await _otpService.SendOTPResetPassword(user.UserId);
 
                 if (string.IsNullOrEmpty(otpCode))
                 {
@@ -550,7 +609,7 @@ namespace EcoRecyclersGreenTech.Controllers
             {
                 // Verify reset OTP
                 if (string.IsNullOrWhiteSpace(model.OTP) ||
-                    !await _otpService.VerifyOTPPasswordAsync(user.UserID, model.OTP.Trim()))
+                    !await _otpService.VerifyOTPPasswordAsync(user.UserId, model.OTP.Trim()))
                 {
                     await transaction.RollbackAsync();
                     ViewBag.Error = "Invalid email, OTP, or password.";
@@ -560,7 +619,7 @@ namespace EcoRecyclersGreenTech.Controllers
                 // Track user inside transaction
                 var trackedUser = await _db.Users
                     .Include(u => u.UserType)
-                    .FirstOrDefaultAsync(u => u.UserID == user.UserID);
+                    .FirstOrDefaultAsync(u => u.UserId == user.UserId);
 
                 if (trackedUser == null)
                     throw new Exception("User not found during transaction");
@@ -591,7 +650,7 @@ namespace EcoRecyclersGreenTech.Controllers
                 await HttpContext.Session.CommitAsync();
 
                 HttpContext.Session.SetString("UserEmail", decryptedEmail);
-                HttpContext.Session.SetInt32("UserID", trackedUser.UserID);
+                HttpContext.Session.SetInt32("UserID", trackedUser.UserId);
                 HttpContext.Session.SetString("UserName", trackedUser.FullName ?? "");
                 HttpContext.Session.SetInt32("UserTypeID", trackedUser.UserTypeID);
                 HttpContext.Session.SetString("PhoneNumber", decryptedPhone ?? "");
@@ -599,7 +658,7 @@ namespace EcoRecyclersGreenTech.Controllers
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, decryptedEmail),
-                    new Claim(ClaimTypes.NameIdentifier, trackedUser.UserID.ToString()),
+                    new Claim(ClaimTypes.NameIdentifier, trackedUser.UserId.ToString()),
                     new Claim("IsVerified", trackedUser.Verified ? "true" : "false"),
                     new Claim("UserType", trackedUser.UserType.TypeName)
                 };

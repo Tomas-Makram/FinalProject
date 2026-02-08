@@ -1,232 +1,764 @@
 ﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @{
     ViewData["Title"] = "Manage Machines";
     var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var userName = ViewBag.UserName as string ?? "User";
+    var userType = ViewBag.UserType as string ?? "Factory";
+    var isVerified = ViewBag.IsVerified as bool? ?? false;
+
+    var totalMachines = Model?.Count ?? 0;
+    var totalOrders = Model?.Sum(x => x.OrdersCount) ?? 0;
+    var totalActiveOrders = Model?.Sum(x => x.ActiveOrdersCount) ?? 0;
 }
 
-<div class="container-fluid py-4">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
 
-    <!-- Alerts -->
-    @if (TempData["Success"] != null)
-    {
-            <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-    }
-
-    <!-- Header -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-8">
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <i class="bi bi-gear-fill fs-1 text-success"></i>
-                </div>
-                <div>
-                    <h1 class="h2 mb-1 fw-bold">Manage Machines</h1>
-                    <p class="text-muted mb-0">Add, edit, or remove your machines from the marketplace</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 text-end">
-            <a asp-action="AddMachine" class="btn btn-success">
-                <i class="bi bi-plus-circle me-2"></i>Add New Machine
-            </a>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search machines...">
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <h3 class="mb-1">Manage Machines</h3>
+                        <p class="mb-0 text-muted small">Add, edit, or remove your machines from the marketplace</p>
                     </div>
-                </div>
 
-                <div class="col-md-4">
-                    <select id="sortFilter" class="form-select">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="price_low">Price: Low to High</option>
-                        <option value="price_high">Price: High to Low</option>
-                        <option value="quantity_low">Quantity: Low to High</option>
-                        <option value="quantity_high">Quantity: High to Low</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-x-circle me-2"></i>Clear Filters
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Grid -->
-    @if (Model != null && Model.Any())
-    {
-            <div class="row" id="machinesGrid">
-            @foreach (var machine in Model)
-            {
-                        <div class="col-xl-3 col-lg-4 col-md-6 mb-4 machine-card"
-                             data-price="@machine.Price"
-                             data-quantity="@machine.AvailableQuantity"
-                             data-date="@machine.CreatedAt.Ticks">
-
-                            <div class="card shadow-sm border-0 h-100">
-                                <div class="position-relative">
-                            @if (!string.IsNullOrWhiteSpace(machine.ImageUrl))
+                    <div class="auth-body">
+                        <!-- Alerts -->
+                        <div class="alerts-container mb-4">
+                            @if (TempData["Success"] != null)
                             {
-                                            <img src="@machine.ImageUrl" class="card-img-top machine-img" alt="@machine.Name">
+                                <div class="alert premium-alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
                             }
-                            else
+                            @if (TempData["Error"] != null)
                             {
-                                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                                <i class="bi bi-gear fs-1 text-muted"></i>
-                                            </div>
+                                <div class="alert premium-alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            }
+                            @if (TempData["Warning"] != null)
+                            {
+                                <div class="alert premium-alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
                             }
 
-                            @if (!string.IsNullOrWhiteSpace(machine.Status))
-                            {
-                                            <span class="position-absolute top-0 start-0 m-2 badge @GetStatusBadgeClass(machine.Status)">
-                                    @machine.Status
+                            <!-- User Info -->
+                            <div class="premium-card mb-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">Welcome, <span class="text-success">@userName</span> (@userType)</h5>
+                                        <p class="text-muted small mb-0">Manage your machines efficiently</p>
+                                    </div>
+                                    <div>
+                                        @if (isVerified)
+                                        {
+                                            <span class="badge bg-success px-3 py-2 rounded-pill">
+                                                <i class="bi bi-shield-check me-1"></i>Verified
                                             </span>
-                            }
-                                </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                                                <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                                            </span>
+                                        }
 
-                                <div class="card-body">
-                                    <h5 class="card-title text-truncate mb-2">@machine.Name</h5>
-
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-6">
-                                            <div class="text-muted small">Price</div>
-                                            <div class="fw-bold text-success">$@machine.Price.ToString("N2")</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted small">Stock</div>
-                                            <div class="fw-bold">@machine.AvailableQuantity units</div>
-                                        </div>
-                                    </div>
-
-                            @if (!string.IsNullOrWhiteSpace(machine.MachineCondition.ToString()) || !string.IsNullOrWhiteSpace(machine.Brand))
-                            {
-                                            <div class="mb-3">
-                                    @if (!string.IsNullOrWhiteSpace(machine.MachineCondition.ToString()))
-                                    {
-                                                        <span class="badge bg-info me-2">@machine.MachineCondition</span>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(machine.Brand))
-                                    {
-                                                        <span class="badge bg-secondary">@machine.Brand</span>
-                                    }
-                                            </div>
-                            }
-
-                            @if (machine.WarrantyMonths.HasValue && machine.WarrantyMonths > 0)
-                            {
-                                            <div class="mb-2">
-                                                <small class="text-muted">
-                                                    <i class="bi bi-shield-check me-1"></i>
-                                                    Warranty: @machine.WarrantyMonths months
-                                                </small>
-                                            </div>
-                            }
-
-                                    <div class="text-muted small">
-                                        <i class="bi bi-calendar3 me-1"></i>@machine.CreatedAt.ToString("MMM dd, yyyy")
-                                    </div>
-                                </div>
-
-                                <div class="card-footer bg-transparent border-top">
-                                    <div class="d-flex justify-content-between align-items-center gap-2">
-                                        <a asp-action="EditMachine" asp-route-id="@machine.Id"
-                                           class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-pencil me-1"></i>Edit
+                                        <a asp-action="AddMachine" class="btn btn-success auth-btn-success ms-3">
+                                            <i class="bi bi-plus-circle me-2"></i>Add New Machine
                                         </a>
-
-                                        <form asp-action="DeleteMachine" method="post" class="m-0">
-                                    @Html.AntiForgeryToken()
-                                            <input type="hidden" name="Id" value="@machine.Id" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash me-1"></i>Delete
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
-            }
-            </div>
-    }
-    else
-    {
-            <div class="text-center py-5">
-                <div class="mb-4">
-                    <i class="bi bi-gear fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+
+                        <!-- Summary cards -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-grid-3x3-gap text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Machines</div>
+                                        <div class="fs-3 fw-bold">@totalMachines</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-receipt text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Total Orders</div>
+                                        <div class="fs-3 fw-bold">@totalOrders</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card kpi-card shadow-sm">
+                                    <div class="card-body text-center">
+                                        <div class="kpi-icon">
+                                            <i class="bi bi-lightning-charge text-success"></i>
+                                        </div>
+                                        <div class="text-muted small">Active Orders</div>
+                                        <div class="fs-3 fw-bold">@totalActiveOrders</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="premium-card mb-4">
+                            <h5 class="mb-3"><i class="bi bi-funnel me-2 text-success"></i>Search & Filter</h5>
+
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-5">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-search text-muted"></i>
+                                        </span>
+                                        <input type="text" id="searchInput" class="form-control premium-input border-start-0" placeholder="Search machines...">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <select id="sortFilter" class="form-select premium-input">
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="price_low">Price: Low to High</option>
+                                        <option value="price_high">Price: High to Low</option>
+                                        <option value="quantity_low">Quantity: Low to High</option>
+                                        <option value="quantity_high">Quantity: High to Low</option>
+                                        <option value="orders_high">Orders: High to Low</option>
+                                        <option value="active_orders_high">Active Orders: High to Low</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-x-circle me-2"></i>Clear Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grid -->
+                        @if (Model != null && Model.Any())
+                        {
+                            <div class="row" id="machinesGrid">
+                                @foreach (var machine in Model)
+                                {
+                                    <div class="col-xl-3 col-lg-4 col-md-6 mb-4 machine-card"
+                                         data-price="@machine.Price"
+                                         data-quantity="@machine.AvailableQuantity"
+                                         data-date="@machine.CreatedAt.Ticks"
+                                         data-orders="@machine.OrdersCount"
+                                         data-activeorders="@machine.ActiveOrdersCount">
+
+                                        <div class="card shadow-sm border-0 h-100 machine-card-inner">
+
+                                            <div class="position-relative">
+                                                @if (!string.IsNullOrWhiteSpace(machine.ImageUrl))
+                                                {
+                                                    <img src="@machine.ImageUrl" class="card-img-top machine-img" alt="@machine.Name">
+                                                }
+                                                else
+                                                {
+                                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 210px;">
+                                                        <i class="bi bi-gear fs-1 text-muted"></i>
+                                                    </div>
+                                                }
+
+                                                <div class="position-absolute top-0 start-0 m-2 d-flex gap-2 flex-wrap">
+                                                    @if (!string.IsNullOrWhiteSpace(machine.Status))
+                                                    {
+                                                        <span class="badge @GetStatusValidationClass(machine.Status) rounded-pill px-3 py-2">
+                                                            <i class="bi @GetStatusIcon(machine.Status) me-1"></i>@machine.Status
+                                                        </span>
+                                                    }
+
+                                                    <span class="badge bg-dark bg-opacity-75 rounded-pill px-3 py-2">
+                                                        <i class="bi bi-receipt me-1"></i>@machine.OrdersCount Orders
+                                                    </span>
+
+                                                    @if (machine.ActiveOrdersCount > 0)
+                                                    {
+                                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                                            <i class="bi bi-lightning-charge me-1"></i>@machine.ActiveOrdersCount Active
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                                    <h5 class="card-title text-truncate mb-0 text-label">@machine.Name</h5>
+                                                </div>
+
+                                                <div class="row g-2 mb-3">
+                                                    <div class="col-6">
+                                                        <div class="text-muted small">Price</div>
+                                                        <div class="fw-bold text-success">$@machine.Price.ToString("N2")</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="text-muted small">Stock</div>
+                                                        <div class="fw-bold text-label">@machine.AvailableQuantity units</div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Machine Specific Badges -->
+                                                <div class="mb-2 d-flex flex-wrap gap-2">
+                                                    @if (machine.MachineCondition != null && !string.IsNullOrWhiteSpace(machine.MachineCondition.ToString()))
+                                                    {
+                                                        <span class="badge bg-info">
+                                                            <i class="bi bi-clipboard-check me-1"></i>@machine.MachineCondition
+                                                        </span>
+                                                    }
+
+                                                    @if (!string.IsNullOrWhiteSpace(machine.Brand))
+                                                    {
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-tag me-1"></i>@machine.Brand
+                                                        </span>
+                                                    }
+                                                </div>
+
+                                                @if (machine.WarrantyMonths.HasValue && machine.WarrantyMonths.Value > 0)
+                                                {
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-shield-check me-1"></i>
+                                                            Warranty: @machine.WarrantyMonths months
+                                                        </small>
+                                                    </div>
+                                                }
+
+                                                <div class="d-flex justify-content-between text-muted small">
+                                                    <div><i class="bi bi-calendar3 me-1"></i>@machine.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                                    <div class="text-end">
+                                                        <i class="bi bi-clock me-1"></i>@machine.CreatedAt.ToString("HH:mm")
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="card-footer bg-transparent border-top">
+                                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                                    <a asp-action="EditMachine" asp-route-id="@machine.Id" class="btn btn-sm btn-outline-primary w-50">
+                                                        <i class="bi bi-pencil me-1"></i>Edit
+                                                    </a>
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger w-50"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-id="@machine.Id"
+                                                            data-name="@machine.Name">
+                                                        <i class="bi bi-trash me-1"></i>Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5 premium-card">
+                                <div class="mb-4">
+                                    <i class="bi bi-gear fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
+                                </div>
+                                <h3 class="h4 text-muted mb-3">No Machines Found</h3>
+                                <p class="text-muted mb-4">You haven't added any machines yet.</p>
+                                <a asp-action="AddMachine" class="btn btn-success auth-btn-success">
+                                    <i class="bi bi-plus-circle me-2"></i>Add First Machine
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Machines Management</small>
+                    </div>
                 </div>
-                <h3 class="h4 text-muted mb-3">No Machines Found</h3>
-                <p class="text-muted mb-4">You haven't added any machines yet.</p>
-                <div class="d-flex justify-content-center">
-                    <a asp-action="AddMachine" class="btn btn-success btn-lg">
-                        <i class="bi bi-plus-circle me-2"></i>Add Your First Machine
-                    </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content premium-modal">
+            <div class="modal-header premium-modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-trash me-2 text-danger"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="text-muted text-label">Are you sure you want to delete:</div>
+                <div class="fw-bold mt-1 text-label" id="deleteMachineName">Machine</div>
+                <div class="small text-muted mt-2">
+                    This action cannot be undone.
                 </div>
             </div>
-    }
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                <form asp-action="DeleteMachine" asp-controller="Factory" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="deleteMachineId" value="" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @functions {
-    string GetStatusBadgeClass(string status)
+    string GetStatusValidationClass(string status)
     {
-        return status?.ToLower() switch
+        return status.ToLower() switch
         {
             "available" => "bg-success",
             "soldout" or "sold out" => "bg-danger",
             "reserved" => "bg-warning text-dark",
             "inactive" => "bg-secondary",
-            _ => "bg-secondary"
+            _ => "bg-primary"
+        };
+    }
+
+    string GetStatusIcon(string status)
+    {
+        return status.ToLower() switch
+        {
+            "available" => "bi-check-circle-fill",
+            "soldout" or "sold out" => "bi-x-circle-fill",
+            "reserved" => "bi-clock-fill",
+            "inactive" => "bi-ban-fill",
+            _ => "bi-info-circle-fill"
         };
     }
 }
 
 <style nonce="@nonce">
-    .card {
+    /* ===================== PREMIUM MACHINES MANAGEMENT STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Premium Alerts */
+    .premium-alert {
+        border-radius: 14px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
+        margin-bottom: 15px;
+    }
+
+    /* KPI Cards */
+    .kpi-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        text-align: center;
+        height: 100%;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(2,6,23,.12);
+        }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
+        background: rgba(34,197,94,.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.5rem;
+        color: var(--eco-green);
+    }
+
+    /* Machine Cards */
+    .machine-card-inner {
+        border-radius: 16px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
         overflow: hidden;
         transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
+        height: 100%;
     }
 
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
+        .machine-card-inner:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(2,6,23,.12);
+            background: rgba(255,255,255,.95);
+        }
 
     .machine-img {
-        height: 200px;
+        height: 210px;
         object-fit: cover;
         width: 100%;
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    /* Premium Inputs */
+    .premium-input {
+        border-radius: 12px !important;
+        border: 1px solid rgba(15,23,42,.10) !important;
+        background: rgba(255,255,255,.88) !important;
+        box-shadow: none !important;
+        transition: all .22s ease;
+    }
+
+        .premium-input:focus {
+            border-color: rgba(34,197,94,.55) !important;
+            box-shadow: 0 0 0 .2rem rgba(34,197,94,.18) !important;
+            background: rgba(255,255,255,.96) !important;
+        }
+
+    /* Text Label Classes */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* Badges */
+    .badge {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    /* Modals */
+    .premium-modal {
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 25px 50px rgba(2,6,23,.15);
+    }
+
+    .premium-modal-header {
+        background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(20,184,166,.10));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+        border-radius: 20px 20px 0 0;
+        padding: 20px;
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0;
+        }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .premium-card,
+    [data-bs-theme="dark"] .kpi-card,
+    [data-bs-theme="dark"] .premium-alert,
+    [data-bs-theme="dark"] .premium-input {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .machine-card-inner {
+        background: rgba(2, 6, 23, .35);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .machine-card-inner:hover {
+            background: rgba(2, 6, 23, .50);
+        }
+
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .premium-input:focus {
+        background: rgba(2, 6, 23, .70) !important;
+        border-color: rgba(34,197,94,.45) !important;
+        box-shadow: 0 0 0 .2rem rgba(34,197,94,.16) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .premium-modal {
+        background: rgba(15, 23, 42, .80);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .premium-modal-header {
+        background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(20,184,166,.10));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .kpi-icon {
+        background: rgba(34,197,94,.15);
+        color: #22c55e;
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .kpi-card .fs-3 {
+            font-size: 1.75rem !important;
+        }
+
+        .machine-img {
+            height: 180px;
+        }
     }
 </style>
 
 <script nonce="@nonce">
     document.addEventListener('DOMContentLoaded', function () {
+
+        // Delete modal wiring
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteMachineName = document.getElementById('deleteMachineName');
+        const deleteMachineId = document.getElementById('deleteMachineId');
+
+        deleteModal?.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name') || 'Machine';
+            deleteMachineName.textContent = name;
+            deleteMachineId.value = id;
+        });
 
         const searchInput = document.getElementById('searchInput');
         const sortFilter = document.getElementById('sortFilter');
@@ -236,7 +768,7 @@
             return Array.from(document.querySelectorAll('.machine-card'));
         }
 
-        function filterAndSort() {
+        function filterAndSortMachines() {
             const term = (searchInput.value || '').toLowerCase();
             const sortBy = sortFilter.value;
 
@@ -254,6 +786,11 @@
                 const qa = parseInt(a.dataset.quantity || '0');
                 const qb = parseInt(b.dataset.quantity || '0');
 
+                const oa = parseInt(a.dataset.orders || '0');
+                const ob = parseInt(b.dataset.orders || '0');
+                const aa = parseInt(a.dataset.activeorders || '0');
+                const ab = parseInt(b.dataset.activeorders || '0');
+
                 switch (sortBy) {
                     case 'newest': return db - da;
                     case 'oldest': return da - db;
@@ -261,6 +798,8 @@
                     case 'price_high': return pb - pa;
                     case 'quantity_low': return qa - qb;
                     case 'quantity_high': return qb - qa;
+                    case 'orders_high': return ob - oa;
+                    case 'active_orders_high': return ab - aa;
                     default: return 0;
                 }
             });
@@ -272,16 +811,16 @@
             cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
         }
 
-        searchInput?.addEventListener('input', filterAndSort);
-        sortFilter?.addEventListener('change', filterAndSort);
+        searchInput?.addEventListener('input', filterAndSortMachines);
+        sortFilter?.addEventListener('change', filterAndSortMachines);
 
         clearFilters?.addEventListener('click', function () {
             searchInput.value = '';
             sortFilter.value = 'newest';
-            filterAndSort();
+            filterAndSortMachines();
             searchInput.focus();
         });
 
-        filterAndSort();
+        filterAndSortMachines();
     });
 </script>

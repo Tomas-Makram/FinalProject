@@ -245,6 +245,22 @@
       "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.map"
     },
     {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\auctions\\77bbf331928c46e2ac353fb9bdb553e0.png",
+      "PackagePath": "staticwebassets\\uploads\\auctions\\77bbf331928c46e2ac353fb9bdb553e0.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\auctions\\a9475c3f222f427d90dece1e93bb7494.png",
+      "PackagePath": "staticwebassets\\uploads\\auctions\\a9475c3f222f427d90dece1e93bb7494.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\auctions\\cd30c7191f0443439233a3f99b85793e.png",
+      "PackagePath": "staticwebassets\\uploads\\auctions\\cd30c7191f0443439233a3f99b85793e.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\auctions\\f59253aec15f4e9c8f5e50206d12093f.png",
+      "PackagePath": "staticwebassets\\uploads\\auctions\\f59253aec15f4e9c8f5e50206d12093f.png"
+    },
+    {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\factory\\0986672dca7f4043bc71c2d366b2f83c.png",
       "PackagePath": "staticwebassets\\uploads\\factory\\0986672dca7f4043bc71c2d366b2f83c.png"
     },
@@ -257,8 +273,20 @@
       "PackagePath": "staticwebassets\\uploads\\factory\\3b9dafa21b47470089a3bb07955c937c.png"
     },
     {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\factory\\40c64ea8054b4ca0a095b49f447dd64f.png",
+      "PackagePath": "staticwebassets\\uploads\\factory\\40c64ea8054b4ca0a095b49f447dd64f.png"
+    },
+    {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\factory\\41033861e33e4d898d1b13ffa7073c9c.png",
       "PackagePath": "staticwebassets\\uploads\\factory\\41033861e33e4d898d1b13ffa7073c9c.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\factory\\65ca7f5bb9fd472e9f7ab375dca2831d.png",
+      "PackagePath": "staticwebassets\\uploads\\factory\\65ca7f5bb9fd472e9f7ab375dca2831d.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\factory\\6aa16ec74e5f418081e6a189a9438733.png",
+      "PackagePath": "staticwebassets\\uploads\\factory\\6aa16ec74e5f418081e6a189a9438733.png"
     },
     {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\factory\\988fc5c6bd4642a39972e48901b7a962.png",
@@ -281,8 +309,160 @@
       "PackagePath": "staticwebassets\\uploads\\factory\\be89ebde1c5c46298df789c4eb6128e1.png"
     },
     {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\2943fdab8f9e4ac9ba155b65e853d3e5.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\2943fdab8f9e4ac9ba155b65e853d3e5.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\47b396b496e74a55831d8f6b0f83650c.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\47b396b496e74a55831d8f6b0f83650c.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\558c6f9c468a470594a02ebdc86e2e3c.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\558c6f9c468a470594a02ebdc86e2e3c.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\5b8f4ca9fe054336a4b60ff2b48fbdf7.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\5b8f4ca9fe054336a4b60ff2b48fbdf7.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\5fa0d025a23f4e14b99b15b7103b082c.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\5fa0d025a23f4e14b99b15b7103b082c.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\6ce12a84d76d4090aa3325bc9ce93ce6.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\6ce12a84d76d4090aa3325bc9ce93ce6.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\7fd92039f46b4aeaab0d77a98f983bba.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\7fd92039f46b4aeaab0d77a98f983bba.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\be113eb8525842b1b593536f7d2edd7e.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\be113eb8525842b1b593536f7d2edd7e.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\machines\\c039aa865e4f4c82869cc39411f424ad.png",
+      "PackagePath": "staticwebassets\\uploads\\machines\\c039aa865e4f4c82869cc39411f424ad.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\04fab76ee90046c1ba955989ba65d6df.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\04fab76ee90046c1ba955989ba65d6df.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\0b8dfb67051f4cf4b07dbb0ea0e7a7cf.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\0b8dfb67051f4cf4b07dbb0ea0e7a7cf.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\170cd117de7e49199b3d2b58f2e470d4.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\170cd117de7e49199b3d2b58f2e470d4.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\1925e449352a470597e8479330cd2de9.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\1925e449352a470597e8479330cd2de9.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\290de34710e3442198a5ef1a87207917.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\290de34710e3442198a5ef1a87207917.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\2ea86b7f2ecf425785f9cb5f36de6fce.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\2ea86b7f2ecf425785f9cb5f36de6fce.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\354ba7a4d5f8437d86778f6f6b27ce18.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\354ba7a4d5f8437d86778f6f6b27ce18.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\459d63507ab34408bd159ae90d7c39e0.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\459d63507ab34408bd159ae90d7c39e0.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\55b79354975d413abfcb4e6ed2e7216c.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\55b79354975d413abfcb4e6ed2e7216c.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\651c3e6ba2ce4cbb882949c33540f574.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\651c3e6ba2ce4cbb882949c33540f574.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\6b659f56da954f69aaa54a510691ec29.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\6b659f56da954f69aaa54a510691ec29.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\6c32478e289644129ef53cf773453d0a.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\6c32478e289644129ef53cf773453d0a.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\77abab47998a4d2c8b8c2292a4af9d0c.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\77abab47998a4d2c8b8c2292a4af9d0c.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\7a20725bf93842b587f39c1a1122a66b.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\7a20725bf93842b587f39c1a1122a66b.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\8c098a5490114090b57784376442e0c3.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\8c098a5490114090b57784376442e0c3.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\98058d38d562490da8b03912dd777216.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\98058d38d562490da8b03912dd777216.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\b0492cb4ff3e416a86ccf1f121aa583a.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\b0492cb4ff3e416a86ccf1f121aa583a.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\b886c1bc81f64e319df6feace69cb212.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\b886c1bc81f64e319df6feace69cb212.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\c178004fca0043149c7800c359a5462a.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\c178004fca0043149c7800c359a5462a.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\ca46ba2a332c4c3ea952a2fef15e7953.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\ca46ba2a332c4c3ea952a2fef15e7953.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\cfef6366ee054c3d9fc7b348d1dc86ec.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\cfef6366ee054c3d9fc7b348d1dc86ec.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\debce5ff38b34ffbb2b4e69deaec50dd.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\debce5ff38b34ffbb2b4e69deaec50dd.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\eaa9acd85cde40e4b9e9d1c4cbc7fd68.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\eaa9acd85cde40e4b9e9d1c4cbc7fd68.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\ebf639f92a434cad9d487568a5b825a5.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\ebf639f92a434cad9d487568a5b825a5.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\ef4ec220b5f1430fab4efb050ab67932.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\ef4ec220b5f1430fab4efb050ab67932.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\f312471c0fe3448ab1f83eb84a458533.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\f312471c0fe3448ab1f83eb84a458533.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\materials\\fffa0e1d77ec41c59568f488116dee5e.png",
+      "PackagePath": "staticwebassets\\uploads\\materials\\fffa0e1d77ec41c59568f488116dee5e.png"
+    },
+    {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\profile\\09c5f42a-7817-4742-87e9-99dcf38adccb.png",
       "PackagePath": "staticwebassets\\uploads\\profile\\09c5f42a-7817-4742-87e9-99dcf38adccb.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\profile\\1c377613d59046f29eda276a6125c705.png",
+      "PackagePath": "staticwebassets\\uploads\\profile\\1c377613d59046f29eda276a6125c705.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\profile\\2279a4286b5e4c03b94ac2a66ec20be9.png",
+      "PackagePath": "staticwebassets\\uploads\\profile\\2279a4286b5e4c03b94ac2a66ec20be9.png"
     },
     {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\profile\\487a296c50e046f7a46bba76cc4848c3.png",
@@ -309,12 +489,68 @@
       "PackagePath": "staticwebassets\\uploads\\rentals\\0c13667af0da49afaac5239554ccd552.png"
     },
     {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\0d9046bd13d34281a8f2f8cded3594c1.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\0d9046bd13d34281a8f2f8cded3594c1.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\20b3522ce82145eeb9eb884deb3a8bf4.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\20b3522ce82145eeb9eb884deb3a8bf4.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\30963cb403304630a6390b42f33e52ca.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\30963cb403304630a6390b42f33e52ca.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\4535b7cd1e4b433999bb01f7392776b4.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\4535b7cd1e4b433999bb01f7392776b4.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\4629536892b94532b59f6bc335dc1548.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\4629536892b94532b59f6bc335dc1548.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\47b58c5fd88f41748fcce6945f2f5a70.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\47b58c5fd88f41748fcce6945f2f5a70.png"
+    },
+    {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\4d540609b0cc42af8981a05cc60df978.png",
       "PackagePath": "staticwebassets\\uploads\\rentals\\4d540609b0cc42af8981a05cc60df978.png"
     },
     {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\5422b6b1c3154eb49702029751c73d8e.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\5422b6b1c3154eb49702029751c73d8e.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\6572379618d642febcea07eda8c5e3ec.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\6572379618d642febcea07eda8c5e3ec.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\756d4dedf10741a4b0279e7094067eb6.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\756d4dedf10741a4b0279e7094067eb6.png"
+    },
+    {
       "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\75cc733dd2264385992f5ceade3841a1.png",
       "PackagePath": "staticwebassets\\uploads\\rentals\\75cc733dd2264385992f5ceade3841a1.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\76ee98fbc56c454d85cb60933bb0cdab.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\76ee98fbc56c454d85cb60933bb0cdab.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\9a638d4ffd5140edb218568294a9705a.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\9a638d4ffd5140edb218568294a9705a.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\be67d81df4ad4b838a44125167ba20b6.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\be67d81df4ad4b838a44125167ba20b6.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\bf0e0a4b787a40f79df40a6b2d0cc3ea.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\bf0e0a4b787a40f79df40a6b2d0cc3ea.png"
+    },
+    {
+      "Id": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\wwwroot\\uploads\\rentals\\fe130737f1084b6992b743129f991a1f.png",
+      "PackagePath": "staticwebassets\\uploads\\rentals\\fe130737f1084b6992b743129f991a1f.png"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.EcoRecyclersGreenTech.Microsoft.AspNetCore.StaticWebAssets.props",

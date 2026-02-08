@@ -159,7 +159,7 @@ namespace EcoRecyclersGreenTech.Services
             await EnsureValidationWindowAsync(user);
 
             // global mail cap
-            if (!await CanSendMailOTPOrReset(user.UserID))
+            if (!await CanSendMailOTPOrReset(user.UserId))
                 return false;
 
             // per-flow send cap
@@ -281,7 +281,7 @@ namespace EcoRecyclersGreenTech.Services
             await EnsureResetWindowAsync(user);
 
             // global mail cap
-            if (!await CanSendMailOTPOrReset(user.UserID))
+            if (!await CanSendMailOTPOrReset(user.UserId))
                 return false;
 
             // per-flow send cap

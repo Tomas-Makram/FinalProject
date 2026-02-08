@@ -1,266 +1,770 @@
 ﻿@model List<EcoRecyclersGreenTech.Models.FactoryStore.FactoryStoreModel>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 
 @{
     ViewData["Title"] = "Manage Auctions";
     var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+
+    var userName = ViewBag.UserName as string ?? "User";
+    var userType = ViewBag.UserType as string ?? (ViewBag.Type as string ?? "Factory");
+    var isVerified = ViewBag.IsVerified as bool? ?? false;
+
+    // Summary
+    var totalAuctions = Model?.Count ?? 0;
+    var totalBids = Model?.Sum(x => x.OrdersCount) ?? 0;
+    var totalActiveBids = Model?.Sum(x => x.ActiveOrdersCount) ?? 0;
+    var endedAuctions = Model?.Count(x => x.IsAuctionEnded == true) ?? 0;
+
+    string FormatAddr(string? a) => string.IsNullOrWhiteSpace(a) ? "Not provided" : a.Trim();
+    string FormatCoord(decimal? v) => v.HasValue ? v.Value.ToString("0.######") : "-";
 }
 
-<div class="container-fluid py-4">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
 
-    <!-- Alerts -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <!-- Header -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-8">
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <i class="bi bi-hammer fs-1 text-primary"></i>
-                </div>
-                <div>
-                    <h1 class="h2 mb-1 fw-bold">Manage Auctions</h1>
-                    <p class="text-muted mb-0">Add, edit, or remove your auctions</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 text-end">
-            <a asp-action="AddAuction" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Add New Auction
-            </a>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search auctions...">
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-hammer"></i>
+                        </div>
+                        <h3 class="mb-1">Manage Auctions</h3>
+                        <p class="mb-0 text-muted small">Add, edit, or remove your auctions from the marketplace</p>
                     </div>
-                </div>
 
-                <div class="col-md-4">
-                    <select id="sortFilter" class="form-select">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="price_low">Starting Price: Low to High</option>
-                        <option value="price_high">Starting Price: High to Low</option>
-                        <option value="ending_soon">Ending Soon</option>
-                        <option value="ending_late">Ending Late</option>
-                    </select>
-                </div>
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Manage Auctions</li>
+                            </ol>
+                        </nav>
 
-                <div class="col-md-3">
-                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-x-circle me-2"></i>Clear Filters
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Warning"] != null)
+                        {
+                            <div class="alert alert-warning alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
 
-    <!-- Grid -->
-    @if (Model != null && Model.Any())
-    {
-        <div class="row" id="auctionsGrid">
-            @foreach (var auction in Model)
-            {
-                var endTicks = auction.AuctionEndDate?.Ticks ?? long.MaxValue;
-                var daysRemaining = auction.DaysRemaining ?? int.MaxValue;
-
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 auction-card"
-                     data-price="@auction.Price"
-                     data-date="@auction.CreatedAt.Ticks"
-                     data-end="@endTicks"
-                     data-days="@daysRemaining">
-
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="position-relative">
-                            @if (!string.IsNullOrWhiteSpace(auction.ImageUrl))
-                            {
-                                <img src="@auction.ImageUrl" class="card-img-top auction-img" alt="@auction.Name">
-                            }
-                            else
-                            {
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                    <i class="bi bi-image fs-1 text-muted"></i>
+                        <!-- Header Action Bar -->
+                        <div class="premium-card mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                                <div>
+                                    <h4 class="mb-0 text-section-title">
+                                        <i class="bi bi-hammer me-2 text-warning"></i>Your Auctions Management
+                                    </h4>
+                                    <p class="text-muted small mt-1 mb-0 text-label">Welcome, <span class="fw-semibold">@userName</span> (@userType) - Manage all your auctions</p>
                                 </div>
-                            }
 
-                            @if (!string.IsNullOrWhiteSpace(auction.Status))
-                            {
-                                <span class="position-absolute top-0 start-0 m-2 badge @GetStatusBadgeClass(auction.Status)">
-                                    @auction.Status
-                                </span>
-                            }
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (isVerified)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <i class="bi bi-shield-check me-1"></i>Verified
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                            <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                                        </span>
+                                    }
 
-                            @if (auction.IsAuctionEnded == true)
-                            {
-                                <span class="position-absolute top-0 end-0 m-2 badge bg-danger">
-                                    Ended
-                                </span>
-                            }
-                            else if (auction.DaysRemaining.HasValue && auction.DaysRemaining.Value != int.MaxValue)
-                            {
-                                <span class="position-absolute top-0 end-0 m-2 badge bg-info text-dark">
-                                    @($"{auction.DaysRemaining} days left")
-                                </span>
-                            }
+                                    <a asp-action="AddAuction" class="auth-btn-success">
+                                        <i class="bi bi-plus-circle me-2"></i>Add New Auction
+                                    </a>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="card-body">
-                            <h5 class="card-title text-truncate mb-2">@auction.Name</h5>
-
-                            <!-- Price + Qty -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <div class="text-muted small">Starting Price</div>
-                                    <div class="fw-bold text-primary">$@auction.Price.ToString("N2")</div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="text-muted small">Quantity</div>
-                                    <div class="fw-bold">@auction.AvailableQuantity</div>
+                        <!-- Summary cards -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="premium-card stat-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Total Auctions</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@totalAuctions</div>
+                                        </div>
+                                        <div class="stat-icon bg-primary-subtle text-primary">
+                                            <i class="bi bi-grid-3x3-gap"></i>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Dates -->
-                            <div class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar3 me-1"></i>
-                                    Start: @(auction.AuctionStartDate?.ToString("MMM dd, yyyy") ?? auction.CreatedAt.ToString("MMM dd, yyyy"))
-                                </small>
-                            </div>
-
-                            <div class="mb-3">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar-x me-1"></i>
-                                    End: @(auction.AuctionEndDate?.ToString("MMM dd, yyyy") ?? "No end date")
-                                </small>
-                            </div>
-
-                            <!-- Top bidder -->
-                            <div class="border rounded-3 p-2 bg-light-subtle mb-3">
-                                <div class="small text-muted">Top bidder so far</div>
-                                <div class="fw-semibold">
-                                    @(!string.IsNullOrWhiteSpace(auction.TopBidderName) ? auction.TopBidderName : "No bids yet")
+                            <div class="col-md-3">
+                                <div class="premium-card stat-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Total Bids</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@totalBids</div>
+                                        </div>
+                                        <div class="stat-icon bg-success-subtle text-success">
+                                            <i class="bi bi-receipt"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                @if (auction.TopBidAmount.HasValue)
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="premium-card stat-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Active Bids</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@totalActiveBids</div>
+                                        </div>
+                                        <div class="stat-icon bg-warning-subtle text-warning">
+                                            <i class="bi bi-lightning-charge"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="premium-card stat-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Ended Auctions</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@endedAuctions</div>
+                                        </div>
+                                        <div class="stat-icon bg-danger-subtle text-danger">
+                                            <i class="bi bi-calendar-x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="premium-card mb-4">
+                            <div class="card-body p-0">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light-subtle border-end-0">
+                                                <i class="bi bi-search text-muted"></i>
+                                            </span>
+                                            <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search auctions...">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <select id="sortFilter" class="form-select">
+                                            <option value="newest">Newest First</option>
+                                            <option value="oldest">Oldest First</option>
+                                            <option value="price_low">Start Price: Low to High</option>
+                                            <option value="price_high">Start Price: High to Low</option>
+                                            <option value="bids_high">Bids: High to Low</option>
+                                            <option value="active_bids_high">Active Bids: High to Low</option>
+                                            <option value="ending_soon">Ending Soon</option>
+                                            <option value="ending_late">Ending Late</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                                            <i class="bi bi-x-circle me-2"></i>Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grid -->
+                        @if (Model != null && Model.Any())
+                        {
+                            <div class="row g-4" id="auctionsGrid">
+                                @foreach (var auction in Model)
                                 {
-                                    <div class="small text-muted">
-                                        <i class="bi bi-trophy me-1"></i>
-                                        $@auction.TopBidAmount.Value.ToString("N2")
-                                        @if (auction.TopBidAt.HasValue)
-                                        {
-                                            <span class="ms-2">(@auction.TopBidAt.Value.ToString("MMM dd, yyyy"))</span>
-                                        }
+                                    // Images
+                                    var imgs = (auction.ImageUrls ?? new List<string>())
+                                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                                    .Select(x => x.Trim())
+                                    .Distinct()
+                                    .ToList();
+
+                                    if (imgs.Count == 0 && !string.IsNullOrWhiteSpace(auction.ImageUrl))
+                                        imgs.Add(auction.ImageUrl!.Trim());
+
+                                    var hasImages = imgs.Count > 0;
+                                    var carouselId = $"auctionCarousel_{auction.Id}";
+
+                                    var statusText = auction.Status ?? "";
+                                    var endTicks = auction.AuctionEndDate?.Ticks ?? long.MaxValue;
+                                    var daysRemaining = auction.DaysRemaining ?? int.MaxValue;
+
+                                    var isEnded = auction.IsAuctionEnded == true;
+                                    var isConfirmed = auction.ConfirmedOrderId.HasValue;
+
+                                    // Location for map button
+                                    var lat = auction.AuctionLatitude;
+                                    var lng = auction.AuctionLongitude;
+                                    var addr = auction.AuctionAddress;
+
+                                    <div class="col-xl-3 col-lg-4 col-md-6 auction-card"
+                                         data-price="@auction.Price"
+                                         data-date="@auction.CreatedAt.Ticks"
+                                         data-orders="@auction.OrdersCount"
+                                         data-activeorders="@auction.ActiveOrdersCount"
+                                         data-end="@endTicks"
+                                         data-days="@daysRemaining">
+
+                                        <div class="premium-card auction-card-inner h-100">
+
+                                            <div class="position-relative">
+
+                                                @if (hasImages && imgs.Count > 1)
+                                                {
+                                                    <div id="@carouselId" class="carousel slide" data-bs-ride="carousel">
+                                                        <div class="carousel-inner">
+                                                            @for (int i = 0; i < imgs.Count; i++)
+                                                            {
+                                                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                                    <img src="@imgs[i]" class="d-block w-100 auction-img" alt="Auction image @(i + 1)" />
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev">
+                                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                            <span class="visually-hidden">Previous</span>
+                                                        </button>
+                                                        <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next">
+                                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                            <span class="visually-hidden">Next</span>
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else if (hasImages && imgs.Count == 1)
+                                                {
+                                                    <img src="@imgs[0]" class="card-img-top auction-img" alt="Auction image" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="card-img-top bg-light-subtle d-flex align-items-center justify-content-center auction-img">
+                                                        <i class="bi bi-image fs-1 text-muted"></i>
+                                                    </div>
+                                                }
+
+                                                <!-- Badges -->
+                                                <div class="position-absolute top-0 start-0 m-2 d-flex gap-2 flex-wrap">
+                                                    @if (!string.IsNullOrWhiteSpace(statusText))
+                                                    {
+                                                        <span class="badge @GetStatusValidationClass(statusText) rounded-pill px-3 py-2">
+                                                            <i class="bi @GetStatusIcon(statusText) me-1"></i>@statusText
+                                                        </span>
+                                                    }
+
+                                                    <span class="badge bg-dark bg-opacity-75 rounded-pill px-3 py-2">
+                                                        <i class="bi bi-receipt me-1"></i>@auction.OrdersCount Bids
+                                                    </span>
+
+                                                    @if (auction.ActiveOrdersCount > 0)
+                                                    {
+                                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                                            <i class="bi bi-lightning-charge me-1"></i>@auction.ActiveOrdersCount Active
+                                                        </span>
+                                                    }
+                                                </div>
+
+                                                <!-- End / Days Remaining / Confirmed -->
+                                                <div class="position-absolute top-0 end-0 m-2 d-flex flex-column gap-2 align-items-end">
+                                                    @if (isConfirmed)
+                                                    {
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-patch-check-fill me-1"></i>Confirmed
+                                                        </span>
+                                                    }
+                                                    else if (isEnded)
+                                                    {
+                                                        <span class="badge bg-danger">
+                                                            <i class="bi bi-calendar-x me-1"></i>Ended
+                                                        </span>
+                                                    }
+                                                    else if (auction.DaysRemaining.HasValue && auction.DaysRemaining.Value != int.MaxValue)
+                                                    {
+                                                        <span class="badge bg-info text-dark">
+                                                            <i class="bi bi-hourglass-split me-1"></i>@($"{auction.DaysRemaining} days left")
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="card-body">
+                                                <h5 class="card-title text-truncate mb-2 text-label">@auction.Name</h5>
+
+                                                <div class="row g-2 mb-2">
+                                                    <div class="col-6">
+                                                        <div class="text-muted small text-label">Start Price</div>
+                                                        <div class="fw-bold text-warning text-label">$@auction.Price.ToString("N2")</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="text-muted small text-label">Quantity</div>
+                                                        <div class="fw-bold text-label">@auction.AvailableQuantity</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-muted small text-label">
+                                                    <i class="bi bi-calendar3 me-1"></i>
+                                                    Start: @(auction.AuctionStartDate?.ToString("MMM dd, yyyy") ?? auction.CreatedAt.ToString("MMM dd, yyyy"))
+                                                </div>
+
+                                                <div class="text-muted small mt-1 text-label">
+                                                    <i class="bi bi-calendar-x me-1"></i>
+                                                    End: @(auction.AuctionEndDate?.ToString("MMM dd, yyyy") ?? "No end date")
+                                                </div>
+
+                                                <!-- Pickup Location block -->
+                                                <div class="border rounded-3 p-2 bg-light-subtle mt-3">
+                                                    <div class="small text-muted text-label">Pickup location</div>
+
+                                                    <div class="fw-semibold text-truncate text-label">
+                                                        <i class="bi bi-geo-alt me-1"></i>@FormatAddr(addr)
+                                                    </div>
+
+                                                    <div class="small text-muted mt-1 text-label">
+                                                        <i class="bi bi-pin-map me-1"></i>
+                                                        Lat: @FormatCoord(lat) , Lng: @FormatCoord(lng)
+                                                    </div>
+
+                                                    <div class="d-flex gap-2 mt-2">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary w-100 btnShowMap"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#mapModal"
+                                                                data-id="@auction.Id"
+                                                                data-lat="@(lat?.ToString() ?? "")"
+                                                                data-lng="@(lng?.ToString() ?? "")"
+                                                                data-address="@FormatAddr(addr)">
+                                                            <i class="bi bi-map me-1"></i>Map
+                                                        </button>
+
+                                                        <a class="btn btn-sm btn-outline-primary w-100"
+                                                           target="_blank" rel="noopener"
+                                                           href="https://www.google.com/maps?q=@(lat ?? 30.0444m),@(lng ?? 31.2357m)">
+                                                            <i class="bi bi-box-arrow-up-right me-1"></i>Open
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Top bidder -->
+                                                <div class="border rounded-3 p-2 bg-light-subtle mt-3">
+                                                    <div class="small text-muted text-label">Top bidder so far</div>
+
+                                                    <div class="fw-semibold text-truncate text-label">
+                                                        @(!string.IsNullOrWhiteSpace(auction.TopBidderName) ? auction.TopBidderName : "No bids yet")
+                                                    </div>
+
+                                                    @if (auction.TopBidAmount.HasValue)
+                                                    {
+                                                        <div class="small text-muted text-label">
+                                                            <i class="bi bi-trophy me-1"></i>
+                                                            $@auction.TopBidAmount.Value.ToString("N2")
+                                                            @if (auction.TopBidAt.HasValue)
+                                                            {
+                                                                <span class="ms-2">(@auction.TopBidAt.Value.ToString("MMM dd, yyyy"))</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                <!-- Thumbnails -->
+                                                @if (imgs.Count > 1)
+                                                {
+                                                    <div class="d-flex gap-2 flex-wrap mt-3">
+                                                        @foreach (var url in imgs.Take(3))
+                                                        {
+                                                            <img src="@url" class="thumb rounded" alt="thumb">
+                                                        }
+                                                    </div>
+                                                }
+
+                                                <div class="text-muted small mt-3 text-label">
+                                                    <i class="bi bi-clock me-1"></i>Created: @auction.CreatedAt.ToString("MMM dd, yyyy")
+                                                </div>
+                                            </div>
+
+                                            <div class="card-footer bg-transparent border-top mt-auto">
+                                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                                    <a asp-action="EditAuction" asp-route-id="@auction.Id"
+                                                       class="btn btn-sm btn-outline-primary w-50">
+                                                        <i class="bi bi-pencil me-1"></i>Edit
+                                                    </a>
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger w-50"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-id="@auction.Id"
+                                                            data-name="@auction.Name">
+                                                        <i class="bi bi-trash me-1"></i>Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
                                     </div>
                                 }
                             </div>
-
-                            <!-- Thumbnails -->
-                            @if (auction.ImageUrls != null && auction.ImageUrls.Count > 1)
-                            {
-                                <div class="d-flex gap-2 flex-wrap">
-                                    @foreach (var url in auction.ImageUrls.Take(3))
-                                    {
-                                        <img src="@url" class="thumb rounded" alt="thumb">
-                                    }
+                        }
+                        else
+                        {
+                            <div class="premium-card text-center py-5">
+                                <div class="mb-4">
+                                    <i class="bi bi-hammer fs-1 text-warning opacity-50" style="font-size: 4rem;"></i>
                                 </div>
-                            }
-
-                            <div class="text-muted small mt-3">
-                                <i class="bi bi-clock me-1"></i>Created: @auction.CreatedAt.ToString("MMM dd, yyyy")
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-transparent border-top">
-                            <div class="d-flex justify-content-between align-items-center gap-2">
-                                <a asp-action="EditAuction" asp-route-id="@auction.Id"
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil me-1"></i>Edit
+                                <h3 class="h4 text-muted mb-3 text-label">No Auctions Found</h3>
+                                <p class="text-muted mb-4 text-label">You haven't added any auctions yet.</p>
+                                <a asp-action="AddAuction" class="auth-btn-success">
+                                    <i class="bi bi-plus-circle me-2"></i>Add First Auction
                                 </a>
-
-                                <form asp-action="DeleteAuction" method="post" class="m-0">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="Id" value="@auction.Id" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash me-1"></i>Delete
-                                    </button>
-                                </form>
                             </div>
-                        </div>
+                        }
+                    </div>
 
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Auctions Management</small>
                     </div>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <div class="mb-4">
-                <i class="bi bi-hammer fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
-            </div>
-            <h3 class="h4 text-muted mb-3">No Auctions Found</h3>
-            <p class="text-muted mb-4">You haven't added any auctions yet.</p>
-            <div class="d-flex justify-content-center">
-                <a asp-action="AddAuction" class="btn btn-primary btn-lg">
-                    <i class="bi bi-plus-circle me-2"></i>Add Your First Auction
-                </a>
             </div>
         </div>
-    }
+    </div>
+</div>
+
+<!-- Map Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-label">
+                    <i class="bi bi-geo-alt-fill me-2 text-danger"></i>Pickup Location Map
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-info py-2 mb-3">
+                    <div class="small text-label"><b>Address:</b> <span id="mapAddressText" class="text-label">-</span></div>
+                    <div class="small mt-1 text-label"><b>Coords:</b> <span id="mapCoordsText" class="text-label">-</span></div>
+                </div>
+
+                <div id="leafletMap"
+                     style="height:420px;border-radius:12px;border:1px solid rgba(15,23,42,.12)"></div>
+
+                <div class="small text-muted mt-2 text-label">
+                    Tip: If coords are missing, map will fallback to Cairo.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-label">
+                    <i class="bi bi-trash me-2 text-danger"></i>Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="text-muted text-label">Are you sure you want to delete:</div>
+                <div class="fw-bold mt-1 text-label" id="deleteAuctionName">Auction</div>
+                <div class="small text-muted mt-2 text-label">This action cannot be undone.</div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                <form asp-action="DeleteAuction" asp-controller="Factory" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="deleteAuctionId" value="" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @functions {
-    string GetStatusBadgeClass(string status)
+    string GetStatusValidationClass(string status)
     {
-        return status?.ToLower() switch
+        return (status ?? "").ToLower() switch
         {
             "available" => "bg-success",
             "soldout" or "sold out" => "bg-danger",
             "reserved" => "bg-warning text-dark",
             "inactive" => "bg-secondary",
-            _ => "bg-secondary"
+            "pending" => "bg-info",
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "draft" => "bg-secondary",
+            "removedbyfactory" or "removed" => "bg-dark",
+            _ => "bg-primary"
+        };
+    }
+
+    string GetStatusIcon(string status)
+    {
+        return (status ?? "").ToLower() switch
+        {
+            "available" => "bi-check-circle-fill",
+            "soldout" or "sold out" => "bi-x-circle-fill",
+            "reserved" => "bi-clock-fill",
+            "inactive" => "bi-ban-fill",
+            "pending" => "bi-hourglass-split",
+            "approved" => "bi-check-circle-fill",
+            "rejected" => "bi-x-circle-fill",
+            "draft" => "bi-pencil-fill",
+            "removedbyfactory" or "removed" => "bi-trash-fill",
+            _ => "bi-info-circle-fill"
         };
     }
 }
 
 <style nonce="@nonce">
-    .card {
-        border-radius: 12px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
+    /* ===================== PREMIUM AUCTION MANAGEMENT STYLES ===================== */
+    :root {
+        --eco-gold: #f59e0b;
+        --eco-amber: #fbbf24;
+        --eco-orange: #fb923c;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(245,158,11,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
     }
 
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    /* Animated background with gold/orange theme */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(245,158,11,.15), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(251,191,36,.15), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(251,146,60,.12), transparent 55%), linear-gradient(180deg, rgba(254,252,232,.92), rgba(255,250,240,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
     }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(245,158,11,.15), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(251,191,36,.15), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(251,146,60,.12), transparent 55%), linear-gradient(180deg, rgba(254,252,232,.92), rgba(255,250,240,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(251,191,36,.12), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(245,158,11,.12), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(251,146,60,.10), transparent 55%), linear-gradient(180deg, rgba(255,250,240,.92), rgba(254,252,232,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(251,146,60,.14), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(251,191,36,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(245,158,11,.10), transparent 55%), linear-gradient(180deg, rgba(254,252,232,.92), rgba(255,250,240,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(251,191,36,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-gold), var(--eco-amber));
+        box-shadow: 0 12px 25px rgba(245,158,11,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-head h3 {
+        color: var(--ink);
+    }
+
+    .auth-head .text-muted {
+        color: var(--muted);
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
+    }
+
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-gold);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        border: none !important;
+        padding: 16px !important;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+    }
+
+    /* Auction Cards */
+    .auction-card-inner {
+        border: none !important;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+        .auction-card-inner:hover {
+            transform: translateY(-6px) !important;
+            box-shadow: 0 22px 45px rgba(2,6,23,.15) !important;
+        }
 
     .auction-img {
-        height: 200px;
+        height: 210px;
         object-fit: cover;
         width: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(15,23,42,.08);
     }
 
     .bg-light-subtle {
@@ -273,71 +777,452 @@
         height: 36px;
         object-fit: cover;
         border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 6px;
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-gold), var(--eco-orange)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(245,158,11,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(251,146,60,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    .btn-outline-secondary {
+        border-color: rgba(15,23,42,.15);
+        color: var(--ink);
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: rgba(15,23,42,.05);
+            border-color: rgba(15,23,42,.25);
+        }
+
+    /* Form Controls */
+    #searchInput:focus, .form-select:focus {
+        box-shadow: 0 0 0 .25rem rgba(245,158,11,.18);
+        border-color: var(--eco-gold);
+    }
+
+    .input-group-text {
+        background-color: rgba(248, 249, 250, 0.8);
+        border-color: rgba(15,23,42,.12);
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 16px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.95);
+        backdrop-filter: blur(10px);
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(245,158,11,.10), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(251,191,36,.10), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(251,146,60,.08), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(245,158,11,.10), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(251,191,36,.10), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(251,146,60,.08), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(251,191,36,.08), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(245,158,11,.08), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(251,146,60,.06), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(251,146,60,.10), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(251,191,36,.08), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(245,158,11,.08), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(251,191,36,.06));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] h1,
+    [data-bs-theme="dark"] h2,
+    [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] h4,
+    [data-bs-theme="dark"] h5,
+    [data-bs-theme="dark"] h6 {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-gold) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .auction-img {
+        border-color: rgba(148, 163, 184, .16);
+    }
+
+    [data-bs-theme="dark"] .bg-light-subtle {
+        background-color: rgba(30, 41, 59, 0.5) !important;
+        border-color: rgba(148, 163, 184, .1);
+    }
+
+    [data-bs-theme="dark"] .btn-outline-secondary {
+        border-color: rgba(148, 163, 184, .3);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] .btn-outline-secondary:hover {
+            background-color: rgba(148, 163, 184, .1);
+            border-color: rgba(148, 163, 184, .4);
+            color: #ffffff;
+        }
+
+    [data-bs-theme="dark"] .input-group-text {
+        background-color: rgba(30, 41, 59, 0.8);
+        border-color: rgba(148, 163, 184, .2);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .form-control,
+    [data-bs-theme="dark"] .form-select {
+        background-color: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, .2);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background-color: rgba(15, 23, 42, 0.8);
+            border-color: var(--eco-gold);
+            color: #e2e8f0;
+            box-shadow: 0 0 0 .25rem rgba(245,158,11,.25);
+        }
+
+    [data-bs-theme="dark"] .modal-content {
+        background: rgba(15, 23, 42, .95);
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .modal-header,
+    [data-bs-theme="dark"] .modal-footer {
+        border-color: rgba(148, 163, 184, .1);
+    }
+
+    /* Badge Dark Mode */
+    [data-bs-theme="dark"] .badge.bg-secondary {
+        background-color: rgba(148, 163, 184, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-warning {
+        background-color: rgba(245, 158, 11, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-info {
+        background-color: rgba(56, 189, 248, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-success {
+        background-color: rgba(34, 197, 94, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .badge.bg-danger {
+        background-color: rgba(239, 68, 68, 0.3) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Carousel controls in dark mode */
+    [data-bs-theme="dark"] .carousel-control-prev-icon,
+    [data-bs-theme="dark"] .carousel-control-next-icon {
+        filter: invert(1) grayscale(100);
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .auction-img {
+            height: 180px;
+        }
+
+        .col-xl-3 {
+            width: 50%;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 16px;
+        }
+
+        .auth-body {
+            padding: 0 16px 14px;
+        }
+
+        .auction-img {
+            height: 160px;
+        }
+
+        .col-xl-3, .col-lg-4 {
+            width: 100%;
+        }
+
+        .stat-card {
+            padding: 12px !important;
+        }
+
+        .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .auction-img {
+            height: 140px;
+        }
+
+        .row.g-3.align-items-center {
+            flex-direction: column;
+            gap: 10px !important;
+        }
+
+            .row.g-3.align-items-center .col-md-5,
+            .row.g-3.align-items-center .col-md-4,
+            .row.g-3.align-items-center .col-md-3 {
+                width: 100%;
+            }
     }
 </style>
 
-<script nonce="@nonce">
-document.addEventListener('DOMContentLoaded', function () {
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script nonce="@nonce" src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-    const searchInput = document.getElementById('searchInput');
-    const sortFilter = document.getElementById('sortFilter');
-    const clearFilters = document.getElementById('clearFilters');
+    <script nonce="@nonce">
+        document.addEventListener('DOMContentLoaded', function () {
+            // Delete modal wiring
+            const deleteModal = document.getElementById('deleteModal');
+            const deleteAuctionName = document.getElementById('deleteAuctionName');
+            const deleteAuctionId = document.getElementById('deleteAuctionId');
 
-    function getCards() {
-        return Array.from(document.querySelectorAll('.auction-card'));
-    }
+            deleteModal?.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name') || 'Auction';
+                deleteAuctionName.textContent = name;
+                deleteAuctionId.value = id;
+            });
 
-    function filterAndSort() {
-        const term = (searchInput.value || '').toLowerCase();
-        const sortBy = sortFilter.value;
+            // Search + sort
+            const searchInput = document.getElementById('searchInput');
+            const sortFilter = document.getElementById('sortFilter');
+            const clearFilters = document.getElementById('clearFilters');
 
-        let cards = getCards();
-
-        if (term) {
-            cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
-        }
-
-        cards.sort((a, b) => {
-            const da = parseInt(a.dataset.date || '0');
-            const db = parseInt(b.dataset.date || '0');
-
-            const pa = parseFloat(a.dataset.price || '0');
-            const pb = parseFloat(b.dataset.price || '0');
-
-            const enda = parseInt(a.dataset.end || '0');
-            const endb = parseInt(b.dataset.end || '0');
-
-            const daysa = parseInt(a.dataset.days || '2147483647');
-            const daysb = parseInt(b.dataset.days || '2147483647');
-
-            switch (sortBy) {
-                case 'newest': return db - da;
-                case 'oldest': return da - db;
-                case 'price_low': return pa - pb;
-                case 'price_high': return pb - pa;
-                case 'ending_soon': return daysa - daysb;
-                case 'ending_late': return daysb - daysa;
-                default: return 0;
+            function getCards() {
+                return Array.from(document.querySelectorAll('.auction-card'));
             }
+
+            function filterAndSort() {
+                const term = (searchInput.value || '').toLowerCase();
+                const sortBy = sortFilter.value;
+
+                let cards = getCards();
+
+                if (term) cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
+
+                cards.sort((a, b) => {
+                    const da = parseInt(a.dataset.date || '0');
+                    const db = parseInt(b.dataset.date || '0');
+                    const pa = parseFloat(a.dataset.price || '0');
+                    const pb = parseFloat(b.dataset.price || '0');
+                    const oa = parseInt(a.dataset.orders || '0');
+                    const ob = parseInt(b.dataset.orders || '0');
+                    const aca = parseInt(a.dataset.activeorders || '0');
+                    const acb = parseInt(b.dataset.activeorders || '0');
+                    const daysa = parseInt(a.dataset.days || '2147483647');
+                    const daysb = parseInt(b.dataset.days || '2147483647');
+
+                    switch (sortBy) {
+                        case 'newest': return db - da;
+                        case 'oldest': return da - db;
+                        case 'price_low': return pa - pb;
+                        case 'price_high': return pb - pa;
+                        case 'bids_high': return ob - oa;
+                        case 'active_bids_high': return acb - aca;
+                        case 'ending_soon': return daysa - daysb;
+                        case 'ending_late': return daysb - daysa;
+                        default: return 0;
+                    }
+                });
+
+                const grid = document.getElementById('auctionsGrid');
+                if (!grid) return;
+
+                getCards().forEach(c => c.style.display = 'none');
+                cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
+            }
+
+            searchInput?.addEventListener('input', filterAndSort);
+            sortFilter?.addEventListener('change', filterAndSort);
+
+            clearFilters?.addEventListener('click', function () {
+                searchInput.value = '';
+                sortFilter.value = 'newest';
+                filterAndSort();
+                searchInput.focus();
+            });
+
+            filterAndSort();
+
+            // Leaflet modal map
+            const mapModal = document.getElementById('mapModal');
+            const mapAddressText = document.getElementById('mapAddressText');
+            const mapCoordsText = document.getElementById('mapCoordsText');
+
+            let leafletMap = null;
+            let leafletMarker = null;
+
+            function toFloat(v) {
+                if (!v) return NaN;
+                return parseFloat(String(v).replace(',', '.'));
+            }
+
+            mapModal?.addEventListener('shown.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                const latRaw = btn.getAttribute('data-lat');
+                const lngRaw = btn.getAttribute('data-lng');
+                const addr = btn.getAttribute('data-address') || '-';
+
+                let lat = toFloat(latRaw);
+                let lng = toFloat(lngRaw);
+
+                // fallback Cairo
+                if (Number.isNaN(lat) || Number.isNaN(lng)) {
+                    lat = 30.0444;
+                    lng = 31.2357;
+                }
+
+                mapAddressText.textContent = addr;
+                mapCoordsText.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+
+                // init map once
+                if (!leafletMap) {
+                    leafletMap = L.map('leafletMap', { zoomControl: true }).setView([lat, lng], 15);
+
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap &copy; CARTO'
+                    }).addTo(leafletMap);
+
+                    leafletMarker = L.marker([lat, lng]).addTo(leafletMap);
+                } else {
+                    leafletMap.setView([lat, lng], 15);
+                    leafletMarker?.setLatLng([lat, lng]);
+                }
+
+                setTimeout(() => leafletMap.invalidateSize(), 250);
+            });
+
+            mapModal?.addEventListener('hidden.bs.modal', function () {
+                // optional: keep map instance for next open (faster)
+            });
         });
-
-        const grid = document.getElementById('auctionsGrid');
-        if (!grid) return;
-
-        getCards().forEach(c => c.style.display = 'none');
-        cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
-    }
-
-    searchInput?.addEventListener('input', filterAndSort);
-    sortFilter?.addEventListener('change', filterAndSort);
-
-    clearFilters?.addEventListener('click', function () {
-        searchInput.value = '';
-        sortFilter.value = 'newest';
-        filterAndSort();
-        searchInput.focus();
-    });
-
-    filterAndSort();
-});
-</script>
+    </script>
+}

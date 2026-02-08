@@ -20,6 +20,9 @@ namespace EcoRecyclersGreenTech.Models
         public DbSet<Individual> Individuals { get; set; }
         public DbSet<Craftsman> Craftsmen { get; set; }
         public DbSet<Admin> Admins { get; set; }
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public DbSet<Wallet> Wallets { get; set; }
+        public DbSet<WalletTransaction> WalletTransactions { get; set; }
 
         // ======= Stores =======
         public DbSet<RentalStore> RentalStores { get; set; }
@@ -51,6 +54,50 @@ namespace EcoRecyclersGreenTech.Models
                 .WithMany(t => t.Users)
                 .HasForeignKey(u => u.UserTypeID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // User (1) -> PaymentCustomer (0..1)
+            //modelBuilder.Entity<User>()
+            //    .HasOne(u => u.PaymentCustomer)
+            //    .WithOne(pc => pc.User)
+            //    .HasForeignKey<PaymentCustomer>(pc => pc.UserId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            // User (1) -> Wallet (0..1)
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Wallet)
+                .WithOne(w => w.User)
+                .HasForeignKey<Wallet>(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique Wallet per User
+            modelBuilder.Entity<Wallet>()
+                .HasIndex(w => w.UserId)
+                .IsUnique();
+
+            modelBuilder.Entity<WalletTransaction>()
+                .HasOne(t => t.Wallet)
+                .WithMany(w => w.Transactions)
+                .HasForeignKey(t => t.WalletId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<PaymentTransaction>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.PaymentTransactions)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PaymentTransaction>()
+                .HasIndex(p => new { p.Provider, p.ProviderPaymentId })
+                .IsUnique();
+
+            modelBuilder.Entity<WalletTransaction>()
+            .HasIndex(t => new { t.WalletId, t.IdempotencyKey })
+            .IsUnique();
+
+            //modelBuilder.Entity<PaymentCustomer>()
+            //    .HasIndex(pc => pc.UserId)
+            //    .IsUnique();
+
 
             // Individual 1-1
             modelBuilder.Entity<Individual>()
@@ -105,6 +152,14 @@ namespace EcoRecyclersGreenTech.Models
                 .WithMany()
                 .HasForeignKey(r => r.OwnerID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RentalOrder>()
+                .HasIndex(x => new { x.PaymentProvider, x.PaymentProviderId })
+                .IsUnique();
+
+            // اختيارياً: تمنع أكتر من Confirmed على نفس Rental
+            modelBuilder.Entity<RentalStore>()
+                .HasIndex(x => x.ReservedForOrderId);
 
             // ===== AuctionStore -> Seller(User) =====
             modelBuilder.Entity<AuctionStore>()

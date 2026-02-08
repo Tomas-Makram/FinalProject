@@ -8,299 +8,397 @@
     var userName = ViewBag.UserName as string ?? "User";
     var userType = ViewBag.UserType as string ?? (ViewBag.Type as string ?? "Factory");
     var isVerified = ViewBag.IsVerified as bool? ?? false;
+
+    // ✅ Summary (زي Materials)
+    var totalRentals = Model?.Count ?? 0;
+    var totalOrders = Model?.Sum(x => x.OrdersCount) ?? 0;
+    var totalActiveOrders = Model?.Sum(x => x.ActiveOrdersCount) ?? 0;
 }
 
-<div class="container-fluid py-4">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
 
-    <!-- Alerts -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["Warning"] != null)
-    {
-        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-4" role="alert">
-            <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <!-- Header -->
-    <div class="row align-items-center mb-4">
-        <div class="col-md-8">
-            <div class="d-flex align-items-center">
-                <div class="me-3">
-                    <i class="bi bi-building fs-1 text-primary"></i>
-                </div>
-                <div>
-                    <h1 class="h2 mb-1 fw-bold">Manage Rentals</h1>
-                    <p class="text-muted mb-0">Add, edit, or remove your rental properties</p>
-                    <small class="text-muted">Welcome, @userName (@userType)</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 text-end">
-            <div class="d-flex gap-2 justify-content-end align-items-center">
-                @if (isVerified)
-                {
-                    <span class="badge bg-success rounded-pill p-2">
-                        <i class="bi bi-shield-check me-1"></i>Verified
-                    </span>
-                }
-                else
-                {
-                    <span class="badge bg-warning text-dark rounded-pill p-2">
-                        <i class="bi bi-shield-exclamation me-1"></i>Not Verified
-                    </span>
-                }
-
-                <a asp-action="AddRental" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Add New
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Search rentals...">
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 class="mb-1">Manage Rentals</h3>
+                        <p class="mb-0 text-muted small">Welcome, <span class="fw-semibold">@userName</span> (@userType)</p>
                     </div>
-                </div>
 
-                <div class="col-md-4">
-                    <select id="sortFilter" class="form-select">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="price_low">Price: Low to High</option>
-                        <option value="price_high">Price: High to Low</option>
-                    </select>
-                </div>
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Manage Rentals</li>
+                            </ol>
+                        </nav>
 
-                <div class="col-md-3">
-                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-x-circle me-2"></i>Clear
-                    </button>
-                </div>
+                        <!-- Alerts -->
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
+                        @if (TempData["Warning"] != null)
+                        {
+                            <div class="alert alert-warning alert-dismissible fade show shadow-sm premium-card mb-3" role="alert">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>@TempData["Warning"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        }
 
-            </div>
-        </div>
-    </div>
-
-    <!-- Grid -->
-    @if (Model != null && Model.Any())
-    {
-        <div class="row" id="rentalsGrid">
-            @foreach (var rental in Model)
-            {
-                var conditionText = rental.RentalCondition ?? "—";
-                var locationText = rental.RentalAddress ?? rental.Name ?? "Location";
-                var statusText = rental.Status ?? "";
-
-                var hasCoords = rental.RentalLatitude.HasValue && rental.RentalLongitude.HasValue;
-                var mapsUrl = hasCoords
-                    ? $"https://www.google.com/maps?q={rental.RentalLatitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{rental.RentalLongitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
-                    : null;
-
-                // ✅ Images
-                var imgs = (rental.ImageUrls ?? new List<string>())
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Select(x => x.Trim())
-                    .Distinct()
-                    .ToList();
-
-                if (imgs.Count == 0 && !string.IsNullOrWhiteSpace(rental.ImageUrl))
-                {
-                    imgs.Add(rental.ImageUrl!.Trim());
-                }
-
-                var hasImages = imgs.Count > 0;
-                var carouselId = $"rentalCarousel_{rental.Id}";
-
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 rental-card"
-                     data-price="@rental.Price"
-                     data-date="@rental.CreatedAt.Ticks">
-
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="position-relative">
-
-                            @* ✅ Image area *@
-                            @if (hasImages && imgs.Count > 1)
-                            {
-                                <div id="@carouselId" class="carousel slide" data-bs-ride="carousel">
-                                    <div class="carousel-inner">
-                                        @for (int i = 0; i < imgs.Count; i++)
-                                        {
-                                            <div class="carousel-item @(i == 0 ? "active" : "")">
-                                                <img src="@imgs[i]" class="d-block w-100"
-                                                     style="height:200px;object-fit:cover;"
-                                                     alt="Rental image @(i + 1)" />
-                                            </div>
-                                        }
+                        <!-- Summary cards -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="premium-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Total Rentals</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@totalRentals</div>
+                                        </div>
+                                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                            <i class="bi bi-grid-3x3-gap fs-4"></i>
+                                        </div>
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev">
-                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">Previous</span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next">
-                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">Next</span>
-                                    </button>
                                 </div>
-                            }
-                            else if (hasImages && imgs.Count == 1)
-                            {
-                                <img src="@imgs[0]" class="card-img-top"
-                                     style="height:200px;object-fit:cover;" alt="Rental image" />
-                            }
-                            else
-                            {
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                    <i class="bi bi-building fs-1 text-muted"></i>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="premium-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Total Orders</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@totalOrders</div>
+                                        </div>
+                                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                            <i class="bi bi-receipt fs-4"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                            }
+                            </div>
 
-                            @if (rental.IsVerifiedSeller)
-                            {
-                                <span class="position-absolute top-0 end-0 m-2 badge bg-success">
-                                    <i class="bi bi-check-circle me-1"></i>Verified
-                                </span>
-                            }
-
-                            @if (hasImages)
-                            {
-                                <span class="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75">
-                                    <i class="bi bi-image me-1"></i>@imgs.Count
-                                </span>
-                            }
+                            <div class="col-md-4">
+                                <div class="premium-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <div class="text-muted small text-label">Active Orders</div>
+                                            <div class="h4 fw-bold mb-0 text-label">@totalActiveOrders</div>
+                                        </div>
+                                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                                            <i class="bi bi-lightning-charge fs-4"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="card-body">
-                            <h5 class="card-title text-truncate mb-2">@locationText</h5>
+                        <!-- Header Action Bar -->
+                        <div class="premium-card mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <h4 class="mb-0 text-section-title">
+                                        <i class="bi bi-buildings me-2 text-success"></i>Your Rental Properties
+                                    </h4>
 
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <div class="text-muted small">Price / Month</div>
-                                    <div class="fw-bold text-success">$@rental.Price.ToString("N2")</div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="text-muted small">Condition</div>
-                                    <div class="fw-bold">@conditionText</div>
-                                </div>
-                            </div>
-
-                            @if (!string.IsNullOrWhiteSpace(statusText))
-                            {
-                                <div class="mb-3">
-                                    <span class="badge @GetStatusValidationClass(statusText) rounded-pill px-3 py-2">
-                                        <i class="bi @GetStatusIcon(statusText) me-1"></i>@statusText
-                                    </span>
-                                </div>
-                            }
-
-                            <div class="text-muted small">
-                                <i class="bi bi-calendar3 me-1"></i>@rental.CreatedAt.ToString("MMM dd, yyyy")
-                            </div>
-
-                            <div class="text-muted small mt-1">
-                                <i class="bi bi-person-badge me-1"></i>@(rental.SellerName ?? "Seller")
-                            </div>
-
-                            <!-- ✅ تفاصيل المكان تحت كل Rental -->
-                            @if (!string.IsNullOrWhiteSpace(rental.RentalAddress))
-                            {
-                                <div class="mt-2 small text-muted">
-                                    <i class="bi bi-geo-alt me-1"></i>
-                                    <span>@rental.RentalAddress</span>
-                                </div>
-                            }
-
-                            @if (hasCoords)
-                            {
-                                <div class="mt-1 small text-muted">
-                                    <i class="bi bi-crosshair me-1"></i>
-                                    <span>
-                                        Lat: @rental.RentalLatitude.Value.ToString("0.000000"),
-                                        Lng: @rental.RentalLongitude.Value.ToString("0.000000")
-                                    </span>
+                                    @if (isVerified)
+                                    {
+                                        <span class="badge bg-success px-3 py-2">
+                                            <i class="bi bi-shield-check me-1"></i>Verified Seller
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark px-3 py-2">
+                                            <i class="bi bi-shield-exclamation me-1"></i>Not Verified
+                                        </span>
+                                    }
                                 </div>
 
-                                <div class="mt-1">
-                                    <a class="small text-decoration-none" href="@mapsUrl" target="_blank" rel="noopener">
-                                        <i class="bi bi-map me-1"></i> View on map
-                                    </a>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="mt-1 small text-muted">
-                                    <i class="bi bi-info-circle me-1"></i> Coordinates not set
-                                </div>
-                            }
-                        </div>
-
-                        <div class="card-footer bg-transparent border-top">
-                            <div class="d-flex justify-content-between align-items-center gap-2">
-                                <a asp-action="EditRental" asp-route-id="@rental.Id" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil me-1"></i>Edit
+                                <a asp-action="AddRental" class="btn btn-success auth-btn-success">
+                                    <i class="bi bi-plus-circle me-2"></i>Add New Rental
                                 </a>
+                            </div>
+                            <p class="text-muted small mt-2 mb-0">Add, edit, or remove your rental properties from the marketplace</p>
+                        </div>
 
-                                <form asp-action="DeleteRental" asp-controller="Factory" method="post" class="m-0">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="Id" value="@rental.Id" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash me-1"></i>Delete
+                        <!-- Filters -->
+                        <div class="premium-card mb-4">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-5">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-search text-muted"></i>
+                                        </span>
+                                        <input type="text" id="searchInput" class="form-control border-start-0 text-label"
+                                               placeholder="Search rentals by name, address, or seller...">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <select id="sortFilter" class="form-select text-label">
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="price_low">Price: Low to High</option>
+                                        <option value="price_high">Price: High to Low</option>
+                                        <option value="area_low">Area: Low to High</option>
+                                        <option value="area_high">Area: High to Low</option>
+                                        <option value="orders_high">Orders: High to Low</option>
+                                        <option value="active_orders_high">Active Orders: High to Low</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <button id="clearFilters" type="button" class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-x-circle me-2"></i>Clear Filters
                                     </button>
-                                </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rentals Grid -->
+                        @if (Model != null && Model.Any())
+                        {
+                            <div class="row g-4" id="rentalsGrid">
+                                @foreach (var rental in Model)
+                                {
+                                    var locationText = rental.RentalAddress ?? rental.Name ?? "Rental";
+                                    var statusText = rental.Status ?? "";
+
+                                    var hasCoords = rental.RentalLatitude.HasValue && rental.RentalLongitude.HasValue;
+                                    var mapsUrl = hasCoords
+                                    ? $"https://www.google.com/maps?q={rental.RentalLatitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{rental.RentalLongitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                                    : null;
+
+                                    // Images
+                                    var imgs = (rental.ImageUrls ?? new List<string>())
+                                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                                    .Select(x => x.Trim())
+                                    .Distinct()
+                                    .ToList();
+
+                                    if (imgs.Count == 0 && !string.IsNullOrWhiteSpace(rental.ImageUrl))
+                                    {
+                                        imgs.Add(rental.ImageUrl!.Trim());
+                                    }
+
+                                    var hasImages = imgs.Count > 0;
+                                    var carouselId = $"rentalCarousel_{rental.Id}";
+
+                                    <div class="col-xl-3 col-lg-4 col-md-6 rental-card"
+                                         data-price="@rental.Price"
+                                         data-area="@(rental.RentalArea ?? 0)"
+                                         data-date="@rental.CreatedAt.Ticks"
+                                         data-orders="@rental.OrdersCount"
+                                         data-activeorders="@rental.ActiveOrdersCount">
+
+                                        <div class="premium-card h-100 rental-card-inner" style="border: 1px solid rgba(15,23,42,.08);">
+
+                                            <div class="position-relative">
+                                                @if (hasImages && imgs.Count > 1)
+                                                {
+                                                    <div id="@carouselId" class="carousel slide" data-bs-ride="carousel">
+                                                        <div class="carousel-inner" style="border-radius: 12px; overflow: hidden;">
+                                                            @for (int i = 0; i < imgs.Count; i++)
+                                                            {
+                                                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                                    <img src="@imgs[i]" class="d-block w-100 rental-img"
+                                                                         alt="Rental image @(i + 1)" loading="lazy" />
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <button class="carousel-control-prev" type="button" data-bs-target="#@carouselId" data-bs-slide="prev">
+                                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                            <span class="visually-hidden">Previous</span>
+                                                        </button>
+                                                        <button class="carousel-control-next" type="button" data-bs-target="#@carouselId" data-bs-slide="next">
+                                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                            <span class="visually-hidden">Next</span>
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else if (hasImages && imgs.Count == 1)
+                                                {
+                                                    <img src="@imgs[0]" class="w-100 rental-img" alt="Rental image"
+                                                         style="border-radius: 12px;" loading="lazy" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="rental-img d-flex align-items-center justify-content-center"
+                                                         style="border-radius: 12px; background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));">
+                                                        <i class="bi bi-building fs-1 text-success opacity-50"></i>
+                                                    </div>
+                                                }
+
+                                                <!-- Badges -->
+                                                <div class="position-absolute top-0 start-0 m-2 d-flex gap-2 flex-wrap">
+                                                    @if (!string.IsNullOrWhiteSpace(statusText))
+                                                    {
+                                                        <span class="badge @GetStatusValidationClass(statusText) rounded-pill px-3 py-2">
+                                                            <i class="bi @GetStatusIcon(statusText) me-1"></i>@statusText
+                                                        </span>
+                                                    }
+
+                                                    <span class="badge bg-dark bg-opacity-75 rounded-pill px-3 py-2">
+                                                        <i class="bi bi-receipt me-1"></i>@rental.OrdersCount
+                                                    </span>
+
+                                                    @if (rental.ActiveOrdersCount > 0)
+                                                    {
+                                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                                            <i class="bi bi-lightning-charge me-1"></i>@rental.ActiveOrdersCount Active
+                                                        </span>
+                                                    }
+                                                </div>
+
+                                                @if (rental.IsVerifiedSeller)
+                                                {
+                                                    <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                                        <i class="bi bi-check-circle me-1"></i>Verified
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="mt-3">
+                                                <h5 class="card-title text-truncate mb-2 text-label">@locationText</h5>
+
+                                                <div class="row g-2 mb-2">
+                                                    <div class="col-6">
+                                                        <div class="text-muted small text-label">Price / Month</div>
+                                                        <div class="fw-bold text-success text-label">$@rental.Price.ToString("N2")</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="text-muted small text-label">Area</div>
+                                                        <div class="fw-bold text-label">@((rental.RentalArea ?? 0).ToString("0.##")) m²</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-muted small text-label">
+                                                    <i class="bi bi-calendar3 me-1"></i>@rental.CreatedAt.ToString("MMM dd, yyyy")
+                                                </div>
+
+                                                <div class="text-muted small mt-1 text-label">
+                                                    <i class="bi bi-person-badge me-1"></i>@(rental.SellerName ?? "Seller")
+                                                </div>
+
+                                                @if (!string.IsNullOrWhiteSpace(rental.RentalAddress))
+                                                {
+                                                    <div class="mt-2 small text-muted text-label">
+                                                        <i class="bi bi-geo-alt me-1"></i>
+                                                        <span class="od-wrap">@rental.RentalAddress</span>
+                                                    </div>
+                                                }
+
+                                                @if (hasCoords)
+                                                {
+                                                    <div class="mt-2">
+                                                        <a class="btn btn-sm btn-success auth-btn-success"
+                                                           href="@mapsUrl" target="_blank" rel="noopener">
+                                                            <i class="bi bi-map me-1"></i> View on Map
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="mt-3 pt-3 border-top">
+                                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                                    <a asp-action="EditRental" asp-route-id="@rental.Id"
+                                                       class="btn btn-sm btn-outline-success w-50">
+                                                        <i class="bi bi-pencil me-1"></i>Edit
+                                                    </a>
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger w-50"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-id="@rental.Id"
+                                                            data-name="@locationText">
+                                                        <i class="bi bi-trash me-1"></i>Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="premium-card text-center py-5">
+                                <div class="mb-4">
+                                    <i class="bi bi-building fs-1 text-success opacity-50" style="font-size: 4rem;"></i>
+                                </div>
+                                <h3 class="h4 text-muted mb-3 text-label">No Rentals Found</h3>
+                                <p class="text-muted mb-4 text-label">You haven't added any rental properties yet.</p>
+                                <a asp-action="AddRental" class="btn btn-success auth-btn-success">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Your First Rental
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content premium-card" style="border: 1px solid rgba(15,23,42,.08);">
+                                <div class="modal-header border-bottom">
+                                    <h5 class="modal-title text-label">
+                                        <i class="bi bi-trash me-2 text-danger"></i>Confirm Delete
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <div class="text-muted text-label">Are you sure you want to delete:</div>
+                                    <div class="fw-bold mt-1 text-label" id="deleteRentalName">Rental</div>
+                                    <div class="small text-muted mt-2 text-label">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>This action cannot be undone.
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer border-top">
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                                    <form asp-action="DeleteRental" asp-controller="Factory" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="rentalId" id="deleteRentalId" value="" />
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Rental Management</small>
+                    </div>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <div class="mb-4">
-                <i class="bi bi-building fs-1 text-muted opacity-50" style="font-size: 4rem;"></i>
-            </div>
-            <h3 class="h4 text-muted mb-3">No Rentals Found</h3>
-            <p class="text-muted mb-4">You haven't added any rentals yet.</p>
-            <div class="d-flex justify-content-center">
-                <a asp-action="AddRental" class="btn btn-primary btn-lg">
-                    <i class="bi bi-plus-circle me-2"></i>Add First Rental
-                </a>
             </div>
         </div>
-    }
-
+    </div>
 </div>
 
 @functions {
     string GetStatusValidationClass(string status)
     {
-        return status.ToLower() switch
+        return (status ?? "").ToLower() switch
         {
             "available" => "bg-success",
             "soldout" or "sold out" => "bg-danger",
@@ -316,7 +414,7 @@
 
     string GetStatusIcon(string status)
     {
-        return status.ToLower() switch
+        return (status ?? "").ToLower() switch
         {
             "available" => "bi-check-circle-fill",
             "soldout" or "sold out" => "bi-x-circle-fill",
@@ -332,76 +430,519 @@
 }
 
 <style nonce="@nonce">
-    .card {
-        border-radius: 12px;
+    /* ===================== PREMIUM RENTAL MANAGEMENT STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
         overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
+        overflow: hidden;
+    }
+
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
+    }
+
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
         transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
     }
 
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background-color: transparent;
+        padding: 12px 0;
+        margin-bottom: 0;
     }
 
-    #searchInput:focus, .form-select:focus {
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        border-color: #86b7fe;
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: var(--muted);
+        transition: color 0.2s ease;
+    }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    .breadcrumb-item.active {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    /* Text Label Classes - Adaptive for Light/Dark Mode */
+    .text-label {
+        color: var(--ink) !important;
+    }
+
+    .text-section-title {
+        color: var(--ink) !important;
+        font-weight: 600;
+    }
+
+    .od-wrap {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 8px 16px !important;
+        font-size: 0.875rem;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* Rental Card Styles */
+    .rental-card-inner {
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .rental-card-inner:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 22px 45px rgba(2,6,23,.15) !important;
+        }
+
+    .rental-img {
+        height: 200px;
+        object-fit: cover;
+        width: 100%;
+        border-radius: 12px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+    }
+
+    /* Form Controls */
+    .form-select {
+        border: 1px solid rgba(15,23,42,.12);
+        border-radius: 12px;
+        background: rgba(255,255,255,.8);
+        backdrop-filter: blur(4px);
+        transition: all 0.2s ease;
+    }
+
+        .form-select:focus {
+            border-color: var(--eco-green);
+            box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.15);
+        }
+
+    .input-group-text {
+        background: rgba(255,255,255,.9);
+        border-color: rgba(15,23,42,.12);
+    }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .auth-head .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+    /* Text Adaptation for Dark Mode */
+    [data-bs-theme="dark"] .text-label {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-section-title {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] h1,
+    [data-bs-theme="dark"] h2,
+    [data-bs-theme="dark"] h3,
+    [data-bs-theme="dark"] h4,
+    [data-bs-theme="dark"] h5,
+    [data-bs-theme="dark"] h6 {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65) !important;
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green) !important;
+        }
+
+    /* Cards and Components for Dark Mode */
+    [data-bs-theme="dark"] .premium-card {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .rental-img {
+        background: rgba(2, 6, 23, .3);
+    }
+
+    [data-bs-theme="dark"] .form-select {
+        background: rgba(15, 23, 42, .5);
+        border-color: rgba(148, 163, 184, .2);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] .form-select:focus {
+            border-color: var(--eco-green);
+            background: rgba(15, 23, 42, .7);
+        }
+
+    [data-bs-theme="dark"] .input-group-text {
+        background: rgba(15, 23, 42, .4);
+        border-color: rgba(148, 163, 184, .2);
+        color: rgba(226, 232, 240, .7);
+    }
+
+    [data-bs-theme="dark"] .stat-icon {
+        background: rgba(255,255,255,.05) !important;
+    }
+
+    /* Modal Dark Mode */
+    [data-bs-theme="dark"] .modal-content {
+        background: rgba(15, 23, 42, .85);
+        border-color: rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .modal-header {
+        border-bottom-color: rgba(148, 163, 184, .2);
+    }
+
+    [data-bs-theme="dark"] .modal-footer {
+        border-top-color: rgba(148, 163, 184, .2);
+    }
+
+    /* Responsive */
+    @@media (max-width: 1200px) {
+        .dashboard-shell {
+            max-width: 95%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+
+        .rental-img {
+            height: 180px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .premium-card {
+            padding: 16px;
+        }
+
+        .auth-body {
+            padding: 0 16px 14px;
+        }
+
+        .rental-img {
+            height: 160px;
+        }
+
+        .col-md-5, .col-md-4, .col-md-3 {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .auth-head {
+            padding: 18px 16px 12px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 12px;
+        }
+
+        .d-flex.flex-wrap {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
     }
 </style>
 
 <script nonce="@nonce">
-document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('searchInput');
-    const sortFilter = document.getElementById('sortFilter');
-    const clearFilters = document.getElementById('clearFilters');
+    document.addEventListener('DOMContentLoaded', function () {
 
-    function getCards() {
-        return Array.from(document.querySelectorAll('.rental-card'));
-    }
+        // Delete modal wiring
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteRentalName = document.getElementById('deleteRentalName');
+        const deleteRentalId = document.getElementById('deleteRentalId');
 
-    function filterAndSort() {
-        const term = (searchInput.value || '').toLowerCase();
-        const sortBy = sortFilter.value;
-
-        let cards = getCards();
-
-        if (term) {
-            cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
-        }
-
-        cards.sort((a, b) => {
-            const da = parseInt(a.dataset.date || '0');
-            const db = parseInt(b.dataset.date || '0');
-            const pa = parseFloat(a.dataset.price || '0');
-            const pb = parseFloat(b.dataset.price || '0');
-
-            switch (sortBy) {
-                case 'newest': return db - da;
-                case 'oldest': return da - db;
-                case 'price_low': return pa - pb;
-                case 'price_high': return pb - pa;
-                default: return 0;
-            }
+        deleteModal?.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name') || 'Rental';
+            deleteRentalName.textContent = name;
+            deleteRentalId.value = id;
         });
 
-        const grid = document.getElementById('rentalsGrid');
-        if (!grid) return;
+        const searchInput = document.getElementById('searchInput');
+        const sortFilter = document.getElementById('sortFilter');
+        const clearFilters = document.getElementById('clearFilters');
 
-        getCards().forEach(c => c.style.display = 'none');
-        cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
-    }
+        function getCards() {
+            return Array.from(document.querySelectorAll('.rental-card'));
+        }
 
-    searchInput?.addEventListener('input', filterAndSort);
-    sortFilter?.addEventListener('change', filterAndSort);
+        function filterAndSort() {
+            const term = (searchInput.value || '').toLowerCase();
+            const sortBy = sortFilter.value;
 
-    clearFilters?.addEventListener('click', function () {
-        searchInput.value = '';
-        sortFilter.value = 'newest';
+            let cards = getCards();
+
+            if (term) {
+                cards = cards.filter(c => c.textContent.toLowerCase().includes(term));
+            }
+
+            cards.sort((a, b) => {
+                const da = parseInt(a.dataset.date || '0');
+                const db = parseInt(b.dataset.date || '0');
+
+                const pa = parseFloat(a.dataset.price || '0');
+                const pb = parseFloat(b.dataset.price || '0');
+
+                const aa = parseFloat(a.dataset.area || '0');
+                const ab = parseFloat(b.dataset.area || '0');
+
+                const oa = parseInt(a.dataset.orders || '0');
+                const ob = parseInt(b.dataset.orders || '0');
+
+                const aca = parseInt(a.dataset.activeorders || '0');
+                const acb = parseInt(b.dataset.activeorders || '0');
+
+                switch (sortBy) {
+                    case 'newest': return db - da;
+                    case 'oldest': return da - db;
+                    case 'price_low': return pa - pb;
+                    case 'price_high': return pb - pa;
+                    case 'area_low': return aa - ab;
+                    case 'area_high': return ab - aa;
+                    case 'orders_high': return ob - oa;
+                    case 'active_orders_high': return acb - aca;
+                    default: return 0;
+                }
+            });
+
+            const grid = document.getElementById('rentalsGrid');
+            if (!grid) return;
+
+            getCards().forEach(c => c.style.display = 'none');
+            cards.forEach(c => { c.style.display = 'block'; grid.appendChild(c); });
+        }
+
+        searchInput?.addEventListener('input', filterAndSort);
+        sortFilter?.addEventListener('change', filterAndSort);
+
+        clearFilters?.addEventListener('click', function () {
+            searchInput.value = '';
+            sortFilter.value = 'newest';
+            filterAndSort();
+            searchInput.focus();
+        });
+
         filterAndSort();
-        searchInput.focus();
     });
-
-    filterAndSort();
-});
 </script>

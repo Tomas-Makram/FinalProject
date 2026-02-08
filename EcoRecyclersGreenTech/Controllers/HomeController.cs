@@ -11,6 +11,7 @@ using EcoRecyclersGreenTech.Models;
 using EcoRecyclersGreenTech.Models.Home;
 using EcoRecyclersGreenTech.Services;
 using EcoRecyclersGreenTech.Data.Users;
+using EcoRecyclersGreenTech.Data.Orders;
 
 namespace EcoRecyclersGreenTech.Controllers;
 
@@ -108,13 +109,23 @@ public class HomeController : Controller
         var user = await _db.Users
             .AsNoTracking()
             .Include(u => u.UserType)
-            .FirstOrDefaultAsync(u => u.UserID == userIdSession.Value);
+            .FirstOrDefaultAsync(u => u.UserId == userIdSession.Value);
 
         if (user == null)
         {
             ViewBag.UserLoggedIn = false;
             return (false, 0, null);
         }
+
+        var wallet = await _db.Wallets
+            .AsNoTracking()
+            .Where(w => w.UserId == user.UserId)
+            .Select(w => new { w.Balance, w.ReservedBalance })
+            .FirstOrDefaultAsync();
+
+        ViewBag.WalletBalance = wallet?.Balance ?? 0m;
+        ViewBag.WalletReserved = wallet?.ReservedBalance ?? 0m;
+        ViewBag.WalletCurrency = "EGP";
 
         ViewBag.type = user.UserType?.TypeName ?? await _db.UserTypes
             .AsNoTracking()
@@ -132,14 +143,182 @@ public class HomeController : Controller
             TempData["ShowVerificationAlert"] = "true";
         }
 
-        return (true, user.UserID, user);
+        return (true, user.UserId, user);
     }
 
     // Index
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        bool logged = ViewBag.UserLoggedIn ?? (User?.Identity?.IsAuthenticated == true);
+        string type = (ViewBag.Type?.ToString() ?? "").Trim();
+        string email = (ViewBag.Email?.ToString() ?? "").Trim();
+
+        var homeModel = new HomeIndexModel
+        {
+            Logged = logged,
+            Type = type,
+            Email = email
+        };
+
+        if (!logged) return View(homeModel);
+
+        if (!string.Equals(type, "Factory", StringComparison.OrdinalIgnoreCase))
+            return View(homeModel);
+
+        var idStr = User!.FindFirstValue(ClaimTypes.NameIdentifier) ?? User!.FindFirstValue("UserId");
+        if (!int.TryParse(idStr, out var factoryId))
+        {
+            return View(homeModel);
+        }
+
+        var today = DateTime.Today;
+        var next7 = today.AddDays(7);
+
+        // Active statuses Completed/Cancelled/Refunded/Returned/Deleted
+        var inactiveStatuses = new[]
+        {
+            EnumsOrderStatus.Completed,
+            EnumsOrderStatus.Cancelled,
+            EnumsOrderStatus.Refunded,
+            EnumsOrderStatus.Returned,
+            EnumsOrderStatus.DeletedByBuyer,
+            EnumsOrderStatus.DeletedBySeller
+        };
+
+        // Material
+        var material = await _db.MaterialOrders
+            .AsNoTracking()
+            .Include(o => o.MaterialStore)
+            .Where(o => o.MaterialStore.SellerID == factoryId && !inactiveStatuses.Contains(o.Status))
+            .Select(o => new FactoryOrdersModel
+            {
+                Source = "Material",
+                OrderNo = $"MAT-{o.MaterialOrderID}",
+                Status = o.Status.ToString(),
+                OrderDate = o.OrderDate,
+                DueDate = o.ExpectedArrivalDate,
+                Location = o.PickupLocation ?? o.MaterialStore.Address,
+                CustomerLabel = $"Buyer #{o.BuyerID}",
+                TotalAmount = o.TotalPrice,
+                Note = "Expected arrival"
+            })
+            .ToListAsync();
+
+        // Machine
+        var machine = await _db.MachineOrders
+            .AsNoTracking()
+            .Include(o => o.MachineStore)
+            .Where(o => o.MachineStore.SellerID == factoryId && !inactiveStatuses.Contains(o.Status))
+            .Select(o => new FactoryOrdersModel
+            {
+                Source = "Machine",
+                OrderNo = $"MAC-{o.MachineOrderID}",
+                Status = o.Status.ToString(),
+                OrderDate = o.OrderDate,
+                DueDate = o.ExpectedArrivalDate,
+                Location = o.PickupLocation ?? o.MachineStore.Address,
+                CustomerLabel = $"Buyer #{o.BuyerID}",
+                TotalAmount = o.TotalPrice,
+                Note = "Expected arrival"
+            })
+            .ToListAsync();
+
+        // Auction
+        var auction = await _db.AuctionOrders
+            .AsNoTracking()
+            .Include(o => o.AuctionStore)
+            .Where(o => o.AuctionStore.SellerID == factoryId && !inactiveStatuses.Contains(o.Status))
+            .Select(o => new FactoryOrdersModel
+            {
+                Source = "Auction",
+                OrderNo = $"AUC-{o.AuctionOrderID}",
+                Status = o.Status.ToString(),
+                OrderDate = o.OrderDate,
+                DueDate = null,
+                Location = o.AuctionStore.Address,
+                CustomerLabel = $"Winner #{o.WinnerID}",
+                TotalAmount = o.AmountPaid,
+                Note = "Auction fulfillment"
+            })
+            .ToListAsync();
+
+        // Rental
+        var rental = await _db.RentalOrders
+            .AsNoTracking()
+            .Include(o => o.RentalStore)
+            .Where(o => o.RentalStore.OwnerID == factoryId && !inactiveStatuses.Contains(o.Status))
+            .Select(o => new FactoryOrdersModel
+            {
+                Source = "Rental",
+                OrderNo = $"REN-{o.RentalOrderID}",
+                Status = o.Status.ToString(),
+                OrderDate = o.OrderDate,
+                DueDate = null,
+                Location = o.RentalStore.Address,
+                CustomerLabel = $"Buyer #{o.BuyerID}",
+                TotalAmount = o.AmountPaid,
+                Note = "Rental processing"
+            })
+            .ToListAsync();
+
+        // Job
+        var job = await _db.JobOrders
+            .AsNoTracking()
+            .Include(o => o.JobStore)
+            .Where(o => o.JobStore.PostedBy == factoryId
+                        && o.Status != JobOrderStatus.Completed
+                        && o.Status != JobOrderStatus.Cancelled)
+            .Select(o => new FactoryOrdersModel
+            {
+                Source = "Job",
+                OrderNo = $"JOB-{o.JobOrderID}",
+                Status = o.Status.ToString(),
+                OrderDate = o.OrderDate,
+                DueDate = null,
+                Location = o.JobStore.Location,
+                CustomerLabel = $"User #{o.UserID}",
+                TotalAmount = null,
+                Note = "Job request"
+            })
+            .ToListAsync();
+
+        var all = material
+            .Concat(machine)
+            .Concat(auction)
+            .Concat(rental)
+            .Concat(job)
+            .OrderByDescending(x => x.OrderDate)
+            .ToList();
+
+        var overdue = all.Where(x => x.DueDate.HasValue && x.DueDate.Value.Date < today)
+                         .OrderBy(x => x.DueDate).ToList();
+
+        var dueToday = all.Where(x => x.DueDate.HasValue && x.DueDate.Value.Date == today)
+                          .OrderBy(x => x.DueDate).ToList();
+
+        var dueSoon = all.Where(x => x.DueDate.HasValue && x.DueDate.Value.Date > today && x.DueDate.Value.Date <= next7)
+                         .OrderBy(x => x.DueDate).ToList();
+
+        var createdToday = all.Where(x => x.OrderDate.Date == today)
+                              .OrderByDescending(x => x.OrderDate).ToList();
+
+        homeModel.FactoryDashboard = new FactoryHomeModel
+        {
+            ActiveAll = all,
+            Overdue = overdue,
+            DueToday = dueToday,
+            DueSoon = dueSoon,
+            CreatedToday = createdToday,
+
+            TotalActive = all.Count,
+            OverdueCount = overdue.Count,
+            DueTodayCount = dueToday.Count,
+            DueSoonCount = dueSoon.Count,
+            CreatedTodayCount = createdToday.Count
+        };
+
+        return View(homeModel);
     }
 
     // Setting
@@ -157,7 +336,7 @@ public class HomeController : Controller
             var user = await _db.Users
                 .AsNoTracking()
                 .Include(u => u.UserType)
-                .FirstOrDefaultAsync(u => u.UserID == userId);
+                .FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null)
                 return RedirectToAction("Login", "Auth");
@@ -318,7 +497,7 @@ public class HomeController : Controller
         if (!int.TryParse(userIdStr, out var userId))
             return RedirectToAction("Login", "Auth");
 
-        var user = await _db.Users.Include(u => u.UserType).FirstOrDefaultAsync(u => u.UserID == userId);
+        var user = await _db.Users.Include(u => u.UserType).FirstOrDefaultAsync(u => u.UserId == userId);
         if (user == null)
             return RedirectToAction("Login", "Auth");
 
@@ -432,7 +611,7 @@ public class HomeController : Controller
                             else
                             {
                                 var newHash = _dataHasher.HashComparison(newEmail);
-                                var exists = await _db.Users.AnyAsync(u => u.UserID != user.UserID && u.HashEmail == newHash);
+                                var exists = await _db.Users.AnyAsync(u => u.UserId != user.UserId && u.HashEmail == newHash);
                                 if (exists)
                                 {
                                     errors.Add("Email already exists (not saved).");
@@ -461,7 +640,7 @@ public class HomeController : Controller
                             else
                             {
                                 var newHash = _dataHasher.HashComparison(newPhone);
-                                var exists = await _db.Users.AnyAsync(u => u.UserID != user.UserID && u.HashPhoneNumber == newHash);
+                                var exists = await _db.Users.AnyAsync(u => u.UserId != user.UserId && u.HashPhoneNumber == newHash);
                                 if (exists)
                                 {
                                     errors.Add("Phone already exists (not saved).");
@@ -827,7 +1006,7 @@ public class HomeController : Controller
 
             if (neverSentBefore)
             {
-                var otp = await _otpService.ResendOtpAsync(user.UserID, sent: false);
+                var otp = await _otpService.ResendOtpAsync(user.UserId, sent: false);
                 if (string.IsNullOrWhiteSpace(otp))
                 {
                     TempData["OtpError"] = "Unable to send OTP now. Please try later.";
@@ -936,7 +1115,7 @@ public class HomeController : Controller
             if (user.Blocked) { TempData["OtpError"] = "Your account is blocked."; return RedirectToAction("Setting"); }
             if (user.Verified) { TempData["InfoMessage"] = "Your account is already verified."; return RedirectToAction("Setting"); }
 
-            var otp = await _otpService.ResendOtpAsync(user.UserID, sent: false);
+            var otp = await _otpService.ResendOtpAsync(user.UserId, sent: false);
             if (string.IsNullOrWhiteSpace(otp))
             {
                 TempData["OtpError"] = "Please wait before requesting a new code.";
@@ -977,7 +1156,7 @@ public class HomeController : Controller
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdStr, out var userId)) return RedirectToAction("Login", "Auth");
 
-        var user = await _db.Users.Include(u => u.UserType).FirstOrDefaultAsync(u => u.UserID == userId);
+        var user = await _db.Users.Include(u => u.UserType).FirstOrDefaultAsync(u => u.UserId == userId);
         if (user == null) return RedirectToAction("Login", "Auth");
 
         try
@@ -1014,7 +1193,7 @@ public class HomeController : Controller
                 return RedirectToAction("Setting");
             }
 
-            var ok = await _otpService.VerifyOtpAsync(user.UserID, vm.VerifyOtp.OtpCode.Trim());
+            var ok = await _otpService.VerifyOtpAsync(user.UserId, vm.VerifyOtp.OtpCode.Trim());
             if (!ok)
             {
                 var remaining = Math.Max(0, _otpService.GetMaxOtpAttempts() - user.OtpAttempts);
@@ -1030,7 +1209,7 @@ public class HomeController : Controller
             var decryptedPhone = user.phoneNumber != null ? _dataProtection.Decrypt(user.phoneNumber) : "";
 
             HttpContext.Session.SetString("UserEmail", decryptedEmail);
-            HttpContext.Session.SetInt32("UserID", user.UserID);
+            HttpContext.Session.SetInt32("UserID", user.UserId);
             HttpContext.Session.SetString("UserName", user.FullName ?? "");
             HttpContext.Session.SetInt32("UserTypeID", user.UserTypeID);
             HttpContext.Session.SetString("PhoneNumber", decryptedPhone ?? "");
@@ -1038,7 +1217,7 @@ public class HomeController : Controller
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, decryptedEmail),
-                new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim("IsVerified", "true"),
                 new Claim(ClaimTypes.Role, user.UserType?.TypeName ?? ""),
                 new Claim("UserType", user.UserType?.TypeName ?? "")
@@ -1069,11 +1248,129 @@ public class HomeController : Controller
         }
     }
 
-    // AuthTesting
-    [Authorize]
-    public IActionResult AuthTesting()
+    // Wallet & Payment
+    [HttpGet]
+    public async Task<IActionResult> Ledger(DateTime? from, DateTime? to, string? q)
     {
-        return Json("User authenticated Sucess");
+
+        DateTime? fromUtc = null;
+        DateTime? toUtc = null;
+
+        if (from.HasValue)
+            fromUtc = DateTime.SpecifyKind(from.Value.Date, DateTimeKind.Local).ToUniversalTime();
+
+        if (to.HasValue)
+            toUtc = DateTime.SpecifyKind(to.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Local).ToUniversalTime();
+
+        // Wallet transactions
+        var walletQ = _db.Set<WalletTransaction>()
+            .AsNoTracking()
+            .Include(x => x.Wallet)
+                .ThenInclude(w => w.User)
+            .Where(x => x.Wallet.UserId == _currentUserId)
+            .AsQueryable();
+
+        // Payment transactions
+        var payQ = _db.Set<PaymentTransaction>()
+            .AsNoTracking()
+            .Include(x => x.User)
+            .Where(x => x.UserId == _currentUserId)
+            .AsQueryable();
+
+        if (fromUtc.HasValue)
+        {
+            walletQ = walletQ.Where(x => x.CreatedAt >= fromUtc.Value);
+            payQ = payQ.Where(x => x.CreatedAt >= fromUtc.Value);
+        }
+
+        if (toUtc.HasValue)
+        {
+            walletQ = walletQ.Where(x => x.CreatedAt <= toUtc.Value);
+            payQ = payQ.Where(x => x.CreatedAt <= toUtc.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            q = q.Trim();
+
+            walletQ = walletQ.Where(x =>
+                (x.Note != null && x.Note.Contains(q)) ||
+                (x.IdempotencyKey != null && x.IdempotencyKey.Contains(q)) ||
+                (x.Wallet.User.FullName != null && x.Wallet.User.FullName.Contains(q))
+            );
+
+            payQ = payQ.Where(x =>
+                (x.ProviderPaymentId != null && x.ProviderPaymentId.Contains(q)) ||
+                (x.Provider != null && x.Provider.Contains(q)) ||
+                (x.User.FullName != null && x.User.FullName.Contains(q))
+            );
+        }
+
+        var walletRows = await walletQ
+            .Select(x => new LedgerModel
+            {
+                Source = LedgerSource.Wallet,
+                CreatedAt = x.CreatedAt,
+                Id = x.Id,
+                UserId = x.Wallet.UserId,
+                UserName = x.Wallet.User.FullName,
+                Currency = x.Currency,
+                Amount = x.Amount,
+
+                WalletId = x.WalletId,
+                WalletType = x.Type.ToString(),
+                WalletStatus = x.Status.ToString(),
+                BalanceAfter = x.BalanceAfter,
+                IdempotencyKey = x.IdempotencyKey,
+                Note = x.Note
+            })
+            .ToListAsync();
+
+        var paymentRows = await payQ
+            .Select(x => new LedgerModel
+            {
+                Source = LedgerSource.Payment,
+                CreatedAt = x.CreatedAt,
+                Id = x.Id,
+                UserId = x.UserId,
+                UserName = x.User.FullName,
+                Currency = x.Currency,
+                Amount = x.Amount,
+
+                Provider = x.Provider,
+                ProviderPaymentId = x.ProviderPaymentId,
+                PaymentStatus = x.Status.ToString(),
+                WalletTransactionId = x.WalletTransactionId
+            })
+            .ToListAsync();
+
+        var vm = new FinancialLedgerModel
+        {
+            UserId = _currentUserId,
+            From = from,
+            To = to,
+            Query = q,
+            Rows = walletRows
+                .Concat(paymentRows)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToList()
+        };
+
+        return View(vm);
+    }
+
+    // Privacy
+    [HttpGet]
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    // Terms
+    [HttpGet]
+    public IActionResult Terms()
+    {
+        return View();
     }
 
     // Error

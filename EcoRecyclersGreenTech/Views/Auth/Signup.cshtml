@@ -5,321 +5,382 @@
     ViewData["Title"] = "Create Account";
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-10 col-xl-9">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-success text-white">
-                    <h2 class="h4 mb-0 text-center"><i class="fas fa-user-plus me-2"></i>Create Account</h2>
+<div class="auth-premium">
+    <div class="container">
+
+        <div class="auth-shell">
+            <div class="row g-0 align-items-stretch">
+
+                <!-- ================= LEFT HERO (Premium) ================= -->
+                <div class="col-lg-5 d-none d-lg-flex">
+                    <div class="auth-hero w-100">
+                        <div class="hero-top">
+                            <div class="hero-badge">
+                                <i class="bi bi-recycle me-2"></i>
+                                EcoRecyclers GreenTech
+                            </div>
+                        </div>
+
+                        <div class="hero-mid">
+                            <h1 class="hero-title">Create your account</h1>
+                            <p class="hero-sub">
+                                Build your eco profile, choose your role, and set your location to unlock the platform.
+                            </p>
+
+                            <ul class="hero-list">
+                                <li><span class="dot"></span> Choose role (Individual / Factory / Craftsman)</li>
+                                <li><span class="dot"></span> Accurate location with GPS or search</li>
+                                <li><span class="dot"></span> Secure account setup</li>
+                            </ul>
+                        </div>
+
+                        <!-- Illustration -->
+                        <div class="hero-illus">
+                            <div class="illus-card">
+                                <div class="illus-row">
+                                    <span class="illus-pill"></span>
+                                    <span class="illus-pill"></span>
+                                    <span class="illus-pill"></span>
+                                </div>
+                                <div class="illus-grid">
+                                    <div class="b b1"></div>
+                                    <div class="b b2"></div>
+                                    <div class="b b3"></div>
+                                    <div class="b b4"></div>
+                                </div>
+                                <div class="illus-wave"></div>
+                            </div>
+
+                            <div class="wind w1"></div>
+                            <div class="wind w2"></div>
+                            <div class="wind w3"></div>
+                        </div>
+
+                        <div class="hero-bottom">
+                            <small class="text-white-50">Cleaner future starts with smarter recycling.</small>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="card-body p-4">
-                    @if (ViewBag.Error != null)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>@ViewBag.Error
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    }
+                <!-- ================= RIGHT FORM (Your Original Content) ================= -->
+                <div class="col-lg-7">
+                    <div class="auth-form-wrap">
+                        <div class="auth-card auth-card-wide">
 
-                    <form method="post" enctype="multipart/form-data"
-                          asp-controller="Auth" asp-action="Signup"
-                          id="signupForm" class="needs-validation" novalidate>
-
-                        <!-- Basic User Information -->
-                        <div class="section mb-4">
-                            <h4 class="section-title"><i class="fas fa-user-circle me-2"></i>Basic Information</h4>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="user!.FullName" class="form-control" placeholder="Full Name" required />
-                                        <label asp-for="user!.FullName">Full Name</label>
-                                        <span asp-validation-for="user!.FullName" class="text-danger small"></span>
-                                    </div>
+                            <div class="auth-head">
+                                <div class="auth-logo">
+                                    <i class="bi bi-person-plus-fill"></i>
                                 </div>
+                                <h2 class="h4 mb-1">Create Account</h2>
+                                <p class="mb-0 text-muted small">Fill in the details below</p>
+                            </div>
 
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="user!.Email" type="email" class="form-control" placeholder="Email" required />
-                                        <label asp-for="user!.Email">Email Address</label>
-                                        <span asp-validation-for="user!.Email" class="text-danger small"></span>
+                            <div class="auth-body">
+                                @if (ViewBag.Error != null)
+                                {
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-exclamation-circle me-2"></i>@ViewBag.Error
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                     </div>
-                                </div>
+                                }
 
-                                <div class="col-md-6">
-                                    <div class="form-floating position-relative">
-                                        <input asp-for="user!.HashPassword" type="password" class="form-control" id="password" placeholder="Password" required />
-                                        <label asp-for="user!.HashPassword">Password</label>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 end-0 translate-middle-y me-2" id="togglePassword">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <span asp-validation-for="user!.HashPassword" class="text-danger small"></span>
-                                    </div>
-                                </div>
+                                <form method="post" enctype="multipart/form-data"
+                                      asp-controller="Auth" asp-action="Signup"
+                                      id="signupForm" class="needs-validation" novalidate>
 
-                                <div class="col-md-6">
-                                    <div class="form-floating position-relative">
-                                        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required />
-                                        <label for="confirmPassword">Confirm Password</label>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 end-0 translate-middle-y me-2" id="toggleConfirmPassword">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <div class="invalid-feedback" id="confirmPasswordError">Passwords do not match</div>
-                                        <div class="valid-feedback" id="confirmPasswordSuccess">Passwords match</div>
-                                    </div>
-                                </div>
+                                    <!-- Basic User Information -->
+                                    <div class="section mb-4">
+                                        <h4 class="section-title"><i class="fas fa-user-circle me-2"></i>Basic Information</h4>
 
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="user!.phoneNumber" class="form-control" placeholder="Phone Number" />
-                                        <label asp-for="user!.phoneNumber">Phone Number</label>
-                                        <span asp-validation-for="user!.phoneNumber" class="text-danger small"></span>
-                                    </div>
-                                </div>
-
-                                <!-- ✅ LOCATION (FULL WIDTH) -->
-                                <div class="col-12 mt-2">
-                                    <div class="p-3 rounded" style="border:1px solid #e9ecef;background:#fff">
-                                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                            <div class="d-flex gap-2 flex-wrap">
-                                                <button type="button" class="btn btn-success" id="btnUseMyLocation">
-                                                    <i class="bi bi-geo-alt me-1"></i> Use GPS
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary" id="btnClearLocation">
-                                                    <i class="bi bi-x-circle me-1"></i> Clear
-                                                </button>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="user!.FullName" class="form-control" placeholder="Full Name" required />
+                                                    <label asp-for="user!.FullName">Full Name</label>
+                                                    <span asp-validation-for="user!.FullName" class="text-danger small"></span>
+                                                </div>
                                             </div>
 
-                                            <div class="small text-muted" id="locationStatus">
-                                                Search for a place (Arabic/English), then select a result or click the map.
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="user!.Email" type="email" class="form-control" placeholder="Email" required />
+                                                    <label asp-for="user!.Email">Email Address</label>
+                                                    <span asp-validation-for="user!.Email" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating position-relative">
+                                                    <input asp-for="user!.HashPassword" type="password" class="form-control" id="password" placeholder="Password" required />
+                                                    <label asp-for="user!.HashPassword">Password</label>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 end-0 translate-middle-y me-2" id="togglePassword">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <span asp-validation-for="user!.HashPassword" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating position-relative">
+                                                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required />
+                                                    <label for="confirmPassword">Confirm Password</label>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute top-50 end-0 translate-middle-y me-2" id="toggleConfirmPassword">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <div class="invalid-feedback" id="confirmPasswordError">Passwords do not match</div>
+                                                    <div class="valid-feedback" id="confirmPasswordSuccess">Passwords match</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="user!.phoneNumber" class="form-control" placeholder="Phone Number" />
+                                                    <label asp-for="user!.phoneNumber">Phone Number</label>
+                                                    <span asp-validation-for="user!.phoneNumber" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- ✅ LOCATION (FULL WIDTH) -->
+                                            <div class="col-12 mt-2">
+                                                <div class="location-box p-3 rounded">
+                                                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                                        <div class="d-flex gap-2 flex-wrap">
+                                                            <button type="button" class="btn btn-success" id="btnUseMyLocation">
+                                                                <i class="bi bi-geo-alt me-1"></i> Use GPS
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary" id="btnClearLocation">
+                                                                <i class="bi bi-x-circle me-1"></i> Clear
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="small text-muted" id="locationStatus">
+                                                            Search for a place (Arabic/English), then select a result or click the map.
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Bind to user.* (no model changes) -->
+                                                    <input type="hidden" name="user.Latitude" id="Latitude" />
+                                                    <input type="hidden" name="user.Longitude" id="Longitude" />
+
+                                                    <div class="row g-3 mt-1">
+                                                        <div class="col-12">
+                                                            <div class="form-floating">
+                                                                <input class="form-control" id="Address" name="user.Address" placeholder="Address hint" />
+                                                                <label for="Address">Address (Hint) - Optional</label>
+                                                            </div>
+                                                            <div class="form-text">
+                                                                Optional hint (street/area). The search below accepts Arabic or English.
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <label class="form-label small fw-semibold text-success mb-1">Search Place</label>
+                                                            <div class="input-group">
+                                                                <input type="text" class="form-control" id="txtPlaceSearch"
+                                                                       placeholder="Type a place name (e.g., Cairo, أسيوط, شارع ...)" autocomplete="off" />
+                                                                <button class="btn btn-success" type="button" id="btnPlaceSearch">
+                                                                    <i class="fas fa-search me-1"></i> Search
+                                                                </button>
+                                                            </div>
+                                                            <div class="form-text small" id="searchStatus">Start typing to see suggestions, or press Search.</div>
+
+                                                            <div class="mt-2" id="searchResultsWrap" style="display:none;">
+                                                                <div class="small fw-semibold text-success mb-1">Results</div>
+                                                                <div class="list-group" id="searchResults"></div>
+                                                            </div>
+
+                                                            <div class="alert alert-warning mt-2 py-2" id="searchError" style="display:none;">
+                                                                <div class="small" id="searchErrorText"></div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-12">
+                                                            <div id="map" class="map-box"></div>
+
+                                                            <div class="mt-2 p-2 rounded selected-box">
+                                                                <div class="small fw-semibold text-success mb-1">Selected Location</div>
+                                                                <div class="small text-muted" id="selectedDetails">
+                                                                    No location selected yet. Search and pick a result, or click the map.
+                                                                </div>
+                                                                <div class="small text-muted mt-1" id="selectedCoords"></div>
+                                                            </div>
+
+                                                            <div class="small text-muted mt-2">
+                                                                Tip: Click on the map or drag the pin to set the exact spot.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- ✅ END LOCATION -->
+
+                                        </div>
+                                    </div>
+
+                                    <!-- User Type Selection -->
+                                    <div class="section mb-4">
+                                        <h4 class="section-title"><i class="fas fa-users me-2"></i>Select Your Role</h4>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="form-check card-select">
+                                                    <input class="form-check-input" type="radio" asp-for="type!.TypeName" value="Individual" id="typeIndividual" required />
+                                                    <label class="form-check-label w-100" for="typeIndividual">
+                                                        <div class="card card-hover text-center p-3 h-100">
+                                                            <div class="card-body">
+                                                                <i class="fas fa-user fa-2x text-success mb-3"></i>
+                                                                <h5 class="card-title mb-2">Individual</h5>
+                                                                <p class="card-text small text-muted mb-0">Personal recycling activities</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-check card-select">
+                                                    <input class="form-check-input" type="radio" asp-for="type!.TypeName" value="Factory" id="typeFactory" />
+                                                    <label class="form-check-label w-100" for="typeFactory">
+                                                        <div class="card card-hover text-center p-3 h-100">
+                                                            <div class="card-body">
+                                                                <i class="fas fa-industry fa-2x text-success mb-3"></i>
+                                                                <h5 class="card-title mb-2">Factory</h5>
+                                                                <p class="card-text small text-muted mb-0">Recycling & industrial facilities</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="form-check card-select">
+                                                    <input class="form-check-input" type="radio" asp-for="type!.TypeName" value="Craftsman" id="typeCraftsman" />
+                                                    <label class="form-check-label w-100" for="typeCraftsman">
+                                                        <div class="card card-hover text-center p-3 h-100">
+                                                            <div class="card-body">
+                                                                <i class="fas fa-hammer fa-2x text-success mb-3"></i>
+                                                                <h5 class="card-title mb-2">Craftsman</h5>
+                                                                <p class="card-text small text-muted mb-0">Skilled artisans & craftsmen</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <span asp-validation-for="type!.TypeName" class="text-danger small mt-2 d-block"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dynamic Sections (unchanged) -->
+                                    <div id="individualSection" class="section mb-4 dynamic-section" style="display: none;">
+                                        <h4 class="section-title"><i class="fas fa-user-tie me-2"></i>Individual Information</h4>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-floating">
+                                                    <input asp-for="individual!.Occupation" class="form-control" placeholder="Occupation" />
+                                                    <label asp-for="individual!.Occupation">Occupation</label>
+                                                    <span asp-validation-for="individual!.Occupation" class="text-danger small"></span>
+                                                    <div class="form-text">Enter your current profession or occupation</div>
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <!-- Bind to user.* (no model changes) -->
-                                        <input type="hidden" name="user.Latitude" id="Latitude" />
-                                        <input type="hidden" name="user.Longitude" id="Longitude" />
-
-                                        <!-- Address hint -->
-                                        <div class="row g-3 mt-1">
+                                    <div id="factorySection" class="section mb-4 dynamic-section" style="display: none;">
+                                        <h4 class="section-title"><i class="fas fa-industry me-2"></i>Factory Information</h4>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="factory!.FactoryName" class="form-control" placeholder="Factory Name" />
+                                                    <label asp-for="factory!.FactoryName">Factory Name</label>
+                                                    <span asp-validation-for="factory!.FactoryName" class="text-danger small"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="factory!.FactoryType" class="form-control" placeholder="Factory Type" />
+                                                    <label asp-for="factory!.FactoryType">Factory Type</label>
+                                                    <span asp-validation-for="factory!.FactoryType" class="text-danger small"></span>
+                                                    <div class="form-text">e.g., Plastic Recycling, Paper Processing, Metal Scrap</div>
+                                                </div>
+                                            </div>
                                             <div class="col-12">
                                                 <div class="form-floating">
-                                                    <input class="form-control" id="Address" name="user.Address" placeholder="Address hint" />
-                                                    <label for="Address">Address (Hint) - Optional</label>
-                                                </div>
-                                                <div class="form-text">
-                                                    Optional hint (street/area). The search below accepts Arabic or English.
-                                                </div>
-                                            </div>
-
-                                            <!-- Search box (full width) -->
-                                            <div class="col-12">
-                                               <label class="form-label small fw-semibold text-success mb-1">Search Place</label>
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control" id="txtPlaceSearch"
-                                                           placeholder="Type a place name (e.g., Cairo, أسيوط, شارع ...)" autocomplete="off" />
-                                                    <button class="btn btn-success" type="button" id="btnPlaceSearch">
-                                                        <i class="fas fa-search me-1"></i> Search
-                                                    </button>
-                                                </div>
-                                                <div class="form-text small" id="searchStatus">Start typing to see suggestions, or press Search.</div>
-
-                                                <!-- Results -->
-                                                <div class="mt-2" id="searchResultsWrap" style="display:none;">
-                                                    <div class="small fw-semibold text-success mb-1">Results</div>
-                                                    <div class="list-group" id="searchResults"></div>
-                                                </div>
-
-                                                <!-- Error (visible) -->
-                                                <div class="alert alert-warning mt-2 py-2" id="searchError" style="display:none;">
-                                                    <div class="small" id="searchErrorText"></div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Map (full width) -->
-                                            <div class="col-12">
-                                                <div id="map" style="height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;"></div>
-
-                                                <div class="mt-2 p-2 rounded" style="background:#f8f9fa;border:1px solid #e9ecef">
-                                                    <div class="small fw-semibold text-success mb-1">Selected Location</div>
-                                                    <div class="small text-muted" id="selectedDetails">
-                                                        No location selected yet. Search and pick a result, or click the map.
-                                                    </div>
-                                                    <div class="small text-muted mt-1" id="selectedCoords"></div>
-                                                </div>
-
-                                                <div class="small text-muted mt-2">
-                                                    Tip: Click on the map or drag the pin to set the exact spot.
+                                                    <textarea asp-for="factory!.Description" class="form-control" placeholder="Description" style="height: 100px"></textarea>
+                                                    <label asp-for="factory!.Description">Factory Description</label>
+                                                    <span asp-validation-for="factory!.Description" class="text-danger small"></span>
+                                                    <div class="form-text">Describe your factory operations and recycling activities</div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <!-- ✅ END LOCATION -->
 
-                            </div>
-                        </div>
-
-                        <!-- User Type Selection -->
-                        <div class="section mb-4">
-                            <h4 class="section-title"><i class="fas fa-users me-2"></i>Select Your Role</h4>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="form-check card-select">
-                                        <input class="form-check-input" type="radio" asp-for="type!.TypeName" value="Individual" id="typeIndividual" required />
-                                        <label class="form-check-label w-100" for="typeIndividual">
-                                            <div class="card card-hover text-center p-3 h-100">
-                                                <div class="card-body">
-                                                    <i class="fas fa-user fa-2x text-success mb-3"></i>
-                                                    <h5 class="card-title mb-2">Individual</h5>
-                                                    <p class="card-text small text-muted mb-0">Personal recycling activities</p>
+                                    <div id="craftsmanSection" class="section mb-4 dynamic-section" style="display: none;">
+                                        <h4 class="section-title"><i class="fas fa-hammer me-2"></i>Craftsman Information</h4>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="craftsman!.SkillType" class="form-control" placeholder="Skill Type" />
+                                                    <label asp-for="craftsman!.SkillType">Primary Skill</label>
+                                                    <span asp-validation-for="craftsman!.SkillType" class="text-danger small"></span>
+                                                    <div class="form-text">e.g., Woodworking, Metalworking, Glass Art, Textile Upcycling</div>
                                                 </div>
                                             </div>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <div class="form-check card-select">
-                                        <input class="form-check-input" type="radio" asp-for="type!.TypeName" value="Factory" id="typeFactory" />
-                                        <label class="form-check-label w-100" for="typeFactory">
-                                            <div class="card card-hover text-center p-3 h-100">
-                                                <div class="card-body">
-                                                    <i class="fas fa-industry fa-2x text-success mb-3"></i>
-                                                    <h5 class="card-title mb-2">Factory</h5>
-                                                    <p class="card-text small text-muted mb-0">Recycling & industrial facilities</p>
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="craftsman!.ExperienceYears" type="number" min="0" max="50" class="form-control" placeholder="Experience Years" />
+                                                    <label asp-for="craftsman!.ExperienceYears">Years of Experience</label>
+                                                    <span asp-validation-for="craftsman!.ExperienceYears" class="text-danger small"></span>
+                                                    <div class="form-text">Number of years of experience in your craft</div>
                                                 </div>
                                             </div>
-                                        </label>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="col-md-4">
-                                    <div class="form-check card-select">
-                                        <input class="form-check-input" type="radio" asp-for="type!.TypeName" value="Craftsman" id="typeCraftsman" />
-                                        <label class="form-check-label w-100" for="typeCraftsman">
-                                            <div class="card card-hover text-center p-3 h-100">
-                                                <div class="card-body">
-                                                    <i class="fas fa-hammer fa-2x text-success mb-3"></i>
-                                                    <h5 class="card-title mb-2">Craftsman</h5>
-                                                    <p class="card-text small text-muted mb-0">Skilled artisans & craftsmen</p>
-                                                </div>
+                                    <!-- Terms -->
+                                    <div class="mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="termsAgreement" required>
+                                            <label class="form-check-label" for="termsAgreement">
+                                                <span class="me-1">I agree to the</span>
+                                                <a asp-controller="Home" asp-action="Terms" class="text-success text-decoration-none fw-semibold">Terms & Conditions</a>
+                                                <span class="mx-1">and</span>
+                                                <a asp-controller="Home" asp-action="Privacy" class="text-success text-decoration-none fw-semibold">Privacy Policy</a>
+                                            </label>
+                                            <div class="invalid-feedback mt-1">
+                                                You must agree to the terms and conditions before proceeding
                                             </div>
-                                        </label>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <span asp-validation-for="type!.TypeName" class="text-danger small mt-2 d-block"></span>
+                                    <!-- Submit -->
+                                    <div class="d-grid gap-2 mt-4">
+                                        <button type="submit" class="btn btn-success btn-lg py-3 auth-btn-success">
+                                            <i class="fas fa-user-plus me-2"></i>Create Account
+                                        </button>
+                                        <div class="text-center mt-3">
+                                            <p class="mb-0 text-muted">
+                                                Already have an account?
+                                                <a asp-controller="Auth" asp-action="Login" class="auth-link fw-semibold ms-1">
+                                                    Login here
+                                                </a>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                </form>
                             </div>
-                        </div>
 
-                        <!-- (rest of your sections remain unchanged) -->
-                        <div id="individualSection" class="section mb-4 dynamic-section" style="display: none;">
-                            <h4 class="section-title"><i class="fas fa-user-tie me-2"></i>Individual Information</h4>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-floating">
-                                        <input asp-for="individual!.Occupation" class="form-control" placeholder="Occupation" />
-                                        <label asp-for="individual!.Occupation">Occupation</label>
-                                        <span asp-validation-for="individual!.Occupation" class="text-danger small"></span>
-                                        <div class="form-text">Enter your current profession or occupation</div>
-                                    </div>
-                                </div>
+                            <div class="auth-foot">
+                                <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech</small>
                             </div>
-                        </div>
 
-                        <div id="factorySection" class="section mb-4 dynamic-section" style="display: none;">
-                            <h4 class="section-title"><i class="fas fa-industry me-2"></i>Factory Information</h4>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="factory!.FactoryName" class="form-control" placeholder="Factory Name" />
-                                        <label asp-for="factory!.FactoryName">Factory Name</label>
-                                        <span asp-validation-for="factory!.FactoryName" class="text-danger small"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="factory!.FactoryType" class="form-control" placeholder="Factory Type" />
-                                        <label asp-for="factory!.FactoryType">Factory Type</label>
-                                        <span asp-validation-for="factory!.FactoryType" class="text-danger small"></span>
-                                        <div class="form-text">e.g., Plastic Recycling, Paper Processing, Metal Scrap</div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-floating">
-                                        <textarea asp-for="factory!.Description" class="form-control" placeholder="Description" style="height: 100px"></textarea>
-                                        <label asp-for="factory!.Description">Factory Description</label>
-                                        <span asp-validation-for="factory!.Description" class="text-danger small"></span>
-                                        <div class="form-text">Describe your factory operations and recycling activities</div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-
-                        <div id="craftsmanSection" class="section mb-4 dynamic-section" style="display: none;">
-                            <h4 class="section-title"><i class="fas fa-hammer me-2"></i>Craftsman Information</h4>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="craftsman!.SkillType" class="form-control" placeholder="Skill Type" />
-                                        <label asp-for="craftsman!.SkillType">Primary Skill</label>
-                                        <span asp-validation-for="craftsman!.SkillType" class="text-danger small"></span>
-                                        <div class="form-text">e.g., Woodworking, Metalworking, Glass Art, Textile Upcycling</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating">
-                                        <input asp-for="craftsman!.ExperienceYears" type="number" min="0" max="50" class="form-control" placeholder="Experience Years" />
-                                        <label asp-for="craftsman!.ExperienceYears">Years of Experience</label>
-                                        <span asp-validation-for="craftsman!.ExperienceYears" class="text-danger small"></span>
-                                        <div class="form-text">Number of years of experience in your craft</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Terms -->
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="termsAgreement" required>
-                                <label class="form-check-label" for="termsAgreement">
-                                    <span class="me-1">I agree to the</span>
-                                    <a asp-controller="Home" asp-action="Terms" class="text-success text-decoration-none fw-semibold">Terms & Conditions</a>
-                                    <span class="mx-1">and</span>
-                                    <a asp-controller="Home" asp-action="Privacy" class="text-success text-decoration-none fw-semibold">Privacy Policy</a>
-                                </label>
-                                <div class="invalid-feedback mt-1">
-                                    You must agree to the terms and conditions before proceeding
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Submit -->
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-success btn-lg py-3">
-                                <i class="fas fa-user-plus me-2"></i>Create Account
-                            </button>
-                            <div class="text-center mt-3">
-                                <p class="mb-0 text-muted">
-                                    Already have an account?
-                                    <a asp-controller="Auth" asp-action="Login" class="text-success text-decoration-none fw-semibold ms-1">
-                                        Login here
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-
-                    </form>
+                    </div>
                 </div>
 
-                <div class="card-footer bg-light text-center py-3">
-                    <p class="mb-0 small text-muted">
-                        © @DateTime.Now.Year EcoRecyclers GreenTech. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </div>
+            </div><!-- row -->
+        </div><!-- shell -->
+
     </div>
 </div>
 
@@ -415,7 +476,7 @@
             const selectedDetails = document.getElementById('selectedDetails');
             const selectedCoords = document.getElementById('selectedCoords');
 
-            // Fast tiles (usually faster than default OSM)
+            // Fast tiles
             const defaultLat = 30.0444, defaultLng = 31.2357; // Cairo
             const map = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 12);
 
@@ -465,20 +526,18 @@
                 locationStatus.textContent = 'Location cleared. Use Search or click the map.';
             }
 
-            // Click on map
             map.on('click', function (e) {
                 clearUiError();
                 setLatLng(e.latlng.lat, e.latlng.lng, map.getZoom(), 'Selected by clicking the map.', true);
             });
 
-            // Drag marker
             marker.on('dragend', function () {
                 clearUiError();
                 const p = marker.getLatLng();
                 setLatLng(p.lat, p.lng, map.getZoom(), 'Selected by dragging the pin.', true);
             });
 
-            // Reverse Geocode (details)
+            // Reverse Geocode
             let reverseTimer = null;
             function reverseGeocodeDebounced(lat, lng) {
                 if (reverseTimer) clearTimeout(reverseTimer);
@@ -487,11 +546,9 @@
 
             async function reverseGeocode(lat, lng) {
                 try {
-                    // UI
                     selectedDetails.textContent = 'Loading location details...';
                     locationStatus.textContent = 'Loading address from server...';
 
-                    // ✅ Call Backend Action بدل Nominatim مباشرة (يتفادى CSP/CORS)
                     const url = `@Url.Action("ReverseGeocode", "Auth")?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
 
                     const res = await fetch(url, {
@@ -506,7 +563,6 @@
 
                     selectedDetails.textContent = display;
 
-                    // Fill address input
                     if (display && display !== 'Unknown place') {
                         addressInput.value = display.length > 255 ? display.substring(0, 255) : display;
                     }
@@ -520,9 +576,7 @@
                 }
             }
 
-            // =========================
-            // Better Search (Autocomplete + button)
-            // =========================
+            // Search
             let searchTimer = null;
 
             function renderResults(items) {
@@ -553,7 +607,6 @@
                         selectedDetails.textContent = display;
                         selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
 
-                        // Fill hint if empty
                         if (!addressInput.value.trim() && display) {
                             addressInput.value = display.length > 255 ? display.substring(0, 255) : display;
                         }
@@ -579,15 +632,12 @@
                 const hint = (addressInput.value || '').trim();
                 const combined = hint ? `${q}, ${hint}` : q;
 
-                // UI state
                 searchStatus.textContent = 'Searching...';
                 btnPlaceSearch.disabled = true;
                 searchResultsWrap.style.display = 'none';
                 searchResults.innerHTML = '';
 
                 try {
-                    // IMPORTANT: Some environments block nominatim by CSP (connect-src).
-                    // If blocked, you will see a clear error below.
                     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(combined)}&limit=8&addressdetails=1`;
 
                     const res = await fetch(url, {
@@ -598,9 +648,7 @@
                         }
                     });
 
-                    if (!res.ok) {
-                        throw new Error(`HTTP ${res.status}`);
-                    }
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                     const data = await res.json();
                     if (!Array.isArray(data) || data.length === 0) {
@@ -613,7 +661,6 @@
                     renderResults(data);
                 }
                 catch (err) {
-                    // Most common: CSP/CORS blocked => TypeError: Failed to fetch
                     console.error(err);
 
                     searchStatus.textContent = 'Search failed.';
@@ -630,12 +677,10 @@
                 }
             }
 
-            // Button Search
             btnPlaceSearch.addEventListener('click', function () {
                 doSearch(txtPlaceSearch.value);
             });
 
-            // Enter triggers search
             txtPlaceSearch.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -643,7 +688,6 @@
                 }
             });
 
-            // Autocomplete while typing (debounced)
             txtPlaceSearch.addEventListener('input', function () {
                 clearUiError();
                 const v = (txtPlaceSearch.value || '').trim();
@@ -660,7 +704,6 @@
             });
 
             // GPS
-            // ✅ GPS (Enhanced: fill address + update UI under map)
             btnUseMyLocation.addEventListener('click', function () {
                 clearUiError();
 
@@ -680,7 +723,6 @@
                             const lat = pos.coords.latitude;
                             const lng = pos.coords.longitude;
 
-                            // ✅ Set Lat/Lng + marker + map + UI
                             latInput.value = String(lat);
                             lngInput.value = String(lng);
 
@@ -690,10 +732,8 @@
                             selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
                             locationStatus.textContent = 'GPS coordinates captured. Loading address...';
 
-                            // ✅ ReverseGeocode via backend => will fill selectedDetails + addressInput
                             await reverseGeocode(lat, lng);
 
-                            // Hide search results (optional UI cleanup)
                             searchResultsWrap.style.display = 'none';
                             searchStatus.textContent = 'GPS selected. You can refine it by dragging the pin or clicking the map.';
                         }
@@ -721,7 +761,6 @@
                 );
             });
 
-            // Clear
             btnClearLocation.addEventListener('click', function () {
                 clearUiError();
                 clearLocation();
@@ -729,12 +768,9 @@
                 searchStatus.textContent = 'Type a place name to search.';
             });
 
-            // Fix map render after CSS transitions
             setTimeout(() => map.invalidateSize(), 350);
 
-            // =========================
-            // Form submit validation
-            // =========================
+            // Submit validation
             form.addEventListener('submit', function (event) {
                 validatePassword();
 
@@ -768,12 +804,309 @@
         });
     </script>
 
+    <!-- ===================== PREMIUM THEME CSS + Your Original CSS ===================== -->
     <style nonce="@nonce">
+        /* ========= Premium shell (same as Login) ========= */
+        :root {
+            --eco-green: #16a34a;
+            --eco-teal: #14b8a6;
+            --eco-sky: #38bdf8;
+            --muted: #64748b;
+            --glass: rgba(255,255,255,.72);
+            --border: rgba(2,132,199,.18);
+            --shadow: 0 22px 60px rgba(2,6,23,.12);
+            --radius: 22px;
+        }
+
+        body {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        .auth-premium {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            padding: 10px 0 25px;
+        }
+
+        .auth-shell {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .auth-hero {
+            position: relative;
+            padding: 26px 26px 20px;
+            color: #fff;
+            background: radial-gradient(600px 350px at 20% 25%, rgba(255,255,255,.18), transparent 60%), radial-gradient(700px 450px at 80% 20%, rgba(255,255,255,.12), transparent 55%), linear-gradient(135deg, rgba(34,197,94,.95), rgba(20,184,166,.92));
+            min-height: 860px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.16);
+            border: 1px solid rgba(255,255,255,.22);
+            font-weight: 800;
+            letter-spacing: .2px;
+            width: fit-content;
+        }
+
+        .hero-title {
+            font-size: 2.05rem;
+            font-weight: 900;
+            margin: 6px 0 8px;
+        }
+
+        .hero-sub {
+            margin: 0;
+            max-width: 420px;
+            color: rgba(255,255,255,.88);
+            line-height: 1.5;
+        }
+
+        .hero-list {
+            list-style: none;
+            padding: 14px 0 0;
+            margin: 0;
+            display: grid;
+            gap: 10px;
+        }
+
+            .hero-list li {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 800;
+                color: rgba(255,255,255,.92);
+            }
+
+            .hero-list .dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 999px;
+                background: rgba(255,255,255,.95);
+                box-shadow: 0 8px 20px rgba(255,255,255,.18);
+            }
+
+        .hero-illus {
+            position: relative;
+            margin-top: 14px;
+            height: 220px;
+        }
+
+        .illus-card {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            width: 92%;
+            height: 200px;
+            border-radius: 20px;
+            background: rgba(255,255,255,.18);
+            border: 1px solid rgba(255,255,255,.22);
+            overflow: hidden;
+            backdrop-filter: blur(6px);
+        }
+
+        .illus-row {
+            display: flex;
+            gap: 8px;
+            padding: 14px;
+        }
+
+        .illus-pill {
+            width: 48px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.35);
+        }
+
+        .illus-grid {
+            padding: 0 14px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+            .illus-grid .b {
+                height: 44px;
+                border-radius: 14px;
+                background: rgba(255,255,255,.22);
+                border: 1px solid rgba(255,255,255,.18);
+            }
+
+        .illus-wave {
+            position: absolute;
+            left: -10%;
+            right: -10%;
+            bottom: -35%;
+            height: 140px;
+            background: radial-gradient(120px 60px at 20% 30%, rgba(255,255,255,.28), transparent 60%), radial-gradient(150px 70px at 60% 30%, rgba(255,255,255,.24), transparent 60%), radial-gradient(140px 60px at 85% 35%, rgba(255,255,255,.22), transparent 60%);
+            opacity: .9;
+        }
+
+        .wind {
+            position: absolute;
+            width: 120px;
+            height: 26px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.16);
+        }
+
+        .w1 {
+            right: 18px;
+            top: 18px;
+            transform: rotate(-8deg);
+        }
+
+        .w2 {
+            right: 38px;
+            top: 58px;
+            width: 150px;
+            transform: rotate(-6deg);
+            opacity: .85;
+        }
+
+        .w3 {
+            right: 26px;
+            top: 104px;
+            width: 100px;
+            transform: rotate(-10deg);
+            opacity: .75;
+        }
+
+        .hero-img {
+            height: 240px;
+            width: 100%;
+            border-radius: 20px;
+            background: url('/images/auth/hero.png') center / contain no-repeat;
+            margin-top: 14px;
+            filter: drop-shadow(0 18px 35px rgba(0,0,0,.15));
+        }
+
+        .auth-form-wrap {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 26px 18px;
+            background: rgba(255,255,255,.35);
+        }
+
+        .auth-card {
+            width: 100%;
+            border-radius: 20px;
+            border: 1px solid rgba(15,23,42,.08);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 18px 45px rgba(2,6,23,.10);
+            overflow: hidden;
+        }
+
+        .auth-card-wide {
+            max-width: 900px;
+        }
+
+        .auth-head {
+            padding: 22px 22px 14px;
+            text-align: center;
+        }
+
+        .auth-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+            box-shadow: 0 12px 25px rgba(20,184,166,.18);
+            font-size: 1.35rem;
+        }
+
+        .auth-body {
+            padding: 0 22px 18px;
+        }
+
+        .auth-foot {
+            padding: 14px 22px;
+            text-align: center;
+            background: rgba(255,255,255,.55);
+            border-top: 1px solid rgba(15,23,42,.08);
+        }
+
+        .auth-link {
+            color: var(--eco-teal) !important;
+            text-decoration: none !important;
+        }
+
+            .auth-link:hover {
+                color: #0ea5a6 !important;
+                text-decoration: underline !important;
+            }
+
+        .auth-btn-success {
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+            font-weight: 900;
+            letter-spacing: .2px;
+            box-shadow: 0 12px 26px rgba(22,163,74,.22);
+            transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        }
+
+            .auth-btn-success:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 34px rgba(20,184,166,.22);
+                filter: brightness(1.02);
+            }
+
+        /* ========= Map / Location UI tweaks (design only) ========= */
+        .location-box {
+            border: 1px solid rgba(15,23,42,.08);
+            background: rgba(255,255,255,.72);
+            backdrop-filter: blur(8px);
+        }
+
+        .map-box {
+            height: 420px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(15,23,42,.10);
+        }
+
+        .selected-box {
+            background: rgba(248,250,252,.85);
+            border: 1px solid rgba(15,23,42,.08);
+        }
+
+        /* ========= Your original styles (kept, with small tune to match theme) ========= */
         .section {
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 25px;
-            background-color: #fff;
+            border: 1px solid rgba(15,23,42,.08);
+            border-radius: 14px;
+            padding: 22px;
+            background-color: rgba(255,255,255,.82);
+            backdrop-filter: blur(8px);
             transition: all 0.35s ease;
             opacity: 0;
             transform: translateY(20px);
@@ -785,35 +1118,37 @@
             }
 
         .section-title {
-            color: #28a745;
-            border-bottom: 2px solid #f0f0f0;
+            color: var(--eco-green);
+            border-bottom: 2px solid rgba(15,23,42,.06);
             padding-bottom: 12px;
-            margin-bottom: 25px;
-            font-weight: 600;
-            font-size: 1.1rem;
+            margin-bottom: 22px;
+            font-weight: 800;
+            font-size: 1.05rem;
         }
 
         .card-select .card {
             cursor: pointer;
-            border: 2px solid #e9ecef;
+            border: 2px solid rgba(15,23,42,.06);
             transition: all 0.3s ease;
             height: 100%;
             min-height: 140px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 16px;
+            background: rgba(255,255,255,.78);
         }
 
             .card-select .card:hover {
-                border-color: #28a745;
+                border-color: rgba(34,197,94,.55);
                 transform: translateY(-3px);
-                box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+                box-shadow: 0 10px 22px rgba(2,6,23,.10);
             }
 
         .card-select input[type="radio"]:checked + label .card {
-            border-color: #28a745;
-            background-color: rgba(40, 167, 69, 0.05);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+            border-color: rgba(34,197,94,.75);
+            background-color: rgba(34,197,94,.06);
+            box-shadow: 0 10px 24px rgba(34,197,94,.14);
             transform: translateY(-1px);
         }
 
@@ -822,13 +1157,14 @@
         }
 
         .btn-outline-secondary {
-            border-color: #ced4da;
-            background-color: transparent;
+            border-color: rgba(15,23,42,.12);
+            background-color: rgba(255,255,255,.55);
             padding: 0 12px;
             height: 42px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border-radius: 12px;
         }
 
         #searchResults .list-group-item {
@@ -845,19 +1181,64 @@
             color: #dc3545 !important;
         }
 
-        .form-control.is-invalid {
-            border-color: #dc3545 !important;
+        /* ========= Dark mode tuning ========= */
+        [data-bs-theme="dark"] .auth-shell {
+            background: rgba(15, 23, 42, .55);
+            border-color: rgba(148, 163, 184, .18);
+            box-shadow: 0 22px 60px rgba(0,0,0,.45);
         }
 
+        [data-bs-theme="dark"] .auth-form-wrap {
+            background: rgba(2, 6, 23, .35);
+        }
 
-        @@media (max-width: 768px) {
-            .section {
-                padding: 15px;
+        [data-bs-theme="dark"] .auth-card {
+            background: rgba(15, 23, 42, .70);
+            border-color: rgba(148, 163, 184, .16);
+            box-shadow: 0 18px 45px rgba(0,0,0,.35);
+        }
+
+        [data-bs-theme="dark"] .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+        [data-bs-theme="dark"] .section {
+            background: rgba(2, 6, 23, .35);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        [data-bs-theme="dark"] .location-box {
+            background: rgba(2, 6, 23, .30);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        [data-bs-theme="dark"] .selected-box {
+            background: rgba(2, 6, 23, .35);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        [data-bs-theme="dark"] .btn-outline-secondary {
+            background: rgba(2, 6, 23, .40);
+            border-color: rgba(148, 163, 184, .20);
+            color: rgba(226, 232, 240, .85);
+        }
+
+        @@media (max-width: 992px) {
+            .auth-premium {
+                min-height: calc(100vh - 120px);
+                padding: 10px 0 20px;
             }
 
-            .card-select .card {
-                min-height: 120px;
-                padding: 15px;
+            .auth-form-wrap {
+                padding: 18px 12px;
+            }
+
+            .auth-card-wide {
+                max-width: 100%;
+            }
+
+            .section {
+                padding: 16px;
             }
         }
     </style>

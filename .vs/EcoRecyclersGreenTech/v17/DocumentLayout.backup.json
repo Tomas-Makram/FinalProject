@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\Universty\\EcoRecyclersGreenTech\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\controllers\\storecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\controllers\\storecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\views\\craftsman\\auction\\myauctionorders.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\views\\craftsman\\auction\\myauctionorders.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\services\\factorystoreservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\services\\factorystoreservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|d:\\universty\\ecorecyclersgreentech\\ecorecyclersgreentech\\controllers\\craftsmancontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{694EB219-1C38-427F-92C1-9EFA5F52830F}|EcoRecyclersGreenTech\\EcoRecyclersGreenTech.csproj|solutionrelative:ecorecyclersgreentech\\controllers\\craftsmancontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,8 +18,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MyAuctionOrders.cshtml",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Views\\CraftsMan\\Auction\\MyAuctionOrders.cshtml",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Views\\CraftsMan\\Auction\\MyAuctionOrders.cshtml",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Views\\CraftsMan\\Auction\\MyAuctionOrders.cshtml",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Views\\CraftsMan\\Auction\\MyAuctionOrders.cshtml",
+              "ViewState": "AgIAAFMAAABg/f////8nwF8AAABaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-02-08T19:45:23.896Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
@@ -30,28 +43,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "StoreController.cs",
-              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\StoreController.cs",
-              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Controllers\\StoreController.cs",
-              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\StoreController.cs",
-              "RelativeToolTip": "EcoRecyclersGreenTech\\Controllers\\StoreController.cs",
-              "ViewState": "AgIAAGQAAAAAMzMzMzMDwJcAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-16T20:08:16.935Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "FactoryStoreService.cs",
-              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Services\\FactoryStoreService.cs",
-              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Services\\FactoryStoreService.cs",
-              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Services\\FactoryStoreService.cs",
-              "RelativeToolTip": "EcoRecyclersGreenTech\\Services\\FactoryStoreService.cs",
-              "ViewState": "AgIAADMIAACAzMzMzMw2wAAAAAAAAAAAAAAAAA==",
+              "Title": "CraftsManController.cs",
+              "DocumentMoniker": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\CraftsManController.cs",
+              "RelativeDocumentMoniker": "EcoRecyclersGreenTech\\Controllers\\CraftsManController.cs",
+              "ToolTip": "D:\\Universty\\EcoRecyclersGreenTech\\EcoRecyclersGreenTech\\Controllers\\CraftsManController.cs",
+              "RelativeToolTip": "EcoRecyclersGreenTech\\Controllers\\CraftsManController.cs",
+              "ViewState": "AgIAAHcFAAAACgAAAEAwwJYGAAA8AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-16T14:12:16.05Z",
+              "WhenOpened": "2026-02-08T12:48:15.859Z",
               "EditorCaption": ""
             }
           ]

@@ -5,17 +5,19 @@
 
 @{
     bool logged = ViewBag.UserLoggedIn ?? false;
-    string type = ViewBag.Type?.ToString() ?? "none";
+
+    // ✅ accept both ViewBag.Type and ViewBag.type
+    string type = (ViewBag.Type?.ToString() ?? ViewBag.type?.ToString() ?? "none");
+
     var nonce = HttpContextAccessor.HttpContext?.Items["CSPNonce"] as string ?? string.Empty;
     bool isDarkMode = ThemeService.IsDarkMode(Context);
     string currentTheme = ThemeService.GetCurrentTheme(Context);
 
-    // Get current controller and action for active link highlighting
+    // current route
     string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     string currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
     string currentArea = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
 
-    // Function to check if link should be active
     bool IsActive(string controller, string action = null!, string area = null!)
     {
         if (!string.IsNullOrEmpty(area) &&
@@ -32,11 +34,14 @@
         return true;
     }
 
-    // ✅ (NEW) Make Store active across Store-related controllers/pages
+    // ✅ Store active across Store-related controllers/pages
     bool storeActive =
         IsActive("Store") ||
-        IsActive("Individual","Index") || 
+        IsActive("Individual", "Index") ||
         IsActive("Individual", "JobDetails");
+
+    // ✅ detect factory
+    bool isFactory = logged && string.Equals(type, "Factory", StringComparison.OrdinalIgnoreCase);
 }
 
 <!DOCTYPE html>
@@ -54,9 +59,7 @@
 
     <!-- Base Styles -->
     <style nonce="@nonce">
-        /* CSS Variables */
         :root {
-            /* Light Theme */
             --primary-color: #2ecc71;
             --secondary-color: #3498db;
             --accent-color: #e74c3c;
@@ -76,7 +79,6 @@
         }
 
         [data-bs-theme="dark"] {
-            /* Dark Theme */
             --primary-color: #2ecc71;
             --secondary-color: #3498db;
             --accent-color: #e74c3c;
@@ -95,7 +97,6 @@
             --active-border: rgba(46, 204, 113, 0.45);
         }
 
-        /* ==================== BASE ==================== */
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -233,13 +234,23 @@
         }
 
         @@keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         @@keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
         .loading-dots {
@@ -258,23 +269,30 @@
             }
 
                 .loading-dots span:nth-child(2) {
-                    animation-delay: 0.2s;
+                    animation-delay: .2s;
                     background: #8BC34A;
                 }
 
                 .loading-dots span:nth-child(3) {
-                    animation-delay: 0.4s;
+                    animation-delay: .4s;
                     background: #CDDC39;
                 }
 
                 .loading-dots span:nth-child(4) {
-                    animation-delay: 0.6s;
+                    animation-delay: .6s;
                     background: #4CAF50;
                 }
 
         @@keyframes dot-pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.75; }
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: .75;
+            }
         }
 
         .loading-messages {
@@ -295,14 +313,33 @@
             font-weight: 600;
         }
 
-            .loading-message-item:nth-child(1) { animation-delay: 0s; }
-            .loading-message-item:nth-child(2) { animation-delay: 3s; }
-            .loading-message-item:nth-child(3) { animation-delay: 6s; }
+            .loading-message-item:nth-child(1) {
+                animation-delay: 0s;
+            }
+
+            .loading-message-item:nth-child(2) {
+                animation-delay: 3s;
+            }
+
+            .loading-message-item:nth-child(3) {
+                animation-delay: 6s;
+            }
 
         @@keyframes message-fade {
-            0%, 33% { opacity: 0; transform: translateY(10px); }
-            5%, 28% { opacity: 1; transform: translateY(0); }
-            38%, 100% { opacity: 0; transform: translateY(-10px); }
+            0%, 33% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            5%, 28% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            38%, 100% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
         }
 
         /* ==================== NAVBAR ==================== */
@@ -328,7 +365,6 @@
             filter: invert(0.8);
         }
 
-        /* Nav Items Styling */
         .navbar .navbar-nav .nav-link {
             display: flex;
             align-items: center;
@@ -346,7 +382,6 @@
                 line-height: 1;
             }
 
-            /* Active Nav Link */
             .navbar .navbar-nav .nav-link.active {
                 background: var(--active-bg);
                 border: 1px solid var(--active-border);
@@ -359,7 +394,6 @@
                     color: var(--primary-color);
                 }
 
-                /* Active Link Indicator */
                 .navbar .navbar-nav .nav-link.active::after {
                     content: '';
                     position: absolute;
@@ -373,30 +407,44 @@
                 }
 
         @@keyframes slideIn {
-            from { width: 0; left: 50%; }
-            to { width: 70%; left: 15%; }
+            from {
+                width: 0;
+                left: 50%;
+            }
+
+            to {
+                width: 70%;
+                left: 15%;
+            }
         }
 
-        /* Hover Effect */
         .navbar .navbar-nav .nav-link:hover {
             background: rgba(46, 204, 113, 0.08);
             transform: translateY(-1px);
         }
 
-        /* Active Hover - more prominent */
         .navbar .navbar-nav .nav-link.active:hover {
             background: var(--active-bg);
             transform: translateY(-1px);
             box-shadow: 0 6px 12px rgba(46, 204, 113, 0.15);
         }
 
-        /* Color Classes for Different User Types */
-        .nav-link.text-danger { color: var(--danger-color) !important; }
-        .nav-link.text-primary { color: var(--secondary-color) !important; }
-        .nav-link.text-success { color: var(--primary-color) !important; }
-        .nav-link.text-warning { color: var(--warning-color) !important; }
+        .nav-link.text-danger {
+            color: var(--danger-color) !important;
+        }
 
-        /* Active state for colored links */
+        .nav-link.text-primary {
+            color: var(--secondary-color) !important;
+        }
+
+        .nav-link.text-success {
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link.text-warning {
+            color: var(--warning-color) !important;
+        }
+
         .nav-link.text-danger.active {
             background: rgba(231, 76, 60, 0.14);
             border-color: rgba(231, 76, 60, 0.35);
@@ -495,9 +543,17 @@
             color: var(--text-color);
         }
 
-        .alert-success { border-left-color: var(--success-color); }
-        .alert-danger { border-left-color: var(--danger-color); }
-        .alert-warning { border-left-color: var(--warning-color); }
+        .alert-success {
+            border-left-color: var(--success-color);
+        }
+
+        .alert-danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .alert-warning {
+            border-left-color: var(--warning-color);
+        }
 
         /* ==================== FOOTER ==================== */
         .footer {
@@ -551,8 +607,14 @@
             }
 
         /* ==================== SCROLLBAR ==================== */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--card-bg); }
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
         ::-webkit-scrollbar-thumb {
             background: var(--border-color);
             border-radius: 5px;
@@ -569,32 +631,65 @@
             border: 1px solid var(--border-color);
         }
 
-        .modal-header, .modal-footer { border-color: var(--border-color); }
-        .btn-close { filter: invert(0.5); }
-        [data-bs-theme="dark"] .btn-close { filter: invert(0.8); }
+        .modal-header, .modal-footer {
+            border-color: var(--border-color);
+        }
+
+        .btn-close {
+            filter: invert(0.5);
+        }
+
+        [data-bs-theme="dark"] .btn-close {
+            filter: invert(0.8);
+        }
 
         /* ==================== ACCESSIBILITY ==================== */
         @@media (prefers-reduced-motion: reduce) {
-            .recycle-circle,
-            .recycle-icon,
-            .loading-dots span,
-            .loading-message-item,
-            .leaf {
+            .recycle-circle, .recycle-icon, .loading-dots span, .loading-message-item, .leaf {
                 animation: none !important;
             }
 
-            .page-loader { transition: none !important; }
-            .navbar .navbar-nav .nav-link.active::after { animation: none; }
+            .page-loader {
+                transition: none !important;
+            }
+
+            .navbar .navbar-nav .nav-link.active::after {
+                animation: none;
+            }
         }
 
         /* ==================== RESPONSIVE ==================== */
         @@media (max-width: 768px) {
-            .loader-card { width: 90%; padding: 20px; }
-            .eco-animated-logo { width: 140px; height: 140px; }
-            .recycle-circle { width: 100px; height: 100px; }
-            .theme-toggle { bottom: 15px; right: 15px; width: 45px; height: 45px; }
-            .navbar .navbar-nav .nav-link { margin: 0.2rem 0; padding: 0.6rem 1rem; }
-            .navbar .navbar-nav .nav-link.active::after { display: none; }
+            .loader-card {
+                width: 90%;
+                padding: 20px;
+            }
+
+            .eco-animated-logo {
+                width: 140px;
+                height: 140px;
+            }
+
+            .recycle-circle {
+                width: 100px;
+                height: 100px;
+            }
+
+            .theme-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+            }
+
+            .navbar .navbar-nav .nav-link {
+                margin: 0.2rem 0;
+                padding: 0.6rem 1rem;
+            }
+
+                .navbar .navbar-nav .nav-link.active::after {
+                    display: none;
+                }
         }
     </style>
 
@@ -646,86 +741,50 @@
 
                 <!-- Navbar Menu -->
                 <div class="collapse navbar-collapse" id="navbarMenu">
-                    <!-- Left Navigation -->
-                    <ul class="navbar-nav me-auto">
-                        @if (logged)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @(IsActive("Home", "Index") ? "active" : "")"
-                                   asp-controller="Home" asp-action="Index">
-                                    <i class="bi bi-house me-1"></i>Home
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <!-- ✅ (UPDATED) Store uses storeActive -->
-                                <a class="nav-link @(storeActive ? "active" : "")"
-                                   asp-controller="Store" asp-action="Index">
-                                    <i class="bi bi-shop me-1"></i>Store
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link @(IsActive("Home", "Setting") ? "active" : "")"
-                                   asp-controller="Home" asp-action="Setting">
-                                    <i class="bi bi-gear me-1"></i>Settings
-                                </a>
-                            </li>
-                        }
 
-                        <!-- Admin Links -->
-                        @if (logged && type == "Admin")
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-danger @(IsActive("Admin", "Users") ? "active" : "")"
-                                   asp-controller="Admin" asp-action="Users">
-                                    <i class="bi bi-people me-1"></i>Manage Users
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-primary @(IsActive("Admin", "Factories") ? "active" : "")"
-                                   asp-controller="Admin" asp-action="Factories">
-                                    <i class="bi bi-building me-1"></i>Manage Factories
-                                </a>
-                            </li>
-                        }
-
-                        <!-- Factory Links -->
-                        @if (logged && type == "Factory")
-                        {
+                    @* =========================================================
+                    ✅ FACTORY NAVBAR (ONLY)
+                    Left: Brand + Dashboard + Settings
+                    Right: Wallet + Email + Logout
+                    ========================================================= *@
+                    @if (isFactory)
+                    {
+                        <ul class="navbar-nav me-auto">
                             <li class="nav-item">
                                 <a class="nav-link fw-semibold text-success @(IsActive("Factory", "Index") ? "active" : "")"
                                    asp-controller="Factory" asp-action="Index">
                                     <i class="bi bi-speedometer2 me-1"></i>Dashboard
                                 </a>
                             </li>
-                        }
 
-                        <!-- Individual Links-->
-                        @if (logged && type == "Individual")
-                        {
                             <li class="nav-item">
-                                <a class="nav-link fw-semibold  @(IsActive("Individual", "MyJobs") ? "active" : "")"
-                                   asp-controller="Individual" asp-action="MyJobs">
-                                    <i class="bi bi-calendar-check me-1"></i>Interviews
+                                <a class="nav-link @(IsActive("Home", "Setting") ? "active" : "")"
+                                   asp-controller="Home" asp-action="Setting">
+                                    <i class="bi bi-gear me-1"></i>Settings
                                 </a>
                             </li>
-                        }
-                        <!-- Customer Links -->
-                        @if (logged && type == "Customer")
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-warning @(IsActive("Customer", "Orders") ? "active" : "")"
-                                   asp-controller="Customer" asp-action="Orders">
-                                    <i class="bi bi-cart-check me-1"></i>My Requests
+                        </ul>
+
+                        <ul class="navbar-nav ms-auto">
+                            <!-- Wallet -->
+                            <li class="nav-item me-3">
+                                <a asp-controller="Home" asp-action="Ledger"
+                                   class="nav-link text-success @(IsActive("Home","Ledger") ? "active" : "")">
+                                    <i class="bi bi-wallet2 me-1"></i>
+                                    Wallet:
+                                    <strong>@(((decimal)(ViewBag.WalletBalance ?? 0m)).ToString("0.00"))</strong>
+                                    @(ViewBag.WalletCurrency ?? "EGP")
+
+                                    @if ((decimal)(ViewBag.WalletReserved ?? 0m) > 0m)
+                                    {
+                                        <span class="ms-2 text-warning">
+                                            (Hold: @(((decimal)ViewBag.WalletReserved).ToString("0.00")))
+                                        </span>
+                                    }
                                 </a>
                             </li>
-                        }
-                    </ul>
 
-                    <!-- Right Navigation -->
-                    <ul class="navbar-nav ms-auto">
-                        @if (logged)
-                        {
-                            <!-- User Info -->
+                            <!-- Email -->
                             <li class="nav-item me-3">
                                 <span class="nav-link text-success">
                                     <i class="bi bi-person-circle me-1"></i>@ViewBag.Email
@@ -741,22 +800,191 @@
                                     </button>
                                 </form>
                             </li>
-                        }
-                        else
-                        {
-                            <!-- Login/Signup -->
-                            <li class="nav-item">
-                                <a class="btn btn-success me-2" href="/Auth/Login">
-                                    <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="btn btn-info" href="/Auth/Signup">
-                                    <i class="bi bi-person-plus me-1"></i>Signup
-                                </a>
-                            </li>
-                        }
-                    </ul>
+                        </ul>
+                    }
+                    else
+                    {
+                        @* =========================================================
+                    ✅ ORIGINAL NAVBAR FOR OTHER USER TYPES
+                    ========================================================= *@
+
+                        <!-- Left Navigation -->
+                        <ul class="navbar-nav me-auto">
+                            @if (logged)
+                            {
+                                @* ✅✅✅ ONLY CHANGE: Craftsman removes Home and starts with Store, Dashboard, Settings *@
+                                if (string.Equals(type, "Craftsman", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    @* li class="nav-item">
+                                        <a class="nav-link @(storeActive ? "active" : "")"
+                                           asp-controller="Store" asp-action="Index">
+                                            <i class="bi bi-shop me-1"></i>Store
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link fw-semibold @(IsActive("CraftsMan", "Index") ? "active" : "")"
+                                           asp-controller="CraftsMan" asp-action="Index">
+                                            <i class="bi bi-calendar-check me-1"></i>Dashboard
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link @(IsActive("Home", "Setting") ? "active" : "")"
+                                           asp-controller="Home" asp-action="Setting">
+                                            <i class="bi bi-gear me-1"></i>Settings
+                                        </a>
+                                    </li> *@
+                                }
+                                else
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link @(IsActive("Home", "Index") ? "active" : "")"
+                                           asp-controller="Home" asp-action="Index">
+                                            <i class="bi bi-house me-1"></i>Home
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link @(storeActive ? "active" : "")"
+                                           asp-controller="Store" asp-action="Index">
+                                            <i class="bi bi-shop me-1"></i>Store
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link @(IsActive("Home", "Setting") ? "active" : "")"
+                                           asp-controller="Home" asp-action="Setting">
+                                            <i class="bi bi-gear me-1"></i>Settings
+                                        </a>
+                                    </li>
+                                }
+                            }
+
+                            <!-- Admin Links -->
+                            @if (logged && type == "Admin")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-danger @(IsActive("Admin", "Users") ? "active" : "")"
+                                       asp-controller="Admin" asp-action="Users">
+                                        <i class="bi bi-people me-1"></i>Manage Users
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-primary @(IsActive("Admin", "Factories") ? "active" : "")"
+                                       asp-controller="Admin" asp-action="Factories">
+                                        <i class="bi bi-building me-1"></i>Manage Factories
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Individual Links -->
+                            @if (logged && type == "Individual")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link @(storeActive ? "active" : "")"
+                                       asp-controller="Store" asp-action="Index">
+                                        <i class="bi bi-shop me-1"></i>Store
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link fw-semibold @(IsActive("Individual", "MyJobs") ? "active" : "")"
+                                       asp-controller="Individual" asp-action="MyJobs">
+                                        <i class="bi bi-calendar-check me-1"></i>Interviews
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link @(IsActive("Home", "Setting") ? "active" : "")"
+                                       asp-controller="Home" asp-action="Setting">
+                                        <i class="bi bi-gear me-1"></i>Settings
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Craftsman Links -->
+                            @if (logged && type == "Craftsman")
+                            {
+
+                                <li class="nav-item">
+                                    <a class="nav-link @(storeActive ? "active" : "")"
+                                    asp-controller="Store" asp-action="Index">
+                                        <i class="bi bi-shop me-1"></i>Store
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link fw-semibold @(IsActive("CraftsMan", "Index") ? "active" : "")"
+                                    asp-controller="CraftsMan" asp-action="Index">
+                                        <i class="bi bi-calendar-check me-1"></i>Dashboard
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link @(IsActive("Home", "Setting") ? "active" : "")"
+                                    asp-controller="Home" asp-action="Setting">
+                                        <i class="bi bi-gear me-1"></i>Settings
+                                    </a>
+                                </li>
+
+                            }
+                        </ul>
+
+                        <!-- Right Navigation -->
+                        <ul class="navbar-nav ms-auto">
+                            @if (logged)
+                            {
+                                <!-- Wallet Info -->
+                                <li class="nav-item me-3">
+                                    <a asp-controller="Home" asp-action="Ledger"
+                                       class="nav-link text-success @(IsActive("Home","Ledger") ? "active" : "")">
+                                        <i class="bi bi-wallet2 me-1"></i>
+                                        Wallet:
+                                        <strong>@(((decimal)(ViewBag.WalletBalance ?? 0m)).ToString("0.00"))</strong>
+                                        @(ViewBag.WalletCurrency ?? "EGP")
+
+                                        @if ((decimal)(ViewBag.WalletReserved ?? 0m) > 0m)
+                                        {
+                                            <span class="ms-2 text-warning">
+                                                (Hold: @(((decimal)ViewBag.WalletReserved).ToString("0.00")))
+                                            </span>
+                                        }
+                                    </a>
+                                </li>
+
+                                <!-- User Info -->
+                                <li class="nav-item me-3">
+                                    <span class="nav-link text-success">
+                                        <i class="bi bi-person-circle me-1"></i>@ViewBag.Email
+                                    </span>
+                                </li>
+
+                                <!-- Logout -->
+                                <li class="nav-item">
+                                    <form asp-controller="Auth" asp-action="Logout" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="bi bi-box-arrow-right me-1"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="btn btn-success me-2" href="/Auth/Login">
+                                        <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="btn btn-info" href="/Auth/Signup">
+                                        <i class="bi bi-person-plus me-1"></i>Signup
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
                 </div>
             </div>
         </nav>
@@ -783,51 +1011,32 @@
     </button>
 
     <!-- ==================== SCRIPTS ==================== -->
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" nonce="@nonce"></script>
-
-    <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" nonce="@nonce"></script>
-
-    <!-- Custom Site Script -->
     <script src="~/js/site.js" asp-append-version="true" nonce="@nonce"></script>
 
     <!-- ==================== CUSTOM SCRIPTS ==================== -->
     <script nonce="@nonce">
         document.addEventListener('DOMContentLoaded', function () {
-            // ==================== VARIABLES ====================
             const pageLoader = document.getElementById('pageLoader');
             const themeToggleBtn = document.getElementById('themeToggle');
             const floatingLeaves = document.getElementById('floatingLeaves');
 
-            // ==================== FUNCTIONS ====================
-
-            /**
-             * Generates floating leaves inside loader
-             */
             function generateFloatingLeaves() {
                 if (!floatingLeaves) return;
-
                 floatingLeaves.innerHTML = "";
-
                 for (let i = 0; i < 10; i++) {
                     const leaf = document.createElement('div');
                     leaf.className = 'leaf';
-
-                    // Random positioning
                     leaf.style.left = `${Math.random() * 100}%`;
                     leaf.style.animationDelay = `${Math.random() * 4}s`;
                     leaf.style.animationDuration = `${7 + Math.random() * 6}s`;
                     leaf.style.transform = `scale(${0.5 + Math.random() * 0.6}) rotate(${Math.random() * 360}deg)`;
                     leaf.style.opacity = `${0.25 + Math.random() * 0.35}`;
-
                     floatingLeaves.appendChild(leaf);
                 }
             }
 
-            /**
-             * Creates and submits theme toggle form
-             */
             function createAndSubmitThemeForm() {
                 const form = document.createElement('form');
                 form.method = 'POST';
@@ -837,19 +1046,14 @@
                 const tokenInput = document.createElement('input');
                 tokenInput.type = 'hidden';
                 tokenInput.name = '__RequestVerificationToken';
-
-                // Get CSRF token from existing form
                 const existingToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
                 tokenInput.value = existingToken || '';
-
                 form.appendChild(tokenInput);
+
                 document.body.appendChild(form);
                 form.submit();
             }
 
-            /**
-             * Shows loader for navigation links
-             */
             function setupNavigationLoader() {
                 document.addEventListener('click', function (e) {
                     const link = e.target.closest('a');
@@ -858,40 +1062,24 @@
                     const href = link.getAttribute('href') || '';
                     const target = link.getAttribute('target');
 
-                    // Check if link should trigger loader
                     const isExternal = /^https?:\/\//i.test(href) && !href.includes(location.host);
                     const isHash = href.startsWith('#');
                     const isJsVoid = href.startsWith('javascript:') || href === '' || href === 'void(0)';
                     const isDownload = link.hasAttribute('download');
                     const hasBootstrapToggle = link.hasAttribute('data-bs-toggle') || link.hasAttribute('data-bs-target');
 
-                    // Skip loader for these cases
-                    if (hasBootstrapToggle || target === '_blank' ||
-                        isExternal || isHash || isJsVoid || isDownload) {
-                        return;
-                    }
+                    if (hasBootstrapToggle || target === '_blank' || isExternal || isHash || isJsVoid || isDownload) return;
 
-                    // Show loader for navigation
-                    if (pageLoader) {
-                        pageLoader.classList.remove('hidden');
-                    }
+                    if (pageLoader) pageLoader.classList.remove('hidden');
                 });
             }
 
-            /**
-             * Sets up form submission loader
-             */
             function setupFormLoader() {
                 document.addEventListener('submit', function () {
-                    if (pageLoader) {
-                        pageLoader.classList.remove('hidden');
-                    }
+                    if (pageLoader) pageLoader.classList.remove('hidden');
                 });
             }
 
-            /**
-             * Auto-hides alerts after delay
-             */
             function setupAutoHideAlerts() {
                 setTimeout(() => {
                     document.querySelectorAll('.alert').forEach(alert => {
@@ -901,61 +1089,34 @@
                 }, 5000);
             }
 
-            // ==================== INITIALIZATION ====================
-
-            // Generate leaves on load
             generateFloatingLeaves();
 
-            // Hide loader when page is fully loaded
             window.addEventListener('load', () => {
                 setTimeout(() => {
-                    if (pageLoader) {
-                        pageLoader.classList.add('hidden');
-                    }
+                    if (pageLoader) pageLoader.classList.add('hidden');
                 }, 700);
             });
 
-            // Setup navigation loader
             setupNavigationLoader();
-
-            // Setup form loader
             setupFormLoader();
 
-            // Theme toggle
             if (themeToggleBtn) {
                 themeToggleBtn.addEventListener('click', createAndSubmitThemeForm);
             }
 
-            // Auto-hide alerts
             setupAutoHideAlerts();
 
-            // ==================== ERROR HANDLING ====================
             window.addEventListener('error', function (e) {
                 console.error('Page error:', e.error);
-
-                // Ensure loader is hidden on error
                 if (pageLoader && !pageLoader.classList.contains('hidden')) {
                     pageLoader.classList.add('hidden');
                 }
             });
-
-            // ==================== PERFORMANCE OPTIMIZATION ====================
-            if ('connection' in navigator) {
-                const connection = navigator.connection;
-                if (connection && connection.saveData === true) {
-                    // Reduce animations for data saver mode
-                    document.documentElement.style.setProperty('--animation-duration', '0.5s');
-                }
-            }
         });
 
-        // ==================== WINDOW UNLOAD HANDLER ====================
         window.addEventListener('beforeunload', function () {
-            // Show loader when leaving page
             const pageLoader = document.getElementById('pageLoader');
-            if (pageLoader) {
-                pageLoader.classList.remove('hidden');
-            }
+            if (pageLoader) pageLoader.classList.remove('hidden');
         });
     </script>
 

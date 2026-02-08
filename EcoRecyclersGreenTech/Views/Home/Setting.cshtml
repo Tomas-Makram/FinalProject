@@ -25,447 +25,444 @@
     }
 }
 
-<div class="container py-4">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
 
-    <!-- Alerts -->
-    @foreach (var key in new[] { "SuccessMessage", "InfoMessage", "WarningMessage", "ErrorMessage", "PasswordError", "OtpError" })
-    {
-        if (TempData[key] != null)
-        {
-            var cls = key switch
-            {
-                "SuccessMessage" => "success",
-                "InfoMessage" => "info",
-                "WarningMessage" => "warning",
-                "ErrorMessage" => "danger",
-                "PasswordError" => "warning",
-                "OtpError" => "danger",
-                _ => "info"
-            };
-            <div class="alert alert-@cls alert-dismissible fade show shadow-sm" role="alert">
-                <i class="bi bi-info-circle-fill me-2"></i>@TempData[key]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-    }
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <h3 class="mb-1">Account Settings</h3>
+                        <p class="mb-0 text-muted small">Manage your profile and account information</p>
+                    </div>
 
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-lg-3 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center p-4">
-
-                    <div class="position-relative mb-3">
-                        <img src="@profileImageSrc"
-                             alt="Profile"
-                             class="rounded-circle img-fluid"
-                             style="width:150px;height:150px;object-fit:cover;"
-                             id="profileImagePreview">
-
-                        <div class="position-absolute bottom-0 end-0">
-                            @if (Model.Account.Verified)
+                    <div class="auth-body">
+                        <!-- Alerts -->
+                        <div class="alerts-container">
+                            @foreach (var key in new[] { "SuccessMessage", "InfoMessage", "WarningMessage", "ErrorMessage", "PasswordError", "OtpError" })
                             {
-                                <span class="badge bg-success rounded-pill p-2"><i class="bi bi-check-circle"></i></span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning rounded-pill p-2"><i class="bi bi-exclamation-circle"></i></span>
+                                if (TempData[key] != null)
+                                {
+                                    var cls = key switch
+                                    {
+                                        "SuccessMessage" => "success",
+                                        "InfoMessage" => "info",
+                                        "WarningMessage" => "warning",
+                                        "ErrorMessage" => "danger",
+                                        "PasswordError" => "warning",
+                                        "OtpError" => "danger",
+                                        _ => "info"
+                                    };
+                                    <div class="alert premium-alert alert-@cls alert-dismissible fade show shadow-sm" role="alert">
+                                        <i class="bi bi-info-circle-fill me-2"></i>@TempData[key]
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                }
                             }
                         </div>
-                    </div>
 
-                    <h4 class="fw-bold mb-1">@Model.Profile.FullName</h4>
+                        <div class="row g-4">
+                            <!-- Sidebar -->
+                            <div class="col-lg-4">
+                                <div class="premium-card h-100">
+                                    <div class="text-center p-3">
+                                        <div class="position-relative mb-3">
+                                            <img src="@profileImageSrc"
+                                                 alt="Profile"
+                                                 class="rounded-circle img-fluid"
+                                                 style="width:150px;height:150px;object-fit:cover;"
+                                                 id="profileImagePreview">
 
-                    <div class="mb-3">
-                        <span class="badge bg-primary px-3 py-2 rounded-pill">
-                            <i class="bi bi-person-badge me-1"></i>@Model.Account.UserTypeName
-                        </span>
-                    </div>
-
-                    <div class="d-grid gap-2 mb-4">
-                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                            <i class="bi bi-key me-2"></i>Change Password
-                        </button>
-
-                        @if (!Model.Account.Verified && !Model.Account.Blocked)
-                        {
-                            <form method="post" asp-action="StartVerification" asp-controller="Home">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-outline-warning w-100" type="submit">
-                                    <i class="bi bi-shield-exclamation me-2"></i>Verify Account
-                                </button>
-                            </form>
-                        }
-
-                        <a href="/Home" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>Back to Home
-                        </a>
-                    </div>
-
-                    <div class="border-top pt-3 text-start">
-                        <small class="text-muted d-block"><i class="bi bi-envelope me-2"></i>Email</small>
-                        <div class="fw-semibold text-truncate">@Model.Profile.Email</div>
-
-                        <small class="text-muted d-block mt-2"><i class="bi bi-calendar me-2"></i>Member Since</small>
-                        <div class="fw-semibold">@Model.Profile.JoinDate.ToString("MMMM yyyy")</div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Main -->
-        <div class="col-lg-9">
-            <div class="card shadow-sm border-0">
-
-                <div class="card-header bg-gradient border-0 py-3">
-                    <h3 class="card-title mb-0 text-dark">
-                        <i class="bi bi-gear-fill me-2"></i>Account Settings
-                    </h3>
-                    <p class="text-dark-50 mb-0 small">Manage your profile and account information</p>
-                </div>
-
-                <form asp-action="Setting" asp-controller="Home" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-
-                    <div class="border-bottom">
-                        <ul class="nav nav-pills px-3 pt-3" role="tablist">
-                            <li class="nav-item">
-                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile" type="button">
-                                    <i class="bi bi-person-circle me-2"></i>Profile
-                                </button>
-                            </li>
-
-                            @if (isAdmin)
-                            {
-                                <li class="nav-item">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admin" type="button">
-                                        <i class="bi bi-shield-lock me-2"></i>Admin
-                                    </button>
-                                </li>
-                            }
-                            @if (isCraftsman)
-                            {
-                                <li class="nav-item">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#craftsman" type="button">
-                                        <i class="bi bi-tools me-2"></i>Craftsman
-                                    </button>
-                                </li>
-                            }
-                            @if (isIndividual)
-                            {
-                                <li class="nav-item">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#individual" type="button">
-                                        <i class="bi bi-person-badge me-2"></i>Individual
-                                    </button>
-                                </li>
-                            }
-                            @if (isFactory)
-                            {
-                                <li class="nav-item">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#factory" type="button">
-                                        <i class="bi bi-building me-2"></i>Factory
-                                    </button>
-                                </li>
-                            }
-                        </ul>
-                    </div>
-
-                    <div class="card-body p-4">
-                        <div class="tab-content">
-
-                            <!-- PROFILE -->
-                            <div class="tab-pane fade show active" id="profile">
-                                <div class="row g-4">
-
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input asp-for="BasicInfo.FullName" class="form-control" placeholder="Full Name">
-                                            <label asp-for="BasicInfo.FullName"><i class="bi bi-person me-1"></i>Full Name</label>
-                                            <span asp-validation-for="BasicInfo.FullName" class="invalid-feedback"></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input asp-for="BasicInfo.Email" type="email" class="form-control" placeholder="Email">
-                                            <label asp-for="BasicInfo.Email"><i class="bi bi-envelope me-1"></i>Email</label>
-                                            <span asp-validation-for="BasicInfo.Email" class="invalid-feedback"></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input asp-for="BasicInfo.PhoneNumber" class="form-control" placeholder="Phone">
-                                            <label asp-for="BasicInfo.PhoneNumber"><i class="bi bi-phone me-1"></i>Phone</label>
-                                            <span asp-validation-for="BasicInfo.PhoneNumber" class="invalid-feedback"></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input asp-for="BasicInfo.Location" class="form-control" placeholder="Location">
-                                            <label asp-for="BasicInfo.Location"><i class="bi bi-geo-alt me-1"></i>Location</label>
-                                            <span asp-validation-for="BasicInfo.Location" class="invalid-feedback"></span>
-                                            <div class="form-text small">This is an address hint. The map saves coordinates.</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- ✅ LOCATION MAP -->
-                                    <div class="col-12">
-                                        <div class="card border bg-transparent">
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-3">
-                                                    <i class="bi bi-geo-alt-fill me-2"></i>Location on Map
-                                                </h6>
-
-                                                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
-                                                    <div class="d-flex gap-2 flex-wrap">
-                                                        <button type="button" class="btn btn-success" id="btnUseMyLocation_Settings">
-                                                            <i class="bi bi-geo-alt me-1"></i> Use GPS
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-secondary" id="btnClearLocation_Settings">
-                                                            <i class="bi bi-x-circle me-1"></i> Clear
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="small text-muted" id="locationStatus_Settings">
-                                                        Click map or drag the pin.
-                                                    </div>
-                                                </div>
-
-                                                <!-- hidden inputs (not in SettingModel) -->
-                                                <input type="hidden" id="Latitude_Settings" name="Latitude"
-                                                       value="@(Model.Profile.Latitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
-                                                <input type="hidden" id="Longitude_Settings" name="Longitude"
-                                                       value="@(Model.Profile.Longitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
-
-                                                <div id="map_settings" style="height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;"></div>
-
-                                                <div class="mt-2 p-2 rounded" style="background:#f8f9fa;border:1px solid #e9ecef">
-                                                    <div class="small fw-semibold text-success mb-1">Selected Location</div>
-                                                    <div class="small text-muted" id="selectedDetails_Settings">
-                                                        @(string.IsNullOrWhiteSpace(Model.Profile.Address) ? "No location details yet." : Model.Profile.Address)
-                                                    </div>
-                                                    <div class="small text-muted mt-1" id="selectedCoords_Settings"></div>
-                                                </div>
-
-                                                <div class="small text-muted mt-2">
-                                                    Tip: You can refine by clicking map or dragging the pin.
-                                                </div>
+                                            <div class="position-absolute bottom-0 end-0">
+                                                @if (Model.Account.Verified)
+                                                {
+                                                    <span class="badge bg-success rounded-pill p-2"><i class="bi bi-check-circle"></i></span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning rounded-pill p-2"><i class="bi bi-exclamation-circle"></i></span>
+                                                }
                                             </div>
                                         </div>
-                                    </div>
-                                    <!-- ✅ END LOCATION MAP -->
 
-                                    <!-- Profile Image -->
-                                    <div class="col-12">
-                                        <div class="card bg-transparent border">
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-3"><i class="bi bi-image me-2"></i>Profile Image</h6>
+                                        <h4 class="fw-bold mb-1">@Model.Profile.FullName</h4>
 
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <div class="position-relative">
-                                                        <img src="@profileImageSrc" class="rounded-circle border"
-                                                             style="width:90px;height:90px;object-fit:cover;"
-                                                             id="profilePreview">
+                                        <div class="mb-3">
+                                            <span class="badge bg-primary px-3 py-2 rounded-pill">
+                                                <i class="bi bi-person-badge me-1"></i>@Model.Account.UserTypeName
+                                            </span>
+                                        </div>
 
-                                                        <label for="profileImageInput"
-                                                               class="position-absolute bottom-0 end-0 btn btn-sm btn-primary rounded-circle">
-                                                            <i class="bi bi-camera"></i>
-                                                        </label>
-                                                    </div>
+                                        <div class="d-grid gap-2 mb-4">
+                                            <button class="btn btn-success auth-btn-success" type="button" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                                <i class="bi bi-key me-2"></i>Change Password
+                                            </button>
 
-                                                    <div class="flex-grow-1">
-                                                        <input asp-for="ProfileImage.ProfileImageFile" type="file"
-                                                               class="form-control d-none"
-                                                               id="profileImageInput"
-                                                               accept=".jpg,.jpeg,.png,.gif,.webp">
-                                                        <div class="form-text">Max: 5MB — JPG/PNG/GIF/WebP</div>
-                                                        <span asp-validation-for="ProfileImage.ProfileImageFile" class="text-danger small"></span>
-
-                                                        <input asp-for="ProfileImage.DeleteProfileImage" id="deleteProfileImage" type="checkbox" class="d-none" />
-                                                    </div>
-
-                                                    <button type="button"
-                                                            class="btn btn-outline-danger profile-delete-btn"
-                                                    @(string.IsNullOrWhiteSpace(Model.Profile.ProfileImageUrl) ? "disabled" : "")>
-                                                        <i class="bi bi-trash"></i>
+                                            @if (!Model.Account.Verified && !Model.Account.Blocked)
+                                            {
+                                                <form method="post" asp-action="StartVerification" asp-controller="Home">
+                                                    @Html.AntiForgeryToken()
+                                                    <button class="btn btn-warning w-100 auth-btn-warning" type="submit">
+                                                        <i class="bi bi-shield-exclamation me-2"></i>Verify Account
                                                     </button>
-                                                </div>
+                                                </form>
+                                            }
 
-                                                <div class="small text-muted mt-2">
-                                                    Delete will apply after Save.
-                                                </div>
-                                            </div>
+                                            <a href="/Home" class="btn btn-outline-secondary">
+                                                <i class="bi bi-arrow-left me-2"></i>Back to Home
+                                            </a>
+                                        </div>
+
+                                        <div class="border-top pt-3 text-start">
+                                            <small class="text-muted d-block"><i class="bi bi-envelope me-2"></i>Email</small>
+                                            <div class="fw-semibold text-truncate">@Model.Profile.Email</div>
+
+                                            <small class="text-muted d-block mt-2"><i class="bi bi-calendar me-2"></i>Member Since</small>
+                                            <div class="fw-semibold">@Model.Profile.JoinDate.ToString("MMMM yyyy")</div>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
 
-                            <!-- ADMIN -->
-                            @if (isAdmin)
-                            {
-                                <div class="tab-pane fade" id="admin">
-                                    <div class="form-floating">
-                                        <input asp-for="TypeSpecific.AdminType" class="form-control" placeholder="Admin Type">
-                                        <label asp-for="TypeSpecific.AdminType"><i class="bi bi-person-gear me-1"></i>Admin Type</label>
-                                    </div>
-                                </div>
-                            }
+                            <!-- Main Form -->
+                            <div class="col-lg-8">
+                                <div class="premium-card h-100">
+                                    <form asp-action="Setting" asp-controller="Home" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                                        @Html.AntiForgeryToken()
 
-                            <!-- CRAFTSMAN -->
-                            @if (isCraftsman)
-                            {
-                                <div class="tab-pane fade" id="craftsman">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input asp-for="TypeSpecific.SkillType" class="form-control" placeholder="Skill Type">
-                                                <label asp-for="TypeSpecific.SkillType"><i class="bi bi-hammer me-1"></i>Skill Type</label>
-                                            </div>
-                                        </div>
+                                        <!-- Tabs -->
+                                        <ul class="nav nav-pills premium-tabs mb-4" role="tablist">
+                                            <li class="nav-item">
+                                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile" type="button">
+                                                    <i class="bi bi-person-circle me-2"></i>Profile
+                                                </button>
+                                            </li>
 
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input asp-for="TypeSpecific.ExperienceYears" type="number" class="form-control" placeholder="Years" min="0" max="100">
-                                                <label asp-for="TypeSpecific.ExperienceYears"><i class="bi bi-calendar-check me-1"></i>Experience Years</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
+                                            @if (isAdmin)
+                                            {
+                                                <li class="nav-item">
+                                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admin" type="button">
+                                                        <i class="bi bi-shield-lock me-2"></i>Admin
+                                                    </button>
+                                                </li>
+                                            }
+                                            @if (isCraftsman)
+                                            {
+                                                <li class="nav-item">
+                                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#craftsman" type="button">
+                                                        <i class="bi bi-tools me-2"></i>Craftsman
+                                                    </button>
+                                                </li>
+                                            }
+                                            @if (isIndividual)
+                                            {
+                                                <li class="nav-item">
+                                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#individual" type="button">
+                                                        <i class="bi bi-person-badge me-2"></i>Individual
+                                                    </button>
+                                                </li>
+                                            }
+                                            @if (isFactory)
+                                            {
+                                                <li class="nav-item">
+                                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#factory" type="button">
+                                                        <i class="bi bi-building me-2"></i>Factory
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
 
-                            <!-- INDIVIDUAL -->
-                            @if (isIndividual)
-                            {
-                                <div class="tab-pane fade" id="individual">
-                                    <div class="form-floating">
-                                        <input asp-for="TypeSpecific.Occupation" class="form-control" placeholder="Occupation">
-                                        <label asp-for="TypeSpecific.Occupation"><i class="bi bi-briefcase me-1"></i>Occupation</label>
-                                    </div>
-                                </div>
-                            }
-
-                            <!-- FACTORY -->
-                            @if (isFactory)
-                            {
-                                <div class="tab-pane fade" id="factory">
-                                    <div class="row g-3">
-
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input asp-for="TypeSpecific.FactoryName" class="form-control" placeholder="Factory Name">
-                                                <label asp-for="TypeSpecific.FactoryName"><i class="bi bi-building me-1"></i>Factory Name</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input asp-for="TypeSpecific.FactoryType" class="form-control" placeholder="Factory Type">
-                                                <label asp-for="TypeSpecific.FactoryType"><i class="bi bi-tags me-1"></i>Factory Type</label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Factory Images -->
-                                        <div class="col-12">
-                                            <div class="card border bg-transparent">
-                                                <div class="card-body">
-                                                    <h6 class="card-title mb-3">
-                                                        <i class="bi bi-images me-2"></i>Factory Images
-                                                    </h6>
-
-                                                    <div class="row g-3">
-                                                        @for (int slot = 1; slot <= 3; slot++)
-                                                        {
-                                                            var url = slots[slot - 1];
-                                                            var hasImage = !string.IsNullOrWhiteSpace(url);
-
-                                                            <div class="col-md-4">
-                                                                <div class="factory-img-card border rounded-3 overflow-hidden position-relative">
-                                                                    <div class="factory-img-wrapper position-relative">
-
-                                                                        @if (hasImage)
-                                                                        {
-                                                                            <img id="factoryPreview_@slot" src="@url" class="w-100 factory-img" alt="Factory Image @slot" />
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <div class="factory-placeholder d-flex flex-column justify-content-center align-items-center" id="factoryPlaceholder_@slot">
-                                                                                <i class="bi bi-image fs-1 mb-2 text-muted"></i>
-                                                                                <div class="small text-muted">Empty slot #@slot</div>
-                                                                            </div>
-                                                                            <img id="factoryPreview_@slot" src="" class="w-100 factory-img d-none" alt="Factory Image @slot" />
-                                                                        }
-
-                                                                        <label class="factory-edit-icon" for="factoryFile_@slot" title="Choose image">
-                                                                            <i class="bi bi-camera-fill"></i>
-                                                                        </label>
-
-                                                                        <button type="button"
-                                                                                class="btn btn-sm btn-danger factory-delete-btn"
-                                                                                data-slot="@slot"
-                                                                                title="Delete (apply after Save)"
-                                                                        @(hasImage ? "" : "disabled")>
-                                                                            <i class="bi bi-trash"></i>
-                                                                        </button>
-                                                                    </div>
-
-                                                                    @if (slot == 1)
-                                                                    {
-                                                                        <input asp-for="FactoryImages.Slot1File" id="factoryFile_1" type="file" class="d-none factory-file" data-slot="1" accept=".jpg,.jpeg,.png,.gif,.webp" />
-                                                                        <input asp-for="FactoryImages.DeleteSlot1" id="deleteSlot_1" type="checkbox" class="d-none" />
-                                                                    }
-                                                                    @if (slot == 2)
-                                                                    {
-                                                                        <input asp-for="FactoryImages.Slot2File" id="factoryFile_2" type="file" class="d-none factory-file" data-slot="2" accept=".jpg,.jpeg,.png,.gif,.webp" />
-                                                                        <input asp-for="FactoryImages.DeleteSlot2" id="deleteSlot_2" type="checkbox" class="d-none" />
-                                                                    }
-                                                                    @if (slot == 3)
-                                                                    {
-                                                                        <input asp-for="FactoryImages.Slot3File" id="factoryFile_3" type="file" class="d-none factory-file" data-slot="3" accept=".jpg,.jpeg,.png,.gif,.webp" />
-                                                                        <input asp-for="FactoryImages.DeleteSlot3" id="deleteSlot_3" type="checkbox" class="d-none" />
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        }
+                                        <div class="tab-content">
+                                            <!-- PROFILE -->
+                                            <div class="tab-pane fade show active" id="profile">
+                                                <div class="row g-3 mb-4">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold small">Full Name</label>
+                                                        <div class="form-floating">
+                                                            <input asp-for="BasicInfo.FullName" class="form-control premium-input" placeholder="Full Name">
+                                                            <label asp-for="BasicInfo.FullName"><i class="bi bi-person me-1"></i>Full Name</label>
+                                                            <span asp-validation-for="BasicInfo.FullName" class="invalid-feedback"></span>
+                                                        </div>
                                                     </div>
 
-                                                    <div class="alert alert-info border-0 small mt-3 mb-0">
-                                                        <i class="bi bi-info-circle me-1"></i>
-                                                        Delete hides the image immediately, but is applied only after Save.
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold small">Email</label>
+                                                        <div class="form-floating">
+                                                            <input asp-for="BasicInfo.Email" type="email" class="form-control premium-input" placeholder="Email">
+                                                            <label asp-for="BasicInfo.Email"><i class="bi bi-envelope me-1"></i>Email</label>
+                                                            <span asp-validation-for="BasicInfo.Email" class="invalid-feedback"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold small">Phone Number</label>
+                                                        <div class="form-floating">
+                                                            <input asp-for="BasicInfo.PhoneNumber" class="form-control premium-input" placeholder="Phone">
+                                                            <label asp-for="BasicInfo.PhoneNumber"><i class="bi bi-phone me-1"></i>Phone</label>
+                                                            <span asp-validation-for="BasicInfo.PhoneNumber" class="invalid-feedback"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold small">Location Hint</label>
+                                                        <div class="form-floating">
+                                                            <input asp-for="BasicInfo.Location" class="form-control premium-input" placeholder="Location">
+                                                            <label asp-for="BasicInfo.Location"><i class="bi bi-geo-alt me-1"></i>Location</label>
+                                                            <span asp-validation-for="BasicInfo.Location" class="invalid-feedback"></span>
+                                                        </div>
+                                                        <div class="form-text small">Address hint. Map saves exact coordinates.</div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Location Map -->
+                                                <div class="premium-card mb-4">
+                                                    <h5 class="mb-3"><i class="bi bi-geo-alt-fill me-2 text-success"></i>Location on Map</h5>
+
+                                                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                                                        <div class="d-flex gap-2 flex-wrap">
+                                                            <button type="button" class="btn btn-success" id="btnUseMyLocation_Settings">
+                                                                <i class="bi bi-geo-alt me-1"></i> Use GPS
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary" id="btnClearLocation_Settings">
+                                                                <i class="bi bi-x-circle me-1"></i> Clear
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="small text-muted" id="locationStatus_Settings">
+                                                            Click map or drag the pin.
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- hidden inputs -->
+                                                    <input type="hidden" id="Latitude_Settings" name="Latitude"
+                                                           value="@(Model.Profile.Latitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+                                                    <input type="hidden" id="Longitude_Settings" name="Longitude"
+                                                           value="@(Model.Profile.Longitude?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" />
+
+                                                    <div id="map_settings" class="map-box"></div>
+
+                                                    <div class="selected-box mt-2">
+                                                        <div class="small fw-semibold text-success mb-1">Selected Location</div>
+                                                        <div class="small text-muted" id="selectedDetails_Settings">
+                                                            @(string.IsNullOrWhiteSpace(Model.Profile.Address) ? "No location details yet." : Model.Profile.Address)
+                                                        </div>
+                                                        <div class="small text-muted mt-1" id="selectedCoords_Settings"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Profile Image -->
+                                                <div class="premium-card">
+                                                    <h5 class="mb-3"><i class="bi bi-image me-2 text-success"></i>Profile Image</h5>
+
+                                                    <div class="d-flex align-items-center gap-4">
+                                                        <div class="position-relative">
+                                                            <img src="@profileImageSrc" class="rounded-circle border"
+                                                                 style="width:120px;height:120px;object-fit:cover;"
+                                                                 id="profilePreview">
+
+                                                            <label for="profileImageInput"
+                                                                   class="position-absolute bottom-0 end-0 btn btn-sm btn-primary rounded-circle" style="width:40px;height:40px;">
+                                                                <i class="bi bi-camera fs-5"></i>
+                                                            </label>
+                                                        </div>
+
+                                                        <div class="flex-grow-1">
+                                                            <input asp-for="ProfileImage.ProfileImageFile" type="file"
+                                                                   class="form-control d-none"
+                                                                   id="profileImageInput"
+                                                                   accept=".jpg,.jpeg,.png,.gif,.webp">
+                                                            <div class="form-text mb-2">Max: 5MB — JPG/PNG/GIF/WebP</div>
+                                                            <span asp-validation-for="ProfileImage.ProfileImageFile" class="text-danger small"></span>
+
+                                                            <input asp-for="ProfileImage.DeleteProfileImage" id="deleteProfileImage" type="checkbox" class="d-none" />
+
+                                                            <button type="button"
+                                                                    class="btn btn-outline-danger btn-sm profile-delete-btn"
+                                                            @(string.IsNullOrWhiteSpace(Model.Profile.ProfileImageUrl) ? "disabled" : "")>
+                                                                <i class="bi bi-trash me-1"></i> Delete Image
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <!-- ADMIN -->
+                                            @if (isAdmin)
+                                            {
+                                                <div class="tab-pane fade" id="admin">
+                                                    <div class="premium-card">
+                                                        <h5 class="mb-3"><i class="bi bi-shield-lock me-2 text-success"></i>Admin Settings</h5>
+                                                        <div class="form-floating">
+                                                            <input asp-for="TypeSpecific.AdminType" class="form-control premium-input" placeholder="Admin Type">
+                                                            <label asp-for="TypeSpecific.AdminType"><i class="bi bi-person-gear me-1"></i>Admin Type</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <!-- CRAFTSMAN -->
+                                            @if (isCraftsman)
+                                            {
+                                                <div class="tab-pane fade" id="craftsman">
+                                                    <div class="premium-card">
+                                                        <h5 class="mb-3"><i class="bi bi-tools me-2 text-success"></i>Craftsman Information</h5>
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <div class="form-floating">
+                                                                    <input asp-for="TypeSpecific.SkillType" class="form-control premium-input" placeholder="Skill Type">
+                                                                    <label asp-for="TypeSpecific.SkillType"><i class="bi bi-hammer me-1"></i>Skill Type</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <div class="form-floating">
+                                                                    <input asp-for="TypeSpecific.ExperienceYears" type="number" class="form-control premium-input" placeholder="Years" min="0" max="100">
+                                                                    <label asp-for="TypeSpecific.ExperienceYears"><i class="bi bi-calendar-check me-1"></i>Experience Years</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <!-- INDIVIDUAL -->
+                                            @if (isIndividual)
+                                            {
+                                                <div class="tab-pane fade" id="individual">
+                                                    <div class="premium-card">
+                                                        <h5 class="mb-3"><i class="bi bi-person-badge me-2 text-success"></i>Individual Information</h5>
+                                                        <div class="form-floating">
+                                                            <input asp-for="TypeSpecific.Occupation" class="form-control premium-input" placeholder="Occupation">
+                                                            <label asp-for="TypeSpecific.Occupation"><i class="bi bi-briefcase me-1"></i>Occupation</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <!-- FACTORY -->
+                                            @if (isFactory)
+                                            {
+                                                <div class="tab-pane fade" id="factory">
+                                                    <div class="premium-card mb-4">
+                                                        <h5 class="mb-3"><i class="bi bi-building me-2 text-success"></i>Factory Information</h5>
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <div class="form-floating">
+                                                                    <input asp-for="TypeSpecific.FactoryName" class="form-control premium-input" placeholder="Factory Name">
+                                                                    <label asp-for="TypeSpecific.FactoryName"><i class="bi bi-building me-1"></i>Factory Name</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <div class="form-floating">
+                                                                    <input asp-for="TypeSpecific.FactoryType" class="form-control premium-input" placeholder="Factory Type">
+                                                                    <label asp-for="TypeSpecific.FactoryType"><i class="bi bi-tags me-1"></i>Factory Type</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Factory Images -->
+                                                    <div class="premium-card mb-4">
+                                                        <h5 class="mb-3"><i class="bi bi-images me-2 text-success"></i>Factory Images</h5>
+
+                                                        <div class="row g-3">
+                                                            @for (int slot = 1; slot <= 3; slot++)
+                                                            {
+                                                                var url = slots[slot - 1];
+                                                                var hasImage = !string.IsNullOrWhiteSpace(url);
+
+                                                                <div class="col-md-4">
+                                                                    <div class="factory-img-card border rounded-3 overflow-hidden position-relative">
+                                                                        <div class="factory-img-wrapper position-relative">
+
+                                                                            @if (hasImage)
+                                                                            {
+                                                                                <img id="factoryPreview_@slot" src="@url" class="w-100 factory-img" alt="Factory Image @slot" />
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="factory-placeholder d-flex flex-column justify-content-center align-items-center" id="factoryPlaceholder_@slot">
+                                                                                    <i class="bi bi-image fs-1 mb-2 text-muted"></i>
+                                                                                    <div class="small text-muted">Empty slot #@slot</div>
+                                                                                </div>
+                                                                                <img id="factoryPreview_@slot" src="" class="w-100 factory-img d-none" alt="Factory Image @slot" />
+                                                                            }
+
+                                                                            <label class="factory-edit-icon" for="factoryFile_@slot" title="Choose image">
+                                                                                <i class="bi bi-camera-fill"></i>
+                                                                            </label>
+
+                                                                            <button type="button"
+                                                                                    class="btn btn-sm btn-danger factory-delete-btn"
+                                                                                    data-slot="@slot"
+                                                                                    title="Delete (apply after Save)"
+                                                                            @(hasImage ? "" : "disabled")>
+                                                                                <i class="bi bi-trash"></i>
+                                                                            </button>
+                                                                        </div>
+
+                                                                        @if (slot == 1)
+                                                                        {
+                                                                            <input asp-for="FactoryImages.Slot1File" id="factoryFile_1" type="file" class="d-none factory-file" data-slot="1" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                            <input asp-for="FactoryImages.DeleteSlot1" id="deleteSlot_1" type="checkbox" class="d-none" />
+                                                                        }
+                                                                        @if (slot == 2)
+                                                                        {
+                                                                            <input asp-for="FactoryImages.Slot2File" id="factoryFile_2" type="file" class="d-none factory-file" data-slot="2" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                            <input asp-for="FactoryImages.DeleteSlot2" id="deleteSlot_2" type="checkbox" class="d-none" />
+                                                                        }
+                                                                        @if (slot == 3)
+                                                                        {
+                                                                            <input asp-for="FactoryImages.Slot3File" id="factoryFile_3" type="file" class="d-none factory-file" data-slot="3" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                                                                            <input asp-for="FactoryImages.DeleteSlot3" id="deleteSlot_3" type="checkbox" class="d-none" />
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <div class="alert alert-info premium-alert small mt-3 mb-0">
+                                                            <i class="bi bi-info-circle me-1"></i>
+                                                            Delete hides the image immediately, but is applied only after Save.
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Factory Description -->
+                                                    <div class="premium-card">
+                                                        <h5 class="mb-3"><i class="bi bi-card-text me-2 text-success"></i>Factory Description</h5>
+                                                        <div class="form-floating">
+                                                            <textarea asp-for="TypeSpecific.Description" class="form-control premium-input" placeholder="Description" style="height:150px;"></textarea>
+                                                            <label asp-for="TypeSpecific.Description"><i class="bi bi-card-text me-1"></i>Description</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
                                         </div>
 
-                                        <div class="col-12">
-                                            <div class="form-floating">
-                                                <textarea asp-for="TypeSpecific.Description" class="form-control" placeholder="Description" style="height:150px;"></textarea>
-                                                <label asp-for="TypeSpecific.Description"><i class="bi bi-card-text me-1"></i>Description</label>
-                                            </div>
+                                        <!-- Form Actions -->
+                                        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                                            <button type="reset" class="btn btn-outline-secondary px-4" onclick="location.reload()">
+                                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                                            </button>
+                                            <button type="submit" class="btn btn-success px-4 auth-btn-success" id="saveBtn">
+                                                <i class="bi bi-save me-2"></i>Save Changes
+                                            </button>
                                         </div>
-
-                                    </div>
+                                    </form>
                                 </div>
-                            }
-
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card-footer bg-light border-0">
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="reset" class="btn btn-outline-danger px-4" onclick="location.reload()">
-                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
-                            </button>
-                            <button type="submit" class="btn btn-primary px-4" id="saveBtn">
-                                <i class="bi bi-save me-2"></i>Save Changes
-                            </button>
-                        </div>
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Account Management</small>
                     </div>
-                </form>
-
+                </div>
             </div>
         </div>
     </div>
@@ -474,33 +471,42 @@
 <!-- Change Password Modal -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-gradient border-0">
-                <h5 class="modal-title text-white"><i class="bi bi-key-fill me-2"></i>Change Password</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content premium-modal">
+            <div class="modal-header premium-modal-header">
+                <h5 class="modal-title"><i class="bi bi-key-fill me-2"></i>Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <form id="changePasswordForm" method="post" asp-action="ChangePassword" asp-controller="Home">
                 @Html.AntiForgeryToken()
 
                 <div class="modal-body p-4">
-                    <div class="mb-4 form-floating">
-                        <input type="password" class="form-control" asp-for="PasswordChange.CurrentPassword" placeholder="Current" required>
-                        <label asp-for="PasswordChange.CurrentPassword"></label>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small">Current Password</label>
+                        <div class="form-floating">
+                            <input type="password" class="form-control premium-input" asp-for="PasswordChange.CurrentPassword" placeholder="Current" required>
+                            <label asp-for="PasswordChange.CurrentPassword"></label>
+                        </div>
                     </div>
-                    <div class="mb-4 form-floating">
-                        <input type="password" class="form-control" asp-for="PasswordChange.NewPassword" placeholder="New" required>
-                        <label asp-for="PasswordChange.NewPassword"></label>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small">New Password</label>
+                        <div class="form-floating">
+                            <input type="password" class="form-control premium-input" asp-for="PasswordChange.NewPassword" placeholder="New" required>
+                            <label asp-for="PasswordChange.NewPassword"></label>
+                        </div>
                     </div>
-                    <div class="mb-4 form-floating">
-                        <input type="password" class="form-control" asp-for="PasswordChange.ConfirmNewPassword" placeholder="Confirm" required>
-                        <label asp-for="PasswordChange.ConfirmNewPassword"></label>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small">Confirm New Password</label>
+                        <div class="form-floating">
+                            <input type="password" class="form-control premium-input" asp-for="PasswordChange.ConfirmNewPassword" placeholder="Confirm" required>
+                            <label asp-for="PasswordChange.ConfirmNewPassword"></label>
+                        </div>
                     </div>
                 </div>
 
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4">Change</button>
+                    <button type="submit" class="btn btn-success px-4 auth-btn-success">Change Password</button>
                 </div>
             </form>
         </div>
@@ -510,11 +516,10 @@
 <!-- OTP Verification Modal -->
 <div class="modal fade" id="verifyAccountModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-
-            <div class="modal-header bg-gradient border-0">
-                <h5 class="modal-title text-white"><i class="bi bi-shield-check me-2"></i>Verify Your Account</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content premium-modal">
+            <div class="modal-header premium-modal-header">
+                <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>Verify Your Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <form id="verifyOtpForm" method="post" asp-action="VerifyOtp" asp-controller="Home">
@@ -522,7 +527,7 @@
                 <input type="hidden" asp-for="VerifyOtp.OtpCode" id="otpCodeInput" />
 
                 <div class="modal-body p-4">
-                    <div class="alert alert-info border-0 bg-light-info mb-4">
+                    <div class="alert alert-info premium-alert mb-4">
                         <i class="bi bi-info-circle-fill me-2"></i>
                         Enter the 6-digit code sent to: <strong>@Model.Profile.Email</strong>
                     </div>
@@ -536,7 +541,7 @@
                         @for (int i = 0; i < 6; i++)
                         {
                             <input type="text" maxlength="1"
-                                   class="form-control form-control-lg text-center otp-digit"
+                                   class="form-control form-control-lg text-center otp-digit premium-input"
                                    autocomplete="off" inputmode="numeric" pattern="[0-9]">
                         }
                     </div>
@@ -544,9 +549,8 @@
                     <span asp-validation-for="VerifyOtp.OtpCode" class="text-danger small" id="otpValidation"></span>
                 </div>
 
-                <div class="modal-footer border-0 bg-light">
+                <div class="modal-footer border-0">
                     <div class="w-100 d-flex justify-content-between align-items-center">
-
                         <form id="resendOtpForm" method="post" asp-action="ResendOtp" asp-controller="Home" style="display:inline;">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-outline-secondary" id="resendOtpBtn">
@@ -558,60 +562,14 @@
 
                         <div>
                             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="verifyBtn" disabled>Verify</button>
+                            <button type="submit" class="btn btn-success auth-btn-success" id="verifyBtn" disabled>Verify</button>
                         </div>
                     </div>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
-
-<style>
-    .otp-input-group input {
-        width: 55px;
-        height: 65px;
-        font-size: 1.75rem;
-        font-weight: bold;
-        border: 2px solid #dee2e6;
-        transition: all 0.2s ease;
-    }
-
-    .otp-input-group input:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25);
-        transform: translateY(-2px);
-    }
-
-    .otp-input-group input.filled {
-        border-color: #198754;
-        background-color: rgba(25,135,84,0.05);
-    }
-
-    .factory-img-card { background: #fff; transition: all .2s ease; }
-    .factory-img-wrapper { height: 170px; background: #f8f9fa; overflow: hidden; position: relative; }
-    .factory-img { height: 170px; width: 100%; object-fit: cover; display: block; }
-    .factory-placeholder { height: 170px; width: 100%; }
-
-    .factory-edit-icon {
-        position: absolute; right: 10px; bottom: 10px;
-        width: 42px; height: 42px; border-radius: 999px;
-        background: rgba(13,110,253,.95); color: #fff;
-        display: grid; place-items: center;
-        cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.18);
-        z-index: 5;
-    }
-
-    .factory-delete-btn {
-        position: absolute; left: 10px; bottom: 10px;
-        z-index: 6; border-radius: 999px;
-        width: 42px; height: 42px; display: grid; place-items: center;
-        box-shadow: 0 6px 18px rgba(0,0,0,.18);
-    }
-
-    .hidden-by-delete { display: none !important; }
-</style>
 
 @section Scripts {
     <!-- ✅ Leaflet -->
@@ -862,10 +820,8 @@
                             const data = await res.json();
                             const address = data && data.address ? data.address : null;
 
-                            // ✅ 1) يظهر تحت Selected Location
                             if (detailsEl) detailsEl.textContent = address || 'Unknown place';
 
-                            // ✅ 2) يتحط في خانة Address (BasicInfo.Location)
                             if (addressHintInput && address) {
                                 addressHintInput.value = address.length > 200 ? address.substring(0, 200) : address;
                             }
@@ -879,7 +835,7 @@
                 setTimeout(() => map.invalidateSize(), 350);
             }
 
-            // -------- OTP stuff (unchanged) ----------
+            // -------- OTP stuff ----------
             function setupOtpInputs() {
                 const otpDigits = document.querySelectorAll('.otp-digit');
                 const otpCodeInput = document.getElementById('otpCodeInput');
@@ -1013,4 +969,504 @@
 
         })();
     </script>
+
+    <style>
+        /* ===================== PREMIUM SETTINGS STYLES ===================== */
+        :root {
+            --eco-green: #16a34a;
+            --eco-teal: #14b8a6;
+            --eco-sky: #38bdf8;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --glass: rgba(255,255,255,.72);
+            --border: rgba(2,132,199,.18);
+            --shadow: 0 22px 60px rgba(2,6,23,.12);
+            --radius: 22px;
+        }
+
+        /* Animated background */
+        body {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+            min-height: 100vh;
+            animation: gradientShift 20s ease infinite alternate;
+        }
+
+        @@keyframes gradientShift {
+            0% {
+                background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+            }
+
+            50% {
+                background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+            }
+
+            100% {
+                background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+            }
+        }
+
+        /* Dashboard Shell */
+        .dashboard-premium {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            padding: 10px 0 25px;
+        }
+
+        .dashboard-shell {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Full Width Content */
+        .dashboard-content-wrap-full {
+            padding: 26px;
+            background: rgba(255,255,255,.35);
+        }
+
+        .dashboard-card-full {
+            width: 100%;
+            border-radius: 20px;
+            border: 1px solid rgba(15,23,42,.08);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 18px 45px rgba(2,6,23,.10);
+            overflow: hidden;
+        }
+
+        /* Auth Components */
+        .auth-head {
+            padding: 22px 22px 14px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+            border-bottom: 1px solid rgba(15,23,42,.06);
+        }
+
+        .auth-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+            box-shadow: 0 12px 25px rgba(20,184,166,.18);
+            font-size: 1.35rem;
+        }
+
+        .auth-body {
+            padding: 0 22px 18px;
+        }
+
+        .auth-foot {
+            padding: 14px 22px;
+            text-align: center;
+            background: rgba(255,255,255,.55);
+            border-top: 1px solid rgba(15,23,42,.08);
+        }
+
+        /* Premium Cards */
+        .premium-card {
+            border: 1px solid rgba(15,23,42,.08);
+            background: rgba(255,255,255,.82);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Premium Inputs */
+        .premium-input {
+            border-radius: 12px !important;
+            border: 1px solid rgba(15,23,42,.10) !important;
+            background: rgba(255,255,255,.88) !important;
+            box-shadow: none !important;
+            transition: all .22s ease;
+        }
+
+            .premium-input:focus {
+                border-color: rgba(34,197,94,.55) !important;
+                box-shadow: 0 0 0 .2rem rgba(34,197,94,.18) !important;
+                background: rgba(255,255,255,.96) !important;
+            }
+
+        /* Premium Tabs */
+        .premium-tabs {
+            border-bottom: 2px solid rgba(15,23,42,.06);
+        }
+
+            .premium-tabs .nav-link {
+                border-radius: 12px 12px 0 0;
+                margin: 0 2px;
+                border: 1px solid transparent;
+                background: rgba(255,255,255,.5);
+                color: var(--muted);
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+                .premium-tabs .nav-link:hover {
+                    background: rgba(34,197,94,.08);
+                    border-color: rgba(34,197,94,.15);
+                }
+
+                .premium-tabs .nav-link.active {
+                    background: rgba(34,197,94,.12);
+                    border-color: rgba(34,197,94,.25);
+                    color: var(--eco-green);
+                    border-bottom-color: transparent;
+                }
+
+        /* Premium Alerts */
+        .premium-alert {
+            border-radius: 14px;
+            border: 1px solid rgba(15,23,42,.08);
+            background: rgba(255,255,255,.85);
+            backdrop-filter: blur(8px);
+            margin-bottom: 15px;
+        }
+
+        /* Buttons */
+        .auth-btn-success {
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+            font-weight: 800;
+            letter-spacing: .2px;
+            box-shadow: 0 12px 26px rgba(22,163,74,.22);
+            transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+            color: white !important;
+            padding: 10px 20px !important;
+        }
+
+            .auth-btn-success:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 34px rgba(20,184,166,.22);
+                filter: brightness(1.02);
+                color: white !important;
+            }
+
+        .auth-btn-warning {
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, #f59e0b, #d97706) !important;
+            font-weight: 800;
+            letter-spacing: .2px;
+            box-shadow: 0 12px 26px rgba(245,158,11,.22);
+            transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+            color: white !important;
+            padding: 10px 20px !important;
+        }
+
+            .auth-btn-warning:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 34px rgba(217,119,6,.22);
+                filter: brightness(1.02);
+                color: white !important;
+            }
+
+        /* Map Box */
+        .map-box {
+            height: 350px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(15,23,42,.10);
+        }
+
+        /* Selected Location Box */
+        .selected-box {
+            background: rgba(248,250,252,.85);
+            border: 1px solid rgba(15,23,42,.08);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        /* Factory Images */
+        .factory-img-card {
+            background: #fff;
+            transition: all .2s ease;
+            border: 1px solid rgba(15,23,42,.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .factory-img-wrapper {
+            height: 200px;
+            background: #f8f9fa;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .factory-img {
+            height: 200px;
+            width: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .factory-placeholder {
+            height: 200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--muted);
+        }
+
+        .factory-edit-icon {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            background: rgba(34,197,94,.95);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0,0,0,.18);
+            z-index: 5;
+            transition: all .2s ease;
+        }
+
+            .factory-edit-icon:hover {
+                background: rgba(22,163,74,.95);
+                transform: scale(1.05);
+            }
+
+        .factory-delete-btn {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            z-index: 6;
+            border-radius: 999px;
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,.18);
+        }
+
+        .hidden-by-delete {
+            display: none !important;
+        }
+
+        /* OTP Inputs */
+        .otp-input-group input {
+            width: 55px;
+            height: 65px;
+            font-size: 1.75rem;
+            font-weight: bold;
+            border: 2px solid rgba(15,23,42,.10);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+            .otp-input-group input:focus {
+                border-color: rgba(34,197,94,.55);
+                box-shadow: 0 0 0 .2rem rgba(34,197,94,.18);
+                transform: translateY(-2px);
+            }
+
+            .otp-input-group input.filled {
+                border-color: #198754;
+                background-color: rgba(25,135,84,.05);
+            }
+
+        /* Modals */
+        .premium-modal {
+            border-radius: 20px;
+            border: 1px solid rgba(15,23,42,.08);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px rgba(2,6,23,.15);
+        }
+
+        .premium-modal-header {
+            background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(20,184,166,.10));
+            border-bottom: 1px solid rgba(15,23,42,.06);
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+        }
+
+        /* Badges */
+        .badge {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* ===================== DARK MODE TUNING ===================== */
+        [data-bs-theme="dark"] body {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+            animation: gradientShiftDark 20s ease infinite alternate;
+        }
+
+        @@keyframes gradientShiftDark {
+            0% {
+                background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+            }
+
+            50% {
+                background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+            }
+
+            100% {
+                background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+            }
+        }
+
+        [data-bs-theme="dark"] .dashboard-shell {
+            background: rgba(15, 23, 42, .55);
+            border-color: rgba(148, 163, 184, .18);
+            box-shadow: 0 22px 60px rgba(0,0,0,.45);
+        }
+
+        [data-bs-theme="dark"] .dashboard-content-wrap-full {
+            background: rgba(2, 6, 23, .35);
+        }
+
+        [data-bs-theme="dark"] .dashboard-card-full {
+            background: rgba(15, 23, 42, .70);
+            border-color: rgba(148, 163, 184, .16);
+            box-shadow: 0 18px 45px rgba(0,0,0,.35);
+        }
+
+        [data-bs-theme="dark"] .auth-head {
+            background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+            border-bottom-color: rgba(148, 163, 184, .16);
+        }
+
+            [data-bs-theme="dark"] .auth-head h3 {
+                color: #e2e8f0;
+            }
+
+        [data-bs-theme="dark"] .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+        [data-bs-theme="dark"] .premium-card,
+        [data-bs-theme="dark"] .premium-alert,
+        [data-bs-theme="dark"] .premium-input {
+            background: rgba(2, 6, 23, .45);
+            border-color: rgba(148, 163, 184, .16);
+            color: #e2e8f0;
+        }
+
+            [data-bs-theme="dark"] .premium-input:focus {
+                background: rgba(2, 6, 23, .70) !important;
+                border-color: rgba(34,197,94,.45) !important;
+                box-shadow: 0 0 0 .2rem rgba(34,197,94,.16) !important;
+                color: #e2e8f0 !important;
+            }
+
+        [data-bs-theme="dark"] .premium-tabs .nav-link {
+            background: rgba(2, 6, 23, .35);
+            color: rgba(226, 232, 240, .75);
+        }
+
+            [data-bs-theme="dark"] .premium-tabs .nav-link:hover {
+                background: rgba(34,197,94,.12);
+                border-color: rgba(34,197,94,.20);
+            }
+
+            [data-bs-theme="dark"] .premium-tabs .nav-link.active {
+                background: rgba(34,197,94,.16);
+                border-color: rgba(34,197,94,.25);
+                color: #22c55e;
+            }
+
+        [data-bs-theme="dark"] .selected-box {
+            background: rgba(2, 6, 23, .35);
+            border-color: rgba(148, 163, 184, .14);
+        }
+
+        [data-bs-theme="dark"] .factory-img-card {
+            background: rgba(2, 6, 23, .35);
+            border-color: rgba(148, 163, 184, .16);
+        }
+
+        [data-bs-theme="dark"] .factory-img-wrapper {
+            background: rgba(2, 6, 23, .25);
+        }
+
+        [data-bs-theme="dark"] .premium-modal {
+            background: rgba(15, 23, 42, .80);
+            border-color: rgba(148, 163, 184, .16);
+        }
+
+        [data-bs-theme="dark"] .premium-modal-header {
+            background: linear-gradient(135deg, rgba(34,197,94,.12), rgba(20,184,166,.10));
+            border-bottom-color: rgba(148, 163, 184, .16);
+        }
+
+        /* Responsive */
+        @@media (max-width: 992px) {
+            .dashboard-premium {
+                min-height: calc(100vh - 120px);
+                padding: 10px 0 20px;
+            }
+
+            .dashboard-content-wrap-full {
+                padding: 18px;
+            }
+
+            .factory-img-wrapper {
+                height: 150px;
+            }
+
+            .factory-img {
+                height: 150px;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .auth-logo {
+                width: 48px;
+                height: 48px;
+                font-size: 1.2rem;
+            }
+
+            .map-box {
+                height: 250px;
+            }
+
+            .otp-input-group input {
+                width: 45px;
+                height: 55px;
+                font-size: 1.5rem;
+            }
+
+            .premium-card {
+                padding: 15px;
+            }
+        }
+    </style>
 }

@@ -1,4 +1,4 @@
-﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.RentalModel
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.RentalProductDetailsModel
 @using EcoRecyclersGreenTech.Data.Stores
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 
@@ -6,6 +6,7 @@
     ViewData["Title"] = "Edit Rental";
     var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
 
+    // ✅ Full edit allowed?
     var canModify = ViewBag.CanModify as bool? ?? true;
 
     // defaults
@@ -16,880 +17,1354 @@
     var startLng = hasCoords ? Model!.Longitude!.Value : defaultLng;
 }
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
 
-            <nav aria-label="breadcrumb" class="mb-4">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a asp-action="Rentals">Rentals</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Edit Rental</li>
-                </ol>
-            </nav>
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3 class="mb-1">Edit Rental</h3>
+                        <p class="mb-0 text-muted small">Update the details of your rental property</p>
+                    </div>
 
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient-warning border-0 py-4">
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <i class="bi bi-pencil-square fs-1 text-white"></i>
-                        </div>
-                        <div>
-                            <h2 class="card-title mb-1 text-white">Edit Rental</h2>
-                            <p class="text-white-50 mb-0">Update the details of your rental property</p>
-                        </div>
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="Rentals">Rentals</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Edit Rental</li>
+                            </ol>
+                        </nav>
+
+                        <!-- Alerts -->
+                        @if (ViewBag.Success != null)
+                        {
+                            <div class="alert alert-success premium-card mb-4" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>@ViewBag.Success
+                            </div>
+                        }
+                        @if (ViewBag.Warning != null)
+                        {
+                            <div class="alert alert-warning premium-card mb-4" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>@ViewBag.Warning
+                            </div>
+                        }
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger premium-card mb-4" role="alert">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>@Html.ValidationSummary(false)
+                            </div>
+                        }
+
+                        @if (!canModify)
+                        {
+                            <div class="alert alert-info premium-card mb-4">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-info-circle-fill fs-4 me-3 mt-1"></i>
+                                    <div>
+                                        <h5 class="alert-heading mb-1 text-label">Limited editing</h5>
+                                        <p class="mb-0 text-label">This rental has active orders. You can update the description only.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <form asp-action="EditRental"
+                              asp-route-id="@Model.Id"
+                              method="post"
+                              enctype="multipart/form-data"
+                              class="needs-validation"
+                              novalidate>
+
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(m => m.Id)
+
+                            @* Preserve current URLs *@
+                            @Html.HiddenFor(m => m.CurrentImageUrl1)
+                            @Html.HiddenFor(m => m.CurrentImageUrl2)
+                            @Html.HiddenFor(m => m.CurrentImageUrl3)
+
+                            @* ✅ If locked: send hidden values for locked fields (NOT Description) *@
+                            @if (!canModify)
+                            {
+                                @Html.HiddenFor(m => m.Status)
+
+                                @Html.HiddenFor(m => m.Location)
+                                @Html.HiddenFor(m => m.Latitude)
+                                @Html.HiddenFor(m => m.Longitude)
+
+                                @Html.HiddenFor(m => m.Area)
+                                @Html.HiddenFor(m => m.PricePerMonth)
+
+                                @Html.HiddenFor(m => m.AvailableFrom)
+                                @Html.HiddenFor(m => m.AvailableUntil)
+
+                                @Html.HiddenFor(m => m.Condition)
+                                @Html.HiddenFor(m => m.IsFurnished)
+                                @Html.HiddenFor(m => m.HasElectricity)
+                                @Html.HiddenFor(m => m.HasWater)
+                            }
+
+                            <!-- Status (locked when orders exist) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-toggle-on me-2 text-success"></i>
+                                    Status
+                                    @if (!canModify)
+                                    {
+                                        <span class="badge bg-secondary ms-2">Locked</span>
+                                    }
+                                </h5>
+
+                                <div class="form-floating">
+                                    <select asp-for="Status" class="form-select text-label" required disabled="@(canModify ? null : "disabled")">
+                                        <option value="Available">Available</option>
+                                        <option value="Reserved">Reserved</option>
+                                        <option value="SoldOut">Sold Out</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                    <label asp-for="Status" class="text-label">Current Status *</label>
+                                    <span asp-validation-for="Status" class="text-danger small"></span>
+
+                                    @if (!canModify)
+                                    {
+                                        <div class="form-text text-warning text-label">
+                                            <i class="bi bi-lock me-1"></i>Locked due to active orders
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- LOCATION PICKER (locked when orders exist) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-geo-alt-fill me-2 text-success"></i>
+                                    Location
+                                    @if (!canModify)
+                                    {
+                                        <span class="badge bg-secondary ms-2">Locked</span>
+                                    }
+                                </h5>
+
+                                <div class="position-relative">
+                                    @if (!canModify)
+                                    {
+                                        <div class="position-absolute top-0 start-0 w-100 h-100"
+                                             style="z-index: 5; background: rgba(255,255,255,0.7); border-radius:12px;"></div>
+                                    }
+
+                                    <div class="p-3 rounded-3 section-inner">
+                                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <button type="button" class="btn btn-success auth-btn-success" id="btnUseMyLocation" disabled="@(canModify ? null : "disabled")">
+                                                    <i class="bi bi-geo-alt me-1"></i> Use GPS
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="btnClearLocation" disabled="@(canModify ? null : "disabled")">
+                                                    <i class="bi bi-x-circle me-1"></i> Clear
+                                                </button>
+                                            </div>
+
+                                            <div class="small text-muted text-label" id="locationStatus">
+                                                Search for a place (Arabic/English), then select a result or click the map.
+                                            </div>
+                                        </div>
+
+                                        <!-- Hidden coords -->
+                                        <input asp-for="Latitude" type="hidden" id="Latitude" />
+                                        <input asp-for="Longitude" type="hidden" id="Longitude" />
+
+                                        <!-- Location input -->
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="form-floating">
+                                                    <input asp-for="Location"
+                                                           class="form-control text-label"
+                                                           id="Location"
+                                                           placeholder="Cairo, Giza..."
+                                                           required
+                                                           disabled="@(canModify ? null : "disabled")" />
+                                                    <label asp-for="Location" class="text-label"><i class="bi bi-geo-alt me-1"></i>Location *</label>
+                                                    <span asp-validation-for="Location" class="text-danger small"></span>
+                                                </div>
+                                                <div class="form-text text-label">Type address/city or pick it from the map.</div>
+                                            </div>
+
+                                            <!-- Search -->
+                                            <div class="col-12">
+                                                <label class="form-label small fw-semibold text-success mb-1 text-label">Search Place</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control text-label" id="txtPlaceSearch"
+                                                           placeholder="Type place name..."
+                                                           autocomplete="off"
+                                                           disabled="@(canModify ? null : "disabled")" />
+                                                    <button class="btn btn-success auth-btn-success" type="button" id="btnPlaceSearch" disabled="@(canModify ? null : "disabled")">
+                                                        <i class="fas fa-search me-1"></i> Search
+                                                    </button>
+                                                </div>
+                                                <div class="form-text small text-label" id="searchStatus">Type to see suggestions, or press Search.</div>
+
+                                                <div class="mt-2" id="searchResultsWrap" style="display:none;">
+                                                    <div class="small fw-semibold text-success mb-1 text-label">Results</div>
+                                                    <div class="list-group" id="searchResults"></div>
+                                                </div>
+
+                                                <div class="alert alert-warning premium-card mt-2 py-2" id="searchError" style="display:none;">
+                                                    <div class="small text-label" id="searchErrorText"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Map -->
+                                            <div class="col-12">
+                                                <div id="map" class="map-box"></div>
+
+                                                <div class="mt-2 p-3 rounded-3 selected-box">
+                                                    <div class="small fw-semibold text-success mb-1 text-label">Selected Location</div>
+                                                    <div class="small text-muted text-label" id="selectedDetails">
+                                                        @(string.IsNullOrWhiteSpace(Model.Location) ? "No location selected yet." : Model.Location)
+                                                    </div>
+                                                    <div class="small text-muted mt-1 text-label" id="selectedCoords"></div>
+                                                </div>
+
+                                                <div class="small text-muted mt-2 text-label">
+                                                    Tip: Click on the map or drag the pin to set the exact spot.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic (locked when orders exist) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-info-circle-fill me-2 text-success"></i>
+                                    Basic Information
+                                    @if (!canModify)
+                                    {
+                                        <span class="badge bg-secondary ms-2">Locked</span>
+                                    }
+                                </h5>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="Area"
+                                                   type="number"
+                                                   class="form-control text-label"
+                                                   placeholder="100"
+                                                   min="1"
+                                                   step="0.01"
+                                                   disabled="@(canModify ? null : "disabled")"
+                                                   required />
+                                            <label asp-for="Area" class="text-label"><i class="bi bi-aspect-ratio me-1"></i>Area (m²) *</label>
+                                            <span asp-validation-for="Area" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select asp-for="Condition"
+                                                    asp-items="Html.GetEnumSelectList<RentalCondition>()"
+                                                    class="form-select text-label"
+                                                    disabled="@(canModify ? null : "disabled")"
+                                                    required>
+                                                <option value="">Select Type *</option>
+                                            </select>
+                                            <label asp-for="Condition" class="text-label"><i class="bi bi-building me-1"></i>Rental Type *</label>
+                                            <span asp-validation-for="Condition" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="PricePerMonth"
+                                                   type="number"
+                                                   class="form-control text-label"
+                                                   placeholder="0.00"
+                                                   step="0.01"
+                                                   min="0.01"
+                                                   disabled="@(canModify ? null : "disabled")"
+                                                   required />
+                                            <label asp-for="PricePerMonth" class="text-label"><i class="bi bi-cash-stack me-1"></i>Price / Month *</label>
+                                            <span asp-validation-for="PricePerMonth" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Availability (locked when orders exist) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-calendar-event me-2 text-success"></i>
+                                    Availability
+                                    @if (!canModify)
+                                    {
+                                        <span class="badge bg-secondary ms-2">Locked</span>
+                                    }
+                                </h5>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="AvailableFrom"
+                                                   type="date"
+                                                   class="form-control text-label"
+                                                   disabled="@(canModify ? null : "disabled")"
+                                                   required />
+                                            <label asp-for="AvailableFrom" class="text-label"><i class="bi bi-calendar-check me-1"></i>Available From *</label>
+                                            <span asp-validation-for="AvailableFrom" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="AvailableUntil"
+                                                   type="date"
+                                                   class="form-control text-label"
+                                                   disabled="@(canModify ? null : "disabled")" />
+                                            <label asp-for="AvailableUntil" class="text-label"><i class="bi bi-calendar-x me-1"></i>Available Until</label>
+                                            <span asp-validation-for="AvailableUntil" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Utilities (locked when orders exist) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-lightning-charge-fill me-2 text-success"></i>
+                                    Utilities & Options
+                                    @if (!canModify)
+                                    {
+                                        <span class="badge bg-secondary ms-2">Locked</span>
+                                    }
+                                </h5>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch">
+                                            <input asp-for="IsFurnished"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   role="switch"
+                                                   id="IsFurnished"
+                                                   disabled="@(canModify ? null : "disabled")" />
+                                            <label class="form-check-label text-label" for="IsFurnished">
+                                                <i class="bi bi-house-check me-1"></i>Furnished
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch">
+                                            <input asp-for="HasElectricity"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   role="switch"
+                                                   id="HasElectricity"
+                                                   disabled="@(canModify ? null : "disabled")" />
+                                            <label class="form-check-label text-label" for="HasElectricity">
+                                                <i class="bi bi-lightning me-1"></i>Electricity
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch">
+                                            <input asp-for="HasWater"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   role="switch"
+                                                   id="HasWater"
+                                                   disabled="@(canModify ? null : "disabled")" />
+                                            <label class="form-check-label text-label" for="HasWater">
+                                                <i class="bi bi-droplet me-1"></i>Water
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Images (locked when orders exist) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-images me-2 text-success"></i>
+                                    Rental Images
+                                    @if (!canModify)
+                                    {
+                                        <span class="badge bg-secondary ms-2">Locked</span>
+                                    }
+                                </h5>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold text-label">Image 1</label>
+
+                                        @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl1))
+                                        {
+                                            <div class="mb-2">
+                                                <div class="small text-muted mb-1 text-label">Current</div>
+                                                <img src="@Model.CurrentImageUrl1" alt="Current 1" class="rental-edit-img" />
+                                            </div>
+                                        }
+
+                                        <input asp-for="RentalImage1" type="file" class="form-control text-label" accept="image/*"
+                                               id="RentalImage1" disabled="@(canModify ? null : "disabled")" />
+                                        <span asp-validation-for="RentalImage1" class="text-danger small"></span>
+
+                                        <div class="mt-2">
+                                            <div class="small text-muted mb-1 text-label">New Preview</div>
+                                            <img id="previewRental1" src="" alt="Preview 1" class="rental-edit-preview" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold text-label">Image 2</label>
+
+                                        @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl2))
+                                        {
+                                            <div class="mb-2">
+                                                <div class="small text-muted mb-1 text-label">Current</div>
+                                                <img src="@Model.CurrentImageUrl2" alt="Current 2" class="rental-edit-img" />
+                                            </div>
+                                        }
+
+                                        <input asp-for="RentalImage2" type="file" class="form-control text-label" accept="image/*"
+                                               id="RentalImage2" disabled="@(canModify ? null : "disabled")" />
+                                        <span asp-validation-for="RentalImage2" class="text-danger small"></span>
+
+                                        <div class="mt-2">
+                                            <div class="small text-muted mb-1 text-label">New Preview</div>
+                                            <img id="previewRental2" src="" alt="Preview 2" class="rental-edit-preview" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold text-label">Image 3</label>
+
+                                        @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl3))
+                                        {
+                                            <div class="mb-2">
+                                                <div class="small text-muted mb-1 text-label">Current</div>
+                                                <img src="@Model.CurrentImageUrl3" alt="Current 3" class="rental-edit-img" />
+                                            </div>
+                                        }
+
+                                        <input asp-for="RentalImage3" type="file" class="form-control text-label" accept="image/*"
+                                               id="RentalImage3" disabled="@(canModify ? null : "disabled")" />
+                                        <span asp-validation-for="RentalImage3" class="text-danger small"></span>
+
+                                        <div class="mt-2">
+                                            <div class="small text-muted mb-1 text-label">New Preview</div>
+                                            <img id="previewRental3" src="" alt="Preview 3" class="rental-edit-preview" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-text mt-2 text-label">
+                                    Uploading new image will replace the current one (if exists).
+                                </div>
+                            </div>
+
+                            <!-- ✅ Description (ALWAYS editable) -->
+                            <div class="premium-card mb-4">
+                                <h5 class="mb-3 text-section-title">
+                                    <i class="bi bi-card-text me-2 text-success"></i>
+                                    Description
+                                    <span class="badge bg-success ms-2">Editable</span>
+                                </h5>
+
+                                <div class="form-floating">
+                                    <textarea asp-for="Description"
+                                              class="form-control text-label"
+                                              placeholder="Describe your rental..."
+                                              style="height: 140px"
+                                              required></textarea>
+                                    <label asp-for="Description" class="text-label">Description *</label>
+                                    <span asp-validation-for="Description" class="text-danger small"></span>
+
+                                    @if (!canModify)
+                                    {
+                                        <div class="form-text text-success text-label">
+                                            <i class="bi bi-unlock me-1"></i>Description is editable even with active orders.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Footer Buttons -->
+                            <div class="premium-card mt-4">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <small class="text-muted text-label">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Fields marked with * are required
+                                    </small>
+
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Rentals" class="btn btn-outline-secondary px-4">
+                                            <i class="bi bi-arrow-left me-2"></i>Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-success auth-btn-success px-4" id="submitBtn">
+                                            <i class="bi bi-save me-2"></i>Update Rental
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Edit Rental</small>
                     </div>
                 </div>
-
-                <form asp-action="EditRental"
-                      asp-route-id="@Model.Id"
-                      method="post"
-                      enctype="multipart/form-data"
-                      class="needs-validation"
-                      novalidate>
-
-                    @Html.AntiForgeryToken()
-                    @Html.HiddenFor(m => m.Id)
-
-                    @* Preserve current URLs *@
-                    @Html.HiddenFor(m => m.CurrentImageUrl1)
-                    @Html.HiddenFor(m => m.CurrentImageUrl2)
-                    @Html.HiddenFor(m => m.CurrentImageUrl3)
-
-                    @* لو الحقول Disabled لازم نبعت قيمها Hidden *@
-                    @if (!canModify)
-                    {
-                        @Html.HiddenFor(m => m.Location)
-                        @Html.HiddenFor(m => m.Latitude)
-                        @Html.HiddenFor(m => m.Longitude)
-
-                        @Html.HiddenFor(m => m.Area)
-                        @Html.HiddenFor(m => m.PricePerMonth)
-                        @Html.HiddenFor(m => m.AvailableFrom)
-                        @Html.HiddenFor(m => m.AvailableUntil)
-                        @Html.HiddenFor(m => m.Condition)
-                        @Html.HiddenFor(m => m.IsFurnished)
-                        @Html.HiddenFor(m => m.HasElectricity)
-                        @Html.HiddenFor(m => m.HasWater)
-                        @Html.HiddenFor(m => m.Description)
-                    }
-
-                    @if (!canModify)
-                    {
-                        <div class="alert alert-warning border-0 rounded-0 mb-0">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
-                                <div>
-                                    <h5 class="alert-heading mb-1">Restricted Editing</h5>
-                                    <p class="mb-0">This rental has active orders. Some fields cannot be modified.</p>
-                                </div>
-                            </div>
-                        </div>
-                    }
-
-                    <div class="card-body p-4 p-md-5">
-
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            Please fix the errors below
-                        </div>
-
-                        <div class="row g-4">
-
-                            <!-- ✅ Status -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-toggle-on me-2 text-secondary"></i>
-                                            Status
-                                        </h5>
-
-                                        <div class="form-floating">
-                                            <select asp-for="Status" class="form-select" required>
-                                                <option value="Available">Available</option>
-                                                <option value="Reserved">Reserved</option>
-                                                <option value="SoldOut">Sold Out</option>
-                                                <option value="Inactive">Inactive</option>
-                                            </select>
-                                            <label asp-for="Status">Current Status *</label>
-                                            <span asp-validation-for="Status" class="text-danger small"></span>
-                                        </div>
-
-                                        <div class="form-text">
-                                            <i class="bi bi-info-circle me-1"></i>
-                                            You can change status anytime.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ✅ LOCATION PICKER -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-geo-alt-fill me-2 text-success"></i>
-                                            Location
-                                        </h5>
-
-                                        <div class="position-relative">
-                                            @if (!canModify)
-                                            {
-                                                <div class="position-absolute top-0 start-0 w-100 h-100"
-                                                     style="z-index: 5; background: rgba(255,255,255,0.7); border-radius:12px;"></div>
-                                            }
-
-                                            <div class="p-3 rounded" style="border:1px solid #e9ecef;background:#fff; border-radius:12px;">
-                                                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                                    <div class="d-flex gap-2 flex-wrap">
-                                                        <button type="button" class="btn btn-success" id="btnUseMyLocation" disabled="@(canModify ? null : "disabled")">
-                                                            <i class="bi bi-geo-alt me-1"></i> Use GPS
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-secondary" id="btnClearLocation" disabled="@(canModify ? null : "disabled")">
-                                                            <i class="bi bi-x-circle me-1"></i> Clear
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="small text-muted" id="locationStatus">
-                                                        Search for a place (Arabic/English), then select a result or click the map.
-                                                    </div>
-                                                </div>
-
-                                                <!-- Hidden coords -->
-                                                <input asp-for="Latitude" type="hidden" id="Latitude" />
-                                                <input asp-for="Longitude" type="hidden" id="Longitude" />
-
-                                                <!-- Location input -->
-                                                <div class="row g-3 mt-2">
-                                                    <div class="col-12">
-                                                        <div class="form-floating">
-                                                            <input asp-for="Location"
-                                                                   class="form-control"
-                                                                   id="Location"
-                                                                   placeholder="Cairo, Giza..."
-                                                                   required
-                                                                   disabled="@(canModify ? null : "disabled")" />
-                                                            <label asp-for="Location"><i class="bi bi-geo-alt me-1"></i>Location *</label>
-                                                            <span asp-validation-for="Location" class="text-danger small"></span>
-
-                                                            @if (!canModify)
-                                                            {
-                                                                <div class="form-text text-warning">
-                                                                    <i class="bi bi-lock me-1"></i>Locked due to active orders
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                        <div class="form-text">Type address/city or pick it from the map.</div>
-                                                    </div>
-
-                                                    <!-- Search -->
-                                                    <div class="col-12">
-                                                        <label class="form-label small fw-semibold text-success mb-1">Search Place</label>
-                                                        <div class="input-group">
-                                                            <input type="text" class="form-control" id="txtPlaceSearch"
-                                                                   placeholder="Type place name (e.g., Cairo, أسيوط, شارع ...)"
-                                                                   autocomplete="off"
-                                                                   disabled="@(canModify ? null : "disabled")" />
-                                                            <button class="btn btn-success" type="button" id="btnPlaceSearch" disabled="@(canModify ? null : "disabled")">
-                                                                <i class="fas fa-search me-1"></i> Search
-                                                            </button>
-                                                        </div>
-                                                        <div class="form-text small" id="searchStatus">Type to see suggestions, or press Search.</div>
-
-                                                        <div class="mt-2" id="searchResultsWrap" style="display:none;">
-                                                            <div class="small fw-semibold text-success mb-1">Results</div>
-                                                            <div class="list-group" id="searchResults"></div>
-                                                        </div>
-
-                                                        <div class="alert alert-warning mt-2 py-2" id="searchError" style="display:none;">
-                                                            <div class="small" id="searchErrorText"></div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Map -->
-                                                    <div class="col-12">
-                                                        <div id="map" style="height: 420px; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0;"></div>
-
-                                                        <div class="mt-2 p-2 rounded" style="background:#f8f9fa;border:1px solid #e9ecef">
-                                                            <div class="small fw-semibold text-success mb-1">Selected Location</div>
-                                                            <div class="small text-muted" id="selectedDetails">
-                                                                @(string.IsNullOrWhiteSpace(Model.Location) ? "No location selected yet." : Model.Location)
-                                                            </div>
-                                                            <div class="small text-muted mt-1" id="selectedCoords"></div>
-                                                        </div>
-
-                                                        <div class="small text-muted mt-2">
-                                                            Tip: Click on the map or drag the pin to set the exact spot.
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Basic -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-info-circle-fill me-2 text-primary"></i>
-                                            Basic Information
-                                        </h5>
-
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input asp-for="Area"
-                                                           type="number"
-                                                           class="form-control"
-                                                           placeholder="100"
-                                                           min="1"
-                                                           step="0.01"
-                                                           disabled="@(canModify ? null : "disabled")"
-                                                           required />
-                                                    <label asp-for="Area"><i class="bi bi-aspect-ratio me-1"></i>Area (m²) *</label>
-                                                    <span asp-validation-for="Area" class="text-danger small"></span>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <select asp-for="Condition"
-                                                            asp-items="Html.GetEnumSelectList<RentalCondition>()"
-                                                            class="form-select"
-                                                            disabled="@(canModify ? null : "disabled")"
-                                                            required>
-                                                        <option value="">Select Type *</option>
-                                                    </select>
-                                                    <label asp-for="Condition"><i class="bi bi-building me-1"></i>Rental Type *</label>
-                                                    <span asp-validation-for="Condition" class="text-danger small"></span>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input asp-for="PricePerMonth"
-                                                           type="number"
-                                                           class="form-control"
-                                                           placeholder="0.00"
-                                                           step="0.01"
-                                                           min="0.01"
-                                                           disabled="@(canModify ? null : "disabled")"
-                                                           required />
-                                                    <label asp-for="PricePerMonth"><i class="bi bi-cash-stack me-1"></i>Price / Month *</label>
-                                                    <span asp-validation-for="PricePerMonth" class="text-danger small"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Availability -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-calendar-event me-2 text-success"></i>
-                                            Availability
-                                        </h5>
-
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input asp-for="AvailableFrom"
-                                                           type="date"
-                                                           class="form-control"
-                                                           disabled="@(canModify ? null : "disabled")"
-                                                           required />
-                                                    <label asp-for="AvailableFrom"><i class="bi bi-calendar-check me-1"></i>Available From *</label>
-                                                    <span asp-validation-for="AvailableFrom" class="text-danger small"></span>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input asp-for="AvailableUntil"
-                                                           type="date"
-                                                           class="form-control"
-                                                           disabled="@(canModify ? null : "disabled")" />
-                                                    <label asp-for="AvailableUntil"><i class="bi bi-calendar-x me-1"></i>Available Until</label>
-                                                    <span asp-validation-for="AvailableUntil" class="text-danger small"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Utilities -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>
-                                            Utilities & Options
-                                        </h5>
-
-                                        <div class="row g-3">
-                                            <div class="col-md-4">
-                                                <div class="form-check form-switch">
-                                                    <input asp-for="IsFurnished"
-                                                           class="form-check-input"
-                                                           type="checkbox"
-                                                           role="switch"
-                                                           id="IsFurnished"
-                                                           disabled="@(canModify ? null : "disabled")" />
-                                                    <label class="form-check-label" for="IsFurnished">
-                                                        <i class="bi bi-house-check me-1"></i>Furnished
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-check form-switch">
-                                                    <input asp-for="HasElectricity"
-                                                           class="form-check-input"
-                                                           type="checkbox"
-                                                           role="switch"
-                                                           id="HasElectricity"
-                                                           disabled="@(canModify ? null : "disabled")" />
-                                                    <label class="form-check-label" for="HasElectricity">
-                                                        <i class="bi bi-lightning me-1"></i>Electricity
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-check form-switch">
-                                                    <input asp-for="HasWater"
-                                                           class="form-check-input"
-                                                           type="checkbox"
-                                                           role="switch"
-                                                           id="HasWater"
-                                                           disabled="@(canModify ? null : "disabled")" />
-                                                    <label class="form-check-label" for="HasWater">
-                                                        <i class="bi bi-droplet me-1"></i>Water
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ✅ Images (Current + Replace + Preview) -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-images me-2 text-primary"></i>
-                                            Rental Images
-                                        </h5>
-
-                                        <div class="row g-3">
-                                            <!-- Image 1 -->
-                                            <div class="col-md-4">
-                                                <label class="form-label small fw-semibold">Image 1</label>
-
-                                                @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl1))
-                                                {
-                                                    <div class="mb-2">
-                                                        <div class="small text-muted mb-1">Current</div>
-                                                        <img src="@Model.CurrentImageUrl1" alt="Current 1"
-                                                             style="width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
-                                                    </div>
-                                                }
-
-                                                <input asp-for="RentalImage1" type="file" class="form-control" accept="image/*"
-                                                       id="RentalImage1" disabled="@(canModify ? null : "disabled")" />
-                                                <span asp-validation-for="RentalImage1" class="text-danger small"></span>
-
-                                                <div class="mt-2">
-                                                    <div class="small text-muted mb-1">New Preview</div>
-                                                    <img id="previewRental1" src="" alt="Preview 1"
-                                                         style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
-                                                </div>
-                                            </div>
-
-                                            <!-- Image 2 -->
-                                            <div class="col-md-4">
-                                                <label class="form-label small fw-semibold">Image 2</label>
-
-                                                @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl2))
-                                                {
-                                                    <div class="mb-2">
-                                                        <div class="small text-muted mb-1">Current</div>
-                                                        <img src="@Model.CurrentImageUrl2" alt="Current 2"
-                                                             style="width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
-                                                    </div>
-                                                }
-
-                                                <input asp-for="RentalImage2" type="file" class="form-control" accept="image/*"
-                                                       id="RentalImage2" disabled="@(canModify ? null : "disabled")" />
-                                                <span asp-validation-for="RentalImage2" class="text-danger small"></span>
-
-                                                <div class="mt-2">
-                                                    <div class="small text-muted mb-1">New Preview</div>
-                                                    <img id="previewRental2" src="" alt="Preview 2"
-                                                         style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
-                                                </div>
-                                            </div>
-
-                                            <!-- Image 3 -->
-                                            <div class="col-md-4">
-                                                <label class="form-label small fw-semibold">Image 3</label>
-
-                                                @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl3))
-                                                {
-                                                    <div class="mb-2">
-                                                        <div class="small text-muted mb-1">Current</div>
-                                                        <img src="@Model.CurrentImageUrl3" alt="Current 3"
-                                                             style="width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
-                                                    </div>
-                                                }
-
-                                                <input asp-for="RentalImage3" type="file" class="form-control" accept="image/*"
-                                                       id="RentalImage3" disabled="@(canModify ? null : "disabled")" />
-                                                <span asp-validation-for="RentalImage3" class="text-danger small"></span>
-
-                                                <div class="mt-2">
-                                                    <div class="small text-muted mb-1">New Preview</div>
-                                                    <img id="previewRental3" src="" alt="Preview 3"
-                                                         style="display:none;width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid #e9ecef;" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-text mt-2">
-                                            Uploading new image will replace the current one (if exists).
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Description -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-card-text me-2 text-info"></i>
-                                            Description
-                                        </h5>
-
-                                        <div class="form-floating">
-                                            <textarea asp-for="Description"
-                                                      class="form-control"
-                                                      placeholder="Describe your rental..."
-                                                      style="height: 140px"
-                                                      disabled="@(canModify ? null : "disabled")"
-                                                      required></textarea>
-                                            <label asp-for="Description">Description *</label>
-                                            <span asp-validation-for="Description" class="text-danger small"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="card-footer bg-light border-0 py-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Fields marked with * are required
-                            </small>
-
-                            <div class="d-flex gap-2">
-                                <a asp-action="Rentals" class="btn btn-outline-secondary px-4">
-                                    <i class="bi bi-x-circle me-2"></i>Cancel
-                                </a>
-                                <button type="submit" class="btn btn-warning px-4" id="submitBtn">
-                                    <i class="bi bi-save me-2"></i>Update Rental
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                </form>
             </div>
-
         </div>
     </div>
 </div>
 
 @section Scripts {
 
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <script nonce="@nonce" src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
     <script nonce="@nonce">
-    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
 
-        const canModify = @((canModify) ? "true" : "false");
+            const canModify = @((canModify) ? "true" : "false");
 
-        // Bootstrap validation
-        const form = document.querySelector('form.needs-validation');
-        if (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
+            // Bootstrap validation (still works; locked fields have hidden values)
+            const form = document.querySelector('form.needs-validation');
+            if (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
+                    }
+
                     form.classList.add('was-validated');
-                    return;
-                }
 
-                form.classList.add('was-validated');
-
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
-                }
-            }, false);
-        }
-
-        // ✅ Preview helper
-        function bindPreview(inputId, imgId) {
-            const input = document.getElementById(inputId);
-            const img = document.getElementById(imgId);
-            if (!input || !img) return;
-
-            input.addEventListener('change', function () {
-                const f = input.files && input.files[0];
-                if (!f) { img.style.display = 'none'; img.src = ''; return; }
-
-                const url = URL.createObjectURL(f);
-                img.src = url;
-                img.style.display = 'block';
-            });
-        }
-        bindPreview('RentalImage1', 'previewRental1');
-        bindPreview('RentalImage2', 'previewRental2');
-        bindPreview('RentalImage3', 'previewRental3');
-
-        // =========================
-        // ✅ Location Picker
-        // =========================
-        const btnUseMyLocation = document.getElementById('btnUseMyLocation');
-        const btnClearLocation = document.getElementById('btnClearLocation');
-        const locationStatus = document.getElementById('locationStatus');
-
-        const latInput = document.getElementById('Latitude');
-        const lngInput = document.getElementById('Longitude');
-        const locationInput = document.getElementById('Location');
-
-        const txtPlaceSearch = document.getElementById('txtPlaceSearch');
-        const btnPlaceSearch = document.getElementById('btnPlaceSearch');
-        const searchStatus = document.getElementById('searchStatus');
-        const searchResultsWrap = document.getElementById('searchResultsWrap');
-        const searchResults = document.getElementById('searchResults');
-
-        const searchError = document.getElementById('searchError');
-        const searchErrorText = document.getElementById('searchErrorText');
-
-        const selectedDetails = document.getElementById('selectedDetails');
-        const selectedCoords = document.getElementById('selectedCoords');
-
-        function setUiError(msg) {
-            searchErrorText.textContent = msg;
-            searchError.style.display = 'block';
-        }
-        function clearUiError() {
-            searchError.style.display = 'none';
-            searchErrorText.textContent = '';
-        }
-        function escapeHtml(str) {
-            return String(str)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
-        }
-
-        // start from model coords if exist else default
-        const startLat = @startLat.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        const startLng = @startLng.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        const hasCoords = @((hasCoords) ? "true" : "false");
-
-        const map = L.map('map', { zoomControl: true }).setView([startLat, startLng], hasCoords ? 16 : 12);
-
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap &copy; CARTO'
-        }).addTo(map);
-
-        let marker = L.marker([startLat, startLng], { draggable: true }).addTo(map);
-
-        if (hasCoords) {
-            selectedCoords.textContent = `Lat: ${Number(startLat).toFixed(6)} , Lng: ${Number(startLng).toFixed(6)}`;
-        }
-
-        function setLatLng(lat, lng, zoom, statusMsg, shouldReverse = true) {
-            latInput.value = String(lat);
-            lngInput.value = String(lng);
-
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], zoom ?? map.getZoom());
-
-            selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
-            if (statusMsg) locationStatus.textContent = statusMsg;
-
-            if (shouldReverse) reverseGeocodeDebounced(lat, lng);
-        }
-
-        function clearLocation() {
-            latInput.value = '';
-            lngInput.value = '';
-            selectedDetails.textContent = 'No location selected yet. Search and pick a result, or click the map.';
-            selectedCoords.textContent = '';
-            locationStatus.textContent = 'Location cleared. Use Search or click the map.';
-        }
-
-        if (canModify) {
-            map.on('click', function (e) {
-                clearUiError();
-                setLatLng(e.latlng.lat, e.latlng.lng, map.getZoom(), 'Selected by clicking the map.', true);
-            });
-
-            marker.on('dragend', function () {
-                clearUiError();
-                const p = marker.getLatLng();
-                setLatLng(p.lat, p.lng, map.getZoom(), 'Selected by dragging the pin.', true);
-            });
-        } else {
-            marker.dragging.disable();
-        }
-
-        let reverseTimer = null;
-        function reverseGeocodeDebounced(lat, lng) {
-            if (reverseTimer) clearTimeout(reverseTimer);
-            reverseTimer = setTimeout(() => reverseGeocode(lat, lng), 400);
-        }
-
-        async function reverseGeocode(lat, lng) {
-            try {
-                selectedDetails.textContent = 'Loading location details...';
-                locationStatus.textContent = 'Loading address from server...';
-
-                const url = `@Url.Action("ReverseGeocode", "Factory")?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
-                const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const data = await res.json();
-                const display = (data && data.address) ? data.address : 'Unknown place';
-
-                selectedDetails.textContent = display;
-
-                if (display && display !== 'Unknown place' && canModify) {
-                    locationInput.value = display.length > 250 ? display.substring(0, 250) : display;
-                }
-
-                locationStatus.textContent = 'Address loaded successfully.';
-            } catch (err) {
-                console.error('ReverseGeocode failed:', err);
-                selectedDetails.textContent = 'Could not load address details. You can still submit coordinates.';
-                locationStatus.textContent = 'Saved coordinates, but address lookup failed.';
-            }
-        }
-
-        function renderResults(items) {
-            searchResults.innerHTML = '';
-            if (!items || items.length === 0) {
-                searchResultsWrap.style.display = 'none';
-                return;
+                    const submitBtn = document.getElementById('submitBtn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+                    }
+                }, false);
             }
 
-            searchResultsWrap.style.display = 'block';
+            // ✅ Preview helper
+            function bindPreview(inputId, imgId) {
+                const input = document.getElementById(inputId);
+                const img = document.getElementById(imgId);
+                if (!input || !img) return;
 
-            for (const item of items) {
-                const lat = parseFloat(item.lat);
-                const lng = parseFloat(item.lon);
-                const display = item.display_name || 'Unknown';
+                input.addEventListener('change', function () {
+                    const f = input.files && input.files[0];
+                    if (!f) { img.style.display = 'none'; img.src = ''; return; }
 
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'list-group-item list-group-item-action';
-                btn.innerHTML = `
-                    <div class="fw-semibold small">${escapeHtml(display)}</div>
-                    <div class="text-muted small">Lat: ${lat.toFixed(5)} , Lng: ${lng.toFixed(5)}</div>
-                `;
+                    const url = URL.createObjectURL(f);
+                    img.src = url;
+                    img.style.display = 'block';
+                });
+            }
+            bindPreview('RentalImage1', 'previewRental1');
+            bindPreview('RentalImage2', 'previewRental2');
+            bindPreview('RentalImage3', 'previewRental3');
 
-                btn.addEventListener('click', function () {
-                    if (!canModify) return;
+            // =========================
+            // ✅ Location Picker
+            // =========================
+            const btnUseMyLocation = document.getElementById('btnUseMyLocation');
+            const btnClearLocation = document.getElementById('btnClearLocation');
+            const locationStatus = document.getElementById('locationStatus');
 
+            const latInput = document.getElementById('Latitude');
+            const lngInput = document.getElementById('Longitude');
+            const locationInput = document.getElementById('Location');
+
+            const txtPlaceSearch = document.getElementById('txtPlaceSearch');
+            const btnPlaceSearch = document.getElementById('btnPlaceSearch');
+            const searchStatus = document.getElementById('searchStatus');
+            const searchResultsWrap = document.getElementById('searchResultsWrap');
+            const searchResults = document.getElementById('searchResults');
+
+            const searchError = document.getElementById('searchError');
+            const searchErrorText = document.getElementById('searchErrorText');
+
+            const selectedDetails = document.getElementById('selectedDetails');
+            const selectedCoords = document.getElementById('selectedCoords');
+
+            function setUiError(msg) {
+                searchErrorText.textContent = msg;
+                searchError.style.display = 'block';
+            }
+            function clearUiError() {
+                searchError.style.display = 'none';
+                searchErrorText.textContent = '';
+            }
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            const startLat = @startLat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const startLng = @startLng.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            const hasCoords = @((hasCoords) ? "true" : "false");
+
+            const map = L.map('map', { zoomControl: true }).setView([startLat, startLng], hasCoords ? 16 : 12);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap &copy; CARTO'
+            }).addTo(map);
+
+            let marker = L.marker([startLat, startLng], { draggable: true }).addTo(map);
+
+            if (hasCoords) {
+                selectedCoords.textContent = `Lat: ${Number(startLat).toFixed(6)} , Lng: ${Number(startLng).toFixed(6)}`;
+            }
+
+            function setLatLng(lat, lng, zoom, statusMsg, shouldReverse = true) {
+                latInput.value = String(lat);
+                lngInput.value = String(lng);
+
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], zoom ?? map.getZoom());
+
+                selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+                if (statusMsg) locationStatus.textContent = statusMsg;
+
+                if (shouldReverse) reverseGeocodeDebounced(lat, lng);
+            }
+
+            if (canModify) {
+                map.on('click', function (e) {
                     clearUiError();
-                    setLatLng(lat, lng, 16, 'Selected from search results.', false);
+                    setLatLng(e.latlng.lat, e.latlng.lng, map.getZoom(), 'Selected by clicking the map.', true);
+                });
+
+                marker.on('dragend', function () {
+                    clearUiError();
+                    const p = marker.getLatLng();
+                    setLatLng(p.lat, p.lng, map.getZoom(), 'Selected by dragging the pin.', true);
+                });
+            } else {
+                marker.dragging.disable();
+            }
+
+            let reverseTimer = null;
+            function reverseGeocodeDebounced(lat, lng) {
+                if (reverseTimer) clearTimeout(reverseTimer);
+                reverseTimer = setTimeout(() => reverseGeocode(lat, lng), 400);
+            }
+
+            async function reverseGeocode(lat, lng) {
+                try {
+                    selectedDetails.textContent = 'Loading location details...';
+                    locationStatus.textContent = 'Loading address from server...';
+
+                    const url = `@Url.Action("ReverseGeocode", "Factory")?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+                    const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                    const data = await res.json();
+                    const display = (data && data.address) ? data.address : 'Unknown place';
 
                     selectedDetails.textContent = display;
-                    selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
 
-                    locationInput.value = display.length > 250 ? display.substring(0, 250) : display;
+                    if (display && display !== 'Unknown place' && canModify) {
+                        locationInput.value = display.length > 250 ? display.substring(0, 250) : display;
+                    }
 
+                    locationStatus.textContent = 'Address loaded successfully.';
+                } catch (err) {
+                    console.error('ReverseGeocode failed:', err);
+                    selectedDetails.textContent = 'Could not load address details. You can still submit coordinates.';
+                    locationStatus.textContent = 'Saved coordinates, but address lookup failed.';
+                }
+            }
+
+            function renderResults(items) {
+                searchResults.innerHTML = '';
+                if (!items || items.length === 0) {
                     searchResultsWrap.style.display = 'none';
-                    searchStatus.textContent = 'Location selected. You can refine by dragging the pin or clicking the map.';
-                });
-
-                searchResults.appendChild(btn);
-            }
-        }
-
-        async function doSearch(query) {
-            clearUiError();
-
-            const q = (query || '').trim();
-            if (!q) {
-                searchStatus.textContent = 'Type a place name then click Search.';
-                searchResultsWrap.style.display = 'none';
-                return;
-            }
-
-            searchStatus.textContent = 'Searching...';
-            btnPlaceSearch.disabled = true;
-            searchResultsWrap.style.display = 'none';
-            searchResults.innerHTML = '';
-
-            try {
-                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&limit=8&addressdetails=1`;
-                const res = await fetch(url, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json', 'Accept-Language': 'en,ar' }
-                });
-
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const data = await res.json();
-                if (!Array.isArray(data) || data.length === 0) {
-                    searchStatus.textContent = 'No results. Try adding city/governorate.';
-                    renderResults([]);
                     return;
                 }
 
-                searchStatus.textContent = `Found ${data.length} results. Click one to select.`;
-                renderResults(data);
-            } catch (err) {
-                console.error(err);
-                searchStatus.textContent = 'Search failed.';
-                renderResults([]);
-                setUiError(
-                    'Search request blocked (CORS/CSP) or rate-limited. ' +
-                    'If CSP is strict: add connect-src for https://nominatim.openstreetmap.org OR route search through backend.'
-                );
-            } finally {
-                btnPlaceSearch.disabled = false;
-            }
-        }
+                searchResultsWrap.style.display = 'block';
 
-        btnPlaceSearch.addEventListener('click', () => {
-            if (!canModify) return;
-            doSearch(txtPlaceSearch.value);
-        });
+                for (const item of items) {
+                    const lat = parseFloat(item.lat);
+                    const lng = parseFloat(item.lon);
+                    const display = item.display_name || 'Unknown';
 
-        txtPlaceSearch.addEventListener('keydown', function (e) {
-            if (!canModify) return;
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                doSearch(txtPlaceSearch.value);
-            }
-        });
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'list-group-item list-group-item-action';
+                    btn.innerHTML = `
+                            <div class="fw-semibold small text-label">${escapeHtml(display)}</div>
+                            <div class="text-muted small text-label">Lat: ${lat.toFixed(5)} , Lng: ${lng.toFixed(5)}</div>
+                        `;
 
-        let searchTimer = null;
-        txtPlaceSearch.addEventListener('input', function () {
-            if (!canModify) return;
-            clearUiError();
-            const v = (txtPlaceSearch.value || '').trim();
+                    btn.addEventListener('click', function () {
+                        if (!canModify) return;
 
-            if (searchTimer) clearTimeout(searchTimer);
-            if (!v || v.length < 3) {
-                searchResultsWrap.style.display = 'none';
-                searchStatus.textContent = 'Type at least 3 characters for suggestions, or press Search.';
-                return;
-            }
+                        clearUiError();
+                        setLatLng(lat, lng, 16, 'Selected from search results.', false);
 
-            searchStatus.textContent = 'Loading suggestions...';
-            searchTimer = setTimeout(() => doSearch(v), 500);
-        });
-
-        // GPS
-        btnUseMyLocation.addEventListener('click', function () {
-            if (!canModify) return;
-            clearUiError();
-
-            if (!navigator.geolocation) {
-                locationStatus.textContent = 'GPS not supported. Use Search or click the map.';
-                return;
-            }
-
-            btnUseMyLocation.disabled = true;
-            locationStatus.textContent = 'Detecting GPS location...';
-            selectedDetails.textContent = 'Waiting for GPS...';
-            selectedCoords.textContent = '';
-
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    try {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-
-                        latInput.value = String(lat);
-                        lngInput.value = String(lng);
-
-                        marker.setLatLng([lat, lng]);
-                        map.setView([lat, lng], 17);
-
+                        selectedDetails.textContent = display;
                         selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
-                        locationStatus.textContent = 'GPS captured. Loading address...';
 
-                        await reverseGeocode(lat, lng);
+                        locationInput.value = display.length > 250 ? display.substring(0, 250) : display;
 
                         searchResultsWrap.style.display = 'none';
-                        searchStatus.textContent = 'GPS selected. You can refine by dragging the pin or clicking the map.';
-                    } finally {
-                        btnUseMyLocation.disabled = false;
+                        searchStatus.textContent = 'Location selected. You can refine by dragging the pin or clicking the map.';
+                    });
+
+                    searchResults.appendChild(btn);
+                }
+            }
+
+            async function doSearch(query) {
+                clearUiError();
+
+                const q = (query || '').trim();
+                if (!q) {
+                    searchStatus.textContent = 'Type a place name then click Search.';
+                    searchResultsWrap.style.display = 'none';
+                    return;
+                }
+
+                searchStatus.textContent = 'Searching...';
+                btnPlaceSearch.disabled = true;
+                searchResultsWrap.style.display = 'none';
+                searchResults.innerHTML = '';
+
+                try {
+                    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&limit=8&addressdetails=1`;
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json', 'Accept-Language': 'en,ar' }
+                    });
+
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                    const data = await res.json();
+                    if (!Array.isArray(data) || data.length === 0) {
+                        searchStatus.textContent = 'No results. Try adding city/governorate.';
+                        renderResults([]);
+                        return;
                     }
-                },
-                (error) => {
-                    btnUseMyLocation.disabled = false;
 
-                    if (error?.code === 1) locationStatus.textContent = 'Permission denied. Allow location and try again.';
-                    else if (error?.code === 2) locationStatus.textContent = 'Position unavailable. Try again or use Search.';
-                    else if (error?.code === 3) locationStatus.textContent = 'GPS timed out. Try again or use Search.';
-                    else locationStatus.textContent = 'Could not use GPS. Use Search or click the map.';
+                    searchStatus.textContent = `Found ${data.length} results. Click one to select.`;
+                    renderResults(data);
+                } catch (err) {
+                    console.error(err);
+                    searchStatus.textContent = 'Search failed.';
+                    renderResults([]);
+                    setUiError('Search request blocked (CORS/CSP) or rate-limited. Consider routing search through backend.');
+                } finally {
+                    btnPlaceSearch.disabled = false;
+                }
+            }
 
-                    selectedDetails.textContent = 'No location selected yet. Search and pick a result, or click the map.';
-                    selectedCoords.textContent = '';
-                },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
+            btnPlaceSearch.addEventListener('click', () => {
+                if (!canModify) return;
+                doSearch(txtPlaceSearch.value);
+            });
+
+            txtPlaceSearch.addEventListener('keydown', function (e) {
+                if (!canModify) return;
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doSearch(txtPlaceSearch.value);
+                }
+            });
+
+            let searchTimer = null;
+            txtPlaceSearch.addEventListener('input', function () {
+                if (!canModify) return;
+                clearUiError();
+                const v = (txtPlaceSearch.value || '').trim();
+
+                if (searchTimer) clearTimeout(searchTimer);
+                if (!v || v.length < 3) {
+                    searchResultsWrap.style.display = 'none';
+                    searchStatus.textContent = 'Type at least 3 characters for suggestions, or press Search.';
+                    return;
+                }
+
+                searchStatus.textContent = 'Loading suggestions...';
+                searchTimer = setTimeout(() => doSearch(v), 500);
+            });
+
+            // GPS
+            btnUseMyLocation.addEventListener('click', function () {
+                if (!canModify) return;
+                clearUiError();
+
+                if (!navigator.geolocation) {
+                    locationStatus.textContent = 'GPS not supported. Use Search or click the map.';
+                    return;
+                }
+
+                btnUseMyLocation.disabled = true;
+                locationStatus.textContent = 'Detecting GPS location...';
+                selectedDetails.textContent = 'Waiting for GPS...';
+                selectedCoords.textContent = '';
+
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        try {
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+
+                            latInput.value = String(lat);
+                            lngInput.value = String(lng);
+
+                            marker.setLatLng([lat, lng]);
+                            map.setView([lat, lng], 17);
+
+                            selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+                            locationStatus.textContent = 'GPS captured. Loading address...';
+
+                            await reverseGeocode(lat, lng);
+                        } finally {
+                            btnUseMyLocation.disabled = false;
+                        }
+                    },
+                    (error) => {
+                        btnUseMyLocation.disabled = false;
+                        locationStatus.textContent = 'Could not use GPS. Use Search or click the map.';
+                        selectedDetails.textContent = 'No location selected yet.';
+                        selectedCoords.textContent = '';
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            });
+
+            btnClearLocation.addEventListener('click', function () {
+                if (!canModify) return;
+                clearUiError();
+                latInput.value = '';
+                lngInput.value = '';
+                locationInput.value = '';
+                selectedDetails.textContent = 'No location selected yet.';
+                selectedCoords.textContent = '';
+                searchResultsWrap.style.display = 'none';
+                searchStatus.textContent = 'Type a place name to search.';
+            });
+
+            setTimeout(() => map.invalidateSize(), 350);
         });
-
-        btnClearLocation.addEventListener('click', function () {
-            if (!canModify) return;
-            clearUiError();
-            clearLocation();
-            searchResultsWrap.style.display = 'none';
-            searchStatus.textContent = 'Type a place name to search.';
-        });
-
-        setTimeout(() => map.invalidateSize(), 350);
-    });
     </script>
 
     <style nonce="@nonce">
-        .card { border-radius: 12px; overflow: hidden; }
-        .card-header.bg-gradient-warning { background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); }
-        .bg-light-subtle { background-color: rgba(248, 249, 250, 0.5) !important; border: 1px solid rgba(0,0,0,0.05); }
-        #searchResults .list-group-item { cursor: pointer; }
+        /* ===================== PREMIUM EDIT RENTAL STYLES ===================== */
+        :root {
+            --eco-green: #16a34a;
+            --eco-teal: #14b8a6;
+            --eco-sky: #38bdf8;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --glass: rgba(255,255,255,.72);
+            --border: rgba(2,132,199,.18);
+            --shadow: 0 22px 60px rgba(2,6,23,.12);
+            --radius: 22px;
+        }
+
+        /* Animated background */
+        body {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+            min-height: 100vh;
+            animation: gradientShift 20s ease infinite alternate;
+        }
+
+        @@keyframes gradientShift {
+            0% {
+                background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+            }
+
+            50% {
+                background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+            }
+
+            100% {
+                background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+            }
+        }
+
+        /* Dashboard Shell */
+        .dashboard-premium {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            padding: 10px 0 25px;
+        }
+
+        .dashboard-shell {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Full Width Content */
+        .dashboard-content-wrap-full {
+            padding: 26px;
+            background: rgba(255,255,255,.35);
+        }
+
+        .dashboard-card-full {
+            width: 100%;
+            border-radius: 20px;
+            border: 1px solid rgba(15,23,42,.08);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 18px 45px rgba(2,6,23,.10);
+            overflow: hidden;
+        }
+
+        /* Auth Components */
+        .auth-head {
+            padding: 22px 22px 14px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+            border-bottom: 1px solid rgba(15,23,42,.06);
+        }
+
+        .auth-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+            box-shadow: 0 12px 25px rgba(20,184,166,.18);
+            font-size: 1.35rem;
+        }
+
+        .auth-body {
+            padding: 0 22px 18px;
+        }
+
+        .auth-foot {
+            padding: 14px 22px;
+            text-align: center;
+            background: rgba(255,255,255,.55);
+            border-top: 1px solid rgba(15,23,42,.08);
+        }
+
+        /* Premium Cards */
+        .premium-card {
+            border: 1px solid rgba(15,23,42,.08);
+            background: rgba(255,255,255,.82);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+            .premium-card:hover {
+                box-shadow: 0 15px 35px rgba(2,6,23,.10);
+                transform: translateY(-3px);
+            }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 12px 0;
+            margin-bottom: 0;
+        }
+
+        .breadcrumb-item a {
+            text-decoration: none;
+            color: var(--muted);
+            transition: color 0.2s ease;
+        }
+
+            .breadcrumb-item a:hover {
+                color: var(--eco-green);
+            }
+
+        .breadcrumb-item.active {
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        /* Text Label Classes - Adaptive for Light/Dark Mode */
+        .text-label {
+            color: var(--ink) !important;
+        }
+
+        .text-section-title {
+            color: var(--ink) !important;
+            font-weight: 600;
+        }
+
+        /* Form Styles */
+        .form-control, .form-select, .form-floating > .form-control, .form-floating > .form-select {
+            border: 1px solid rgba(15,23,42,.12);
+            border-radius: 12px;
+            background: rgba(255,255,255,.9);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
+        }
+
+            .form-control:focus, .form-select:focus {
+                border-color: var(--eco-green);
+                box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.15);
+                background: rgba(255,255,255,.95);
+            }
+
+        .form-floating > label {
+            color: var(--muted);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--eco-green);
+            border-color: var(--eco-green);
+        }
+
+        .input-group-text {
+            background: rgba(255,255,255,.9);
+            border-color: rgba(15,23,42,.12);
+        }
+
+        /* Map Styles */
+        .map-box {
+            height: 400px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(15,23,42,.12);
+            box-shadow: 0 8px 25px rgba(0,0,0,.08);
+        }
+
+        .section-inner {
+            border: 1px solid rgba(15,23,42,.08);
+            background: rgba(248,249,250,.5);
+            border-radius: 14px;
+        }
+
+        .selected-box {
+            background: rgba(240,253,250,.6);
+            border: 1px solid rgba(34,197,94,.2);
+            border-radius: 14px;
+        }
+
+        /* Image Preview Styles */
+        .rental-edit-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid rgba(15,23,42,.12);
+        }
+
+        .rental-edit-preview {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid rgba(34,197,94,.3);
+            display: none;
+        }
+
+        /* Buttons */
+        .auth-btn-success {
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+            font-weight: 800;
+            letter-spacing: .2px;
+            box-shadow: 0 12px 26px rgba(22,163,74,.22);
+            transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+            color: white !important;
+            padding: 8px 16px !important;
+            font-size: 0.875rem;
+        }
+
+            .auth-btn-success:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 34px rgba(20,184,166,.22);
+                filter: brightness(1.02);
+                color: white !important;
+            }
+
+        /* Search Results */
+        #searchResults .list-group-item {
+            cursor: pointer;
+            border: 1px solid rgba(15,23,42,.08);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,.8);
+        }
+
+            #searchResults .list-group-item:hover {
+                background: rgba(240,253,250,.9);
+                border-color: var(--eco-green);
+                transform: translateX(4px);
+            }
+
+        /* ===================== DARK MODE TUNING ===================== */
+        [data-bs-theme="dark"] body {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+            animation: gradientShiftDark 20s ease infinite alternate;
+        }
+
+        @@keyframes gradientShiftDark {
+            0% {
+                background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+            }
+
+            50% {
+                background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+            }
+
+            100% {
+                background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+            }
+        }
+
+        [data-bs-theme="dark"] .dashboard-shell {
+            background: rgba(15, 23, 42, .55);
+            border-color: rgba(148, 163, 184, .18);
+            box-shadow: 0 22px 60px rgba(0,0,0,.45);
+        }
+
+        [data-bs-theme="dark"] .dashboard-content-wrap-full {
+            background: rgba(2, 6, 23, .35);
+        }
+
+        [data-bs-theme="dark"] .dashboard-card-full {
+            background: rgba(15, 23, 42, .70);
+            border-color: rgba(148, 163, 184, .16);
+            box-shadow: 0 18px 45px rgba(0,0,0,.35);
+        }
+
+        [data-bs-theme="dark"] .auth-head {
+            background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+            border-bottom-color: rgba(148, 163, 184, .16);
+        }
+
+            [data-bs-theme="dark"] .auth-head h3 {
+                color: #e2e8f0 !important;
+            }
+
+            [data-bs-theme="dark"] .auth-head .text-muted {
+                color: rgba(226, 232, 240, .75) !important;
+            }
+
+        /* Text Adaptation for Dark Mode */
+        [data-bs-theme="dark"] .text-label {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .text-section-title {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .text-muted {
+            color: rgba(226, 232, 240, .75) !important;
+        }
+
+        [data-bs-theme="dark"] h1,
+        [data-bs-theme="dark"] h2,
+        [data-bs-theme="dark"] h3,
+        [data-bs-theme="dark"] h4,
+        [data-bs-theme="dark"] h5,
+        [data-bs-theme="dark"] h6 {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .breadcrumb-item.active {
+            color: #e2e8f0 !important;
+        }
+
+        [data-bs-theme="dark"] .breadcrumb-item a {
+            color: rgba(226, 232, 240, .65) !important;
+        }
+
+            [data-bs-theme="dark"] .breadcrumb-item a:hover {
+                color: var(--eco-green) !important;
+            }
+
+        /* Cards and Components for Dark Mode */
+        [data-bs-theme="dark"] .premium-card {
+            background: rgba(2, 6, 23, .45);
+            border-color: rgba(148, 163, 184, .16);
+            color: #e2e8f0 !important;
+        }
+
+        /* Form Dark Mode */
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select,
+        [data-bs-theme="dark"] .form-floating > .form-control,
+        [data-bs-theme="dark"] .form-floating > .form-select {
+            background: rgba(15, 23, 42, .5);
+            border-color: rgba(148, 163, 184, .2);
+            color: #e2e8f0;
+        }
+
+            [data-bs-theme="dark"] .form-control:focus,
+            [data-bs-theme="dark"] .form-select:focus {
+                border-color: var(--eco-green);
+                background: rgba(15, 23, 42, .7);
+                color: #e2e8f0;
+            }
+
+        [data-bs-theme="dark"] .form-floating > label {
+            color: rgba(226, 232, 240, .65);
+        }
+
+        [data-bs-theme="dark"] .input-group-text {
+            background: rgba(15, 23, 42, .4);
+            border-color: rgba(148, 163, 184, .2);
+            color: rgba(226, 232, 240, .7);
+        }
+
+        /* Map Dark Mode */
+        [data-bs-theme="dark"] .map-box {
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+        [data-bs-theme="dark"] .section-inner {
+            background: rgba(2, 6, 23, .3);
+            border-color: rgba(148, 163, 184, .16);
+        }
+
+        [data-bs-theme="dark"] .selected-box {
+            background: rgba(34, 197, 94, .08);
+            border-color: rgba(34, 197, 94, .3);
+        }
+
+        /* Image Preview Dark Mode */
+        [data-bs-theme="dark"] .rental-edit-img {
+            border-color: rgba(148, 163, 184, .2);
+        }
+
+        [data-bs-theme="dark"] .rental-edit-preview {
+            border-color: rgba(34, 197, 94, .4);
+        }
+
+        /* Search Results Dark Mode */
+        [data-bs-theme="dark"] #searchResults .list-group-item {
+            background: rgba(15, 23, 42, .5);
+            border-color: rgba(148, 163, 184, .2);
+            color: #e2e8f0;
+        }
+
+            [data-bs-theme="dark"] #searchResults .list-group-item:hover {
+                background: rgba(34, 197, 94, .15);
+                border-color: var(--eco-green);
+            }
+
+        /* Locked Fields Overlay */
+        .position-relative .position-absolute {
+            border-radius: 12px;
+            backdrop-filter: blur(2px);
+        }
+
+        [data-bs-theme="dark"] .position-relative .position-absolute {
+            background: rgba(15, 23, 42, 0.8) !important;
+        }
+
+        /* Responsive */
+        @@media (max-width: 992px) {
+            .dashboard-premium {
+                min-height: calc(100vh - 120px);
+                padding: 10px 0 20px;
+            }
+
+            .dashboard-content-wrap-full {
+                padding: 18px;
+            }
+
+            .auth-logo {
+                width: 48px;
+                height: 48px;
+                font-size: 1.2rem;
+            }
+
+            .map-box {
+                height: 350px;
+            }
+
+            .rental-edit-img,
+            .rental-edit-preview {
+                height: 160px;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .premium-card {
+                padding: 16px;
+            }
+
+            .auth-body {
+                padding: 0 16px 14px;
+            }
+
+            .map-box {
+                height: 300px;
+            }
+
+            .rental-edit-img,
+            .rental-edit-preview {
+                height: 140px;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .auth-head {
+                padding: 18px 16px 12px;
+            }
+
+            .dashboard-content-wrap-full {
+                padding: 12px;
+            }
+
+            .d-flex.flex-wrap {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 12px !important;
+            }
+        }
     </style>
 }

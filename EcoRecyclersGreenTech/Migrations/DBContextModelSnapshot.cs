@@ -30,15 +30,42 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AuctionOrderID"));
 
+                    b.Property<decimal>("AmountPaid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("AuctionStoreID")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("BidAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DepositPercentUsed")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("HeldAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("HiddenForBidder")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<string>("PaymentProvider")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentProviderId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("WinnerID")
                         .HasColumnType("int");
@@ -63,15 +90,8 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Property<int>("JobStoreID")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("MeetingDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("PickupLocation")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -96,11 +116,24 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MachineOrderID"));
 
-                    b.Property<DateTime?>("ArrivalDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("BuyerID")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CancelUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DepositPaid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("ExpectedArrivalDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<int>("MachineStoreID")
                         .HasColumnType("int");
@@ -109,11 +142,22 @@ namespace EcoRecyclersGreenTech.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PickupLocation")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("MachineOrderID");
 
@@ -132,11 +176,24 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaterialOrderID"));
 
-                    b.Property<DateTime?>("ArrivalDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("BuyerID")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CancelUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DepositPaid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("ExpectedArrivalDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<int>("MaterialStoreID")
                         .HasColumnType("int");
@@ -145,11 +202,22 @@ namespace EcoRecyclersGreenTech.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PickupLocation")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("MaterialOrderID");
 
@@ -168,24 +236,53 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RentalOrderID"));
 
+                    b.Property<decimal>("AmountPaid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("BuyerID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("HeldAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("HiddenForBuyer")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MonthsPaid")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PaymentProvider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("PaymentProviderId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<int>("RentalStoreID")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("RentalOrderID");
 
                     b.HasIndex("BuyerID");
 
                     b.HasIndex("RentalStoreID");
+
+                    b.HasIndex("PaymentProvider", "PaymentProviderId")
+                        .IsUnique();
 
                     b.ToTable("RentalOrders");
                 });
@@ -286,11 +383,34 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AuctionID"));
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ConfirmedOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("CurrentTopBid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("CurrentTopBidderId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<string>("ProductImgURL1")
                         .HasColumnType("nvarchar(max)");
@@ -327,6 +447,69 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.ToTable("AuctionStores");
                 });
 
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Stores.JobStore", b =>
+                {
+                    b.Property<int>("JobID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("JobID"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("EmploymentType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ExperienceLevel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("JobType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<int>("PostedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequiredSkills")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Salary")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WorkHours")
+                        .HasColumnType("int");
+
+                    b.HasKey("JobID");
+
+                    b.HasIndex("PostedBy");
+
+                    b.ToTable("JobStores");
+                });
+
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Stores.MachineStore", b =>
                 {
                     b.Property<int>("MachineID")
@@ -335,14 +518,33 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MachineID"));
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("Brand")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CancelWindowDays")
+                        .HasColumnType("int");
 
                     b.Property<int?>("Condition")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DeliveryDays")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<string>("MachineImgURL1")
                         .HasColumnType("nvarchar(max)");
@@ -371,6 +573,7 @@ namespace EcoRecyclersGreenTech.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
+                        .HasPrecision(18, 2)
                         .HasColumnType("int");
 
                     b.Property<int>("SellerID")
@@ -397,11 +600,27 @@ namespace EcoRecyclersGreenTech.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaterialID"));
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("CancelWindowDays")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DeliveryDays")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("decimal(9,6)");
 
                     b.Property<decimal?>("MinOrderQuantity")
                         .HasPrecision(18, 2)
@@ -500,12 +719,20 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Property<string>("RentalImgURL3")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("ReservedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReservedForOrderId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("RentalID");
 
                     b.HasIndex("OwnerID");
+
+                    b.HasIndex("ReservedForOrderId");
 
                     b.ToTable("RentalStores");
                 });
@@ -584,6 +811,14 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Property<string>("FactoryType")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal?>("TotalBalanceOrderWaiting")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("TotalBalancePercentageRequests")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
@@ -617,13 +852,61 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.ToTable("Individuals");
                 });
 
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.PaymentTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ProviderPaymentId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("WalletTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Provider", "ProviderPaymentId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentTransactions");
+                });
+
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.User", b =>
                 {
-                    b.Property<int>("UserID")
+                    b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
                     b.Property<string>("Address")
                         .HasMaxLength(255)
@@ -724,7 +1007,7 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Property<string>("phoneNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("UserID");
+                    b.HasKey("UserId");
 
                     b.HasIndex("UserTypeID");
 
@@ -770,67 +1053,86 @@ namespace EcoRecyclersGreenTech.Migrations
                         });
                 });
 
-            modelBuilder.Entity("EcoRecyclersGreenTech.JobStore", b =>
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.Wallet", b =>
                 {
-                    b.Property<int>("JobID")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("JobID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("ReservedBalance")
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("EmploymentType")
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExperienceLevel")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
 
-                    b.Property<DateTime?>("ExpiryDate")
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Wallets");
+                });
+
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.WalletTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("JobType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("Latitude")
-                        .HasColumnType("decimal(9,6)");
-
-                    b.Property<string>("Location")
+                    b.Property<string>("Currency")
                         .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
 
-                    b.Property<decimal?>("Longitude")
-                        .HasColumnType("decimal(9,6)");
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("PostedBy")
-                        .HasColumnType("int");
-
-                    b.Property<string>("RequiredSkills")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Salary")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("WorkHours")
+                    b.Property<int>("Type")
                         .HasColumnType("int");
 
-                    b.HasKey("JobID");
+                    b.Property<int>("WalletId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("PostedBy");
+                    b.HasKey("Id");
 
-                    b.ToTable("JobStores");
+                    b.HasIndex("WalletId", "IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("[IdempotencyKey] IS NOT NULL");
+
+                    b.ToTable("WalletTransactions");
                 });
 
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Orders.AuctionOrder", b =>
@@ -854,7 +1156,7 @@ namespace EcoRecyclersGreenTech.Migrations
 
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Orders.JobOrder", b =>
                 {
-                    b.HasOne("EcoRecyclersGreenTech.JobStore", "JobStore")
+                    b.HasOne("EcoRecyclersGreenTech.Data.Stores.JobStore", "JobStore")
                         .WithMany()
                         .HasForeignKey("JobStoreID")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -988,6 +1290,17 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Navigation("Seller");
                 });
 
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Stores.JobStore", b =>
+                {
+                    b.HasOne("EcoRecyclersGreenTech.Data.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("PostedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Stores.MachineStore", b =>
                 {
                     b.HasOne("EcoRecyclersGreenTech.Data.Users.User", "Seller")
@@ -1065,6 +1378,17 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.PaymentTransaction", b =>
+                {
+                    b.HasOne("EcoRecyclersGreenTech.Data.Users.User", "User")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.User", b =>
                 {
                     b.HasOne("EcoRecyclersGreenTech.Data.Users.UserType", "UserType")
@@ -1076,15 +1400,26 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Navigation("UserType");
                 });
 
-            modelBuilder.Entity("EcoRecyclersGreenTech.JobStore", b =>
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.Wallet", b =>
                 {
                     b.HasOne("EcoRecyclersGreenTech.Data.Users.User", "User")
-                        .WithMany()
-                        .HasForeignKey("PostedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .WithOne("Wallet")
+                        .HasForeignKey("EcoRecyclersGreenTech.Data.Users.Wallet", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.WalletTransaction", b =>
+                {
+                    b.HasOne("EcoRecyclersGreenTech.Data.Users.Wallet", "Wallet")
+                        .WithMany("Transactions")
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.User", b =>
@@ -1096,11 +1431,20 @@ namespace EcoRecyclersGreenTech.Migrations
                     b.Navigation("FactoryProfile");
 
                     b.Navigation("IndividualProfile");
+
+                    b.Navigation("PaymentTransactions");
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.UserType", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("EcoRecyclersGreenTech.Data.Users.Wallet", b =>
+                {
+                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }

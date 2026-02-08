@@ -1,90 +1,96 @@
-﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.MaterialModel
+﻿@model EcoRecyclersGreenTech.Models.FactoryStore.Products.MaterialProductDetailsModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     ViewData["Title"] = "Add New Material";
-    var nonce = Context.Items["CSPNonce"] as string ?? string.Empty;
+    var nonce = Context.Items["CSPNonce"]?.ToString() ?? "";
+
+    // Values from controller (factory default)
+    var factoryAddress = ViewBag.FactoryAddress as string;
+    var factoryLat = ViewBag.FactoryLat as decimal?;
+    var factoryLng = ViewBag.FactoryLng as decimal?;
+    var factoryHasLocation = (ViewBag.FactoryHasLocation as bool?) ?? false;
+
+    // Default map center (Cairo if nothing)
+    decimal defaultLat = factoryLat ?? 30.0444m;
+    decimal defaultLng = factoryLng ?? 31.2357m;
 }
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
+<div class="dashboard-premium">
+    <div class="container">
+        <div class="dashboard-shell">
+            <div class="dashboard-content-wrap-full">
+                <div class="dashboard-card-full">
 
-            <!-- Breadcrumb -->
-            <nav aria-label="breadcrumb" class="mb-4">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a asp-action="Materials">Materials</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Add New Material</li>
-                </ol>
-            </nav>
-
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient border-0 py-4">
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <i class="bi bi-plus-circle-fill fs-1 text-white"></i>
+                    <!-- Header -->
+                    <div class="auth-head">
+                        <div class="auth-logo">
+                            <i class="bi bi-plus-circle-fill"></i>
                         </div>
-                        <div>
-                            <h2 class="card-title mb-1 text-white">Add New Material</h2>
-                            <p class="text-white-50 mb-0">Fill in the details below to list your material</p>
-                        </div>
+                        <h3 class="mb-1">Add New Material</h3>
+                        <p class="mb-0 text-muted small">Fill in the details below to list your material</p>
                     </div>
-                </div>
 
-                <form asp-action="AddMaterial" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                    @Html.AntiForgeryToken()
+                    <div class="auth-body">
+                        <!-- Breadcrumb -->
+                        <nav aria-label="breadcrumb" class="mb-4">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a asp-action="Index">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a asp-action="Materials">Materials</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Add New Material</li>
+                            </ol>
+                        </nav>
 
-                    <div class="card-body p-4 p-md-5">
-
-                        <!-- Validation Summary -->
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 mb-4">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            Please fix the errors below
+                        <!-- Alerts -->
+                        <div class="alerts-container mb-4">
+                            <div asp-validation-summary="ModelOnly" class="alert premium-alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Please fix the errors below
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
                         </div>
 
-                        <div class="row g-4">
+                        <!-- Form -->
+                        <form asp-action="AddMaterial" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            @Html.AntiForgeryToken()
 
-                            <!-- Basic Information -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                            <div class="row g-4">
+
+                                <!-- Basic Information -->
+                                <div class="col-12">
+                                    <div class="premium-card">
+                                        <h5 class="mb-3">
+                                            <i class="bi bi-info-circle-fill me-2 text-success"></i>
                                             Basic Information
                                         </h5>
 
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input asp-for="ProductType" class="form-control" placeholder="Plastic, Paper, Metal..." required />
+                                                    <input asp-for="ProductType" class="form-control premium-input" placeholder="Plastic, Paper, Metal..." required />
                                                     <label asp-for="ProductType" class="form-label">
                                                         <i class="bi bi-tag me-1"></i>Material Type *
                                                     </label>
-                                                    <span asp-validation-for="ProductType" class="text-danger small"></span>
-                                                    <div class="form-text">e.g., Plastic, Paper, Metal, Glass</div>
+                                                    <span asp-validation-for="ProductType" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input asp-for="Quantity" type="number" class="form-control" placeholder="100" min="1" required />
+                                                    <input asp-for="Quantity" type="number" class="form-control premium-input" placeholder="100" min="1" required />
                                                     <label asp-for="Quantity" class="form-label">
                                                         <i class="bi bi-box me-1"></i>Quantity *
                                                     </label>
-                                                    <span asp-validation-for="Quantity" class="text-danger small"></span>
-                                                    <div class="form-text">Available stock quantity</div>
+                                                    <span asp-validation-for="Quantity" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Pricing -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
+                                <!-- Pricing Information -->
+                                <div class="col-12">
+                                    <div class="premium-card">
+                                        <h5 class="mb-3">
                                             <i class="bi bi-currency-dollar me-2 text-success"></i>
                                             Pricing Information
                                         </h5>
@@ -92,18 +98,17 @@
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input asp-for="Price" type="number" class="form-control" placeholder="0.00" step="0.01" min="0.01" required />
+                                                    <input asp-for="Price" type="number" class="form-control premium-input" placeholder="0.00" step="0.01" min="0.01" required />
                                                     <label asp-for="Price" class="form-label">
                                                         <i class="bi bi-cash-stack me-1"></i>Price per Unit *
                                                     </label>
-                                                    <span asp-validation-for="Price" class="text-danger small"></span>
-                                                    <div class="form-text">Price for one unit</div>
+                                                    <span asp-validation-for="Price" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <select asp-for="Unit" class="form-select">
+                                                    <select asp-for="Unit" class="form-select premium-input">
                                                         <option value="kg">Kilogram (kg)</option>
                                                         <option value="ton">Ton (t)</option>
                                                         <option value="piece">Piece</option>
@@ -113,90 +118,236 @@
                                                     <label asp-for="Unit" class="form-label">
                                                         <i class="bi bi-rulers me-1"></i>Unit
                                                     </label>
-                                                    <span asp-validation-for="Unit" class="text-danger small"></span>
-                                                    <div class="form-text">Measurement unit</div>
+                                                    <span asp-validation-for="Unit" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input asp-for="MinOrderQuantity" type="number" class="form-control" placeholder="0"
-                                                           step="0.01" min="0" />
+                                                    <input asp-for="MinOrderQuantity" type="number" class="form-control premium-input" placeholder="0" step="0.01" min="0" />
                                                     <label asp-for="MinOrderQuantity" class="form-label">
                                                         <i class="bi bi-box-arrow-in-down me-1"></i>Minimum Order Quantity
                                                     </label>
-                                                    <span asp-validation-for="MinOrderQuantity" class="text-danger small"></span>
-                                                    <div class="form-text">Leave empty for no minimum</div>
+                                                    <span asp-validation-for="MinOrderQuantity" class="text-danger small mt-1 d-block"></span>
                                                 </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="CancelWindowDays" type="number" class="form-control premium-input" min="0" max="365" />
+                                                    <label asp-for="CancelWindowDays" class="form-label">
+                                                        <i class="bi bi-calendar-x me-1"></i>Cancel Window (Days)
+                                                    </label>
+                                                    <span asp-validation-for="CancelWindowDays" class="text-danger small mt-1 d-block"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input asp-for="DeliveryDays" type="number" class="form-control premium-input" min="0" max="365" />
+                                                    <label asp-for="DeliveryDays" class="form-label">
+                                                        <i class="bi bi-truck me-1"></i>Delivery Days
+                                                    </label>
+                                                    <span asp-validation-for="DeliveryDays" class="text-danger small mt-1 d-block"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ✅ Pickup Location -->
+                                <div class="col-12">
+                                    <div class="premium-card">
+                                        <h5 class="mb-3">
+                                            <i class="bi bi-geo-alt-fill me-2 text-success"></i>
+                                            Pickup Location
+                                        </h5>
+
+                                        <div class="premium-alert alert-info mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-info-circle me-2 mt-1"></i>
+                                                <div>
+                                                    <div class="fw-semibold">Choose pickup location</div>
+                                                    <div class="small text-muted">
+                                                        If your factory location is not set, you must choose custom pickup location.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- UseFactoryLocation bind -->
+                                        <div class="row g-2">
+                                            <div class="col-12">
+                                                <div class="form-check">
+                                                    <input asp-for="UseFactoryLocation" class="form-check-input" type="radio" value="true" id="useFactoryYes" />
+                                                    <label class="form-check-label fw-semibold" for="useFactoryYes">
+                                                        Use factory location (Default)
+                                                    </label>
+                                                </div>
+
+                                                <div class="ms-4 mt-2 small text-muted">
+                                                    <div><i class="bi bi-building me-1"></i><strong>Factory Address:</strong> @(string.IsNullOrWhiteSpace(factoryAddress) ? "Not set" : factoryAddress)</div>
+                                                    <div><i class="bi bi-pin-map me-1"></i><strong>Coords:</strong> @(factoryLat?.ToString() ?? "-"), @(factoryLng?.ToString() ?? "-")</div>
+
+                                                    @if (!factoryHasLocation)
+                                                    {
+                                                        <div class="text-danger mt-1">
+                                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                            Factory location is not set. Please choose "Custom pickup location".
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <div class="form-check">
+                                                    <input asp-for="UseFactoryLocation" class="form-check-input" type="radio" value="false" id="useFactoryNo" />
+                                                    <label class="form-check-label fw-semibold" for="useFactoryNo">
+                                                        Custom pickup location (Map)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <span asp-validation-for="UseFactoryLocation" class="text-danger small d-block mt-2"></span>
+
+                                        <!-- Custom Location Map Box -->
+                                        <div id="customLocationBox" class="mt-3">
+                                            <div class="premium-card p-3">
+
+                                                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <button type="button" class="btn btn-success auth-btn-success" id="btnUseMyLocation">
+                                                            <i class="bi bi-geo-alt me-1"></i> Use GPS
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary" id="btnClearLocation">
+                                                            <i class="bi bi-x-circle me-1"></i> Clear
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="small text-muted" id="locationStatus">
+                                                        Search a place then choose a result, or click the map.
+                                                    </div>
+                                                </div>
+
+                                                <!-- ✅ Bind to MaterialModel -->
+                                                <input asp-for="Latitude" type="hidden" id="Latitude" />
+                                                <input asp-for="Longitude" type="hidden" id="Longitude" />
+
+                                                <div class="row g-3 mt-1">
+
+                                                    <div class="col-12">
+                                                        <div class="form-floating">
+                                                            <input asp-for="Address" class="form-control premium-input" id="Address" placeholder="Pickup Address" />
+                                                            <label asp-for="Address">Pickup Address (Optional)</label>
+                                                            <span asp-validation-for="Address" class="text-danger small mt-1 d-block"></span>
+                                                            <div class="form-text small mt-1">Optional hint. Coordinates will be saved if you pick from map/GPS.</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Search -->
+                                                    <div class="col-12">
+                                                        <label class="form-label small fw-semibold text-success mb-1">Search Place</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light border-end-0">
+                                                                <i class="bi bi-search text-muted"></i>
+                                                            </span>
+                                                            <input type="text" class="form-control premium-input border-start-0" id="txtPlaceSearch"
+                                                                   placeholder="Type place name (Arabic/English)" autocomplete="off" />
+                                                            <button class="btn btn-success auth-btn-success border-0" type="button" id="btnPlaceSearch">
+                                                                <i class="bi bi-search me-1"></i> Search
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="form-text small mt-1" id="searchStatus">
+                                                            Type 3+ characters for suggestions, or press Search.
+                                                        </div>
+
+                                                        <div class="mt-2" id="searchResultsWrap" style="display:none;">
+                                                            <div class="small fw-semibold text-success mb-1">Results</div>
+                                                            <div class="list-group" id="searchResults"></div>
+                                                        </div>
+
+                                                        <div class="alert premium-alert alert-warning mt-2 py-2" id="searchError" style="display:none;">
+                                                            <div class="small" id="searchErrorText"></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Map -->
+                                                    <div class="col-12">
+                                                        <div id="map" style="height: 400px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(15,23,42,.08);"></div>
+
+                                                        <div class="mt-2 p-3 premium-card">
+                                                            <div class="small fw-semibold text-success mb-1">Selected Location</div>
+                                                            <div class="small text-muted" id="selectedDetails">
+                                                                No location selected yet. Search and pick a result, or click the map.
+                                                            </div>
+                                                            <div class="small text-muted mt-1" id="selectedCoords"></div>
+                                                        </div>
+
+                                                        <div class="small text-muted mt-2">
+                                                            Tip: Click on the map or drag the pin to set the exact spot.
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         </div>
 
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Images -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle mb-4">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-images me-2 text-info"></i>
+                                <!-- Material Images -->
+                                <div class="col-12">
+                                    <div class="premium-card">
+                                        <h5 class="mb-3">
+                                            <i class="bi bi-images me-2 text-success"></i>
                                             Material Images (up to 3)
                                         </h5>
 
                                         <div class="row g-4">
-
-                                            <!-- Image 1 -->
                                             <div class="col-md-4">
-                                                <div class="border rounded-3 p-3 bg-white">
+                                                <div class="border rounded-3 p-3 bg-light-subtle h-100">
                                                     <img id="preview1"
                                                          src="https://placehold.co/300x200/e9ecef/6c757d?text=Image+1"
-                                                         class="img-fluid rounded mb-2"
-                                                         alt="Preview 1"
-                                                         style="height: 180px; width: 100%; object-fit: cover;" />
+                                                         class="img-fluid rounded mb-2 material-img"
+                                                         alt="Preview 1" />
                                                     <label asp-for="ProductImage1" class="form-label fw-semibold">
                                                         <i class="bi bi-upload me-1"></i>Upload Image 1
                                                     </label>
-                                                    <input asp-for="ProductImage1" type="file" class="form-control"
-                                                           accept=".jpg,.jpeg,.png,.gif,.webp"
-                                                           id="imageInput1" />
-                                                    <span asp-validation-for="ProductImage1" class="text-danger small"></span>
+                                                    <input asp-for="ProductImage1" type="file" class="form-control premium-input"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp" id="imageInput1" />
+                                                    <span asp-validation-for="ProductImage1" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
 
-                                            <!-- Image 2 -->
                                             <div class="col-md-4">
-                                                <div class="border rounded-3 p-3 bg-white">
+                                                <div class="border rounded-3 p-3 bg-light-subtle h-100">
                                                     <img id="preview2"
                                                          src="https://placehold.co/300x200/e9ecef/6c757d?text=Image+2"
-                                                         class="img-fluid rounded mb-2"
-                                                         alt="Preview 2"
-                                                         style="height: 180px; width: 100%; object-fit: cover;" />
+                                                         class="img-fluid rounded mb-2 material-img"
+                                                         alt="Preview 2" />
                                                     <label asp-for="ProductImage2" class="form-label fw-semibold">
                                                         <i class="bi bi-upload me-1"></i>Upload Image 2
                                                     </label>
-                                                    <input asp-for="ProductImage2" type="file" class="form-control"
-                                                           accept=".jpg,.jpeg,.png,.gif,.webp"
-                                                           id="imageInput2" />
-                                                    <span asp-validation-for="ProductImage2" class="text-danger small"></span>
+                                                    <input asp-for="ProductImage2" type="file" class="form-control premium-input"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp" id="imageInput2" />
+                                                    <span asp-validation-for="ProductImage2" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
 
-                                            <!-- Image 3 -->
                                             <div class="col-md-4">
-                                                <div class="border rounded-3 p-3 bg-white">
+                                                <div class="border rounded-3 p-3 bg-light-subtle h-100">
                                                     <img id="preview3"
                                                          src="https://placehold.co/300x200/e9ecef/6c757d?text=Image+3"
-                                                         class="img-fluid rounded mb-2"
-                                                         alt="Preview 3"
-                                                         style="height: 180px; width: 100%; object-fit: cover;" />
+                                                         class="img-fluid rounded mb-2 material-img"
+                                                         alt="Preview 3" />
                                                     <label asp-for="ProductImage3" class="form-label fw-semibold">
                                                         <i class="bi bi-upload me-1"></i>Upload Image 3
                                                     </label>
-                                                    <input asp-for="ProductImage3" type="file" class="form-control"
-                                                           accept=".jpg,.jpeg,.png,.gif,.webp"
-                                                           id="imageInput3" />
-                                                    <span asp-validation-for="ProductImage3" class="text-danger small"></span>
+                                                    <input asp-for="ProductImage3" type="file" class="form-control premium-input"
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp" id="imageInput3" />
+                                                    <span asp-validation-for="ProductImage3" class="text-danger small mt-1 d-block"></span>
                                                 </div>
                                             </div>
 
@@ -206,155 +357,817 @@
                                                     Max file size: 5MB لكل صورة — Supported: JPG, PNG, GIF, WebP
                                                 </div>
                                             </div>
-
                                         </div>
+
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Description -->
-                            <div class="col-12">
-                                <div class="card border-0 bg-light-subtle">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <i class="bi bi-card-text me-2 text-warning"></i>
+                                <!-- Description -->
+                                <div class="col-12">
+                                    <div class="premium-card">
+                                        <h5 class="mb-3">
+                                            <i class="bi bi-card-text me-2 text-success"></i>
                                             Description
                                         </h5>
 
                                         <div class="form-floating">
-                                            <textarea asp-for="Description" class="form-control"
+                                            <textarea asp-for="Description" class="form-control premium-input"
                                                       placeholder="Describe your material..."
                                                       style="height: 140px" required></textarea>
                                             <label asp-for="Description" class="form-label">Description *</label>
-                                            <span asp-validation-for="Description" class="text-danger small"></span>
+                                            <span asp-validation-for="Description" class="text-danger small mt-1 d-block"></span>
                                         </div>
 
                                     </div>
                                 </div>
+
                             </div>
 
-                        </div>
-                    </div>
+                            <!-- Form Footer -->
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Fields marked with * are required
+                                </small>
 
-                    <!-- Footer -->
-                    <div class="card-footer bg-light border-0 py-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Fields marked with * are required
-                            </small>
-
-                            <div class="d-flex gap-2">
-                                <a asp-action="Materials" class="btn btn-outline-secondary px-4">
-                                    <i class="bi bi-arrow-left me-2"></i>Cancel
-                                </a>
-                                <button type="submit" class="btn btn-primary px-4" id="submitBtn">
-                                    <i class="bi bi-plus-circle me-2"></i>Add Material
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Materials" class="btn btn-outline-secondary px-4">
+                                        <i class="bi bi-arrow-left me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-success auth-btn-success px-4" id="submitBtn">
+                                        <i class="bi bi-plus-circle me-2"></i>Add Material
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+
+                        </form>
                     </div>
 
-                </form>
-
+                    <div class="auth-foot">
+                        <small class="text-muted">© @DateTime.Now.Year EcoRecyclers GreenTech • Add New Material</small>
+                    </div>
+                </div>
             </div>
-
         </div>
     </div>
 </div>
 
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script nonce="@nonce" src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <script nonce="@nonce">
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // =========================
+            // Image previews
+            // =========================
+            function bindImagePreview(inputId, previewId) {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                if (!input || !preview) return;
+
+                input.addEventListener('change', function () {
+                    const file = this.files && this.files[0];
+                    if (!file) return;
+
+                    const maxSize = 5 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        alert('File size exceeds 5MB limit.');
+                        this.value = '';
+                        return;
+                    }
+
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Invalid file type. Please upload JPG, PNG, GIF, or WebP image.');
+                        this.value = '';
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) { preview.src = e.target.result; };
+                    reader.readAsDataURL(file);
+                });
+            }
+            bindImagePreview('imageInput1', 'preview1');
+            bindImagePreview('imageInput2', 'preview2');
+            bindImagePreview('imageInput3', 'preview3');
+
+            // =========================
+            // Toggle factory/custom location
+            // =========================
+            const factoryHasLocation = @factoryHasLocation.ToString().ToLowerInvariant();
+
+            const yes = document.getElementById('useFactoryYes');
+            const no = document.getElementById('useFactoryNo');
+            const customBox = document.getElementById('customLocationBox');
+
+            function toggleCustomBox() {
+                const useFactory = yes && yes.checked;
+                if (!customBox) return;
+                customBox.style.display = useFactory ? 'none' : 'block';
+            }
+
+            // If factory doesn't have location => force custom
+            if (!factoryHasLocation && no) {
+                no.checked = true;
+                if (yes) yes.checked = false;
+            }
+
+            if (yes) yes.addEventListener('change', toggleCustomBox);
+            if (no) no.addEventListener('change', toggleCustomBox);
+            toggleCustomBox();
+
+            // =========================
+            // Map + Search + GPS
+            // =========================
+            const btnUseMyLocation = document.getElementById('btnUseMyLocation');
+            const btnClearLocation = document.getElementById('btnClearLocation');
+            const locationStatus = document.getElementById('locationStatus');
+
+            const latInput = document.getElementById('Latitude');
+            const lngInput = document.getElementById('Longitude');
+            const addressInput = document.getElementById('Address');
+
+            const txtPlaceSearch = document.getElementById('txtPlaceSearch');
+            const btnPlaceSearch = document.getElementById('btnPlaceSearch');
+            const searchStatus = document.getElementById('searchStatus');
+            const searchResultsWrap = document.getElementById('searchResultsWrap');
+            const searchResults = document.getElementById('searchResults');
+
+            const searchError = document.getElementById('searchError');
+            const searchErrorText = document.getElementById('searchErrorText');
+
+            const selectedDetails = document.getElementById('selectedDetails');
+            const selectedCoords = document.getElementById('selectedCoords');
+
+            function setUiError(msg) {
+                searchErrorText.textContent = msg;
+                searchError.style.display = 'block';
+            }
+            function clearUiError() {
+                searchError.style.display = 'none';
+                searchErrorText.textContent = '';
+            }
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            // Init map
+            const defaultLat = parseFloat("@defaultLat".replace(',', '.'));
+            const defaultLng = parseFloat("@defaultLng".replace(',', '.'));
+
+            const map = L.map('map', { zoomControl: true }).setView([defaultLat, defaultLng], 12);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap &copy; CARTO'
+            }).addTo(map);
+
+            let marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+            // If model has saved values (postback) set marker to them
+            const modelLat = parseFloat((latInput?.value || '').replace(',', '.'));
+            const modelLng = parseFloat((lngInput?.value || '').replace(',', '.'));
+            if (!Number.isNaN(modelLat) && !Number.isNaN(modelLng)) {
+                marker.setLatLng([modelLat, modelLng]);
+                map.setView([modelLat, modelLng], 16);
+                selectedCoords.textContent = `Lat: ${modelLat.toFixed(6)} , Lng: ${modelLng.toFixed(6)}`;
+            }
+
+            function setLatLng(lat, lng, zoom, statusMsg, shouldReverse = true) {
+                if (latInput) latInput.value = String(lat);
+                if (lngInput) lngInput.value = String(lng);
+
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], zoom ?? map.getZoom());
+
+                selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+                if (statusMsg) locationStatus.textContent = statusMsg;
+
+                if (shouldReverse) reverseGeocodeDebounced(lat, lng);
+            }
+
+            function clearLocation() {
+                if (latInput) latInput.value = '';
+                if (lngInput) lngInput.value = '';
+                selectedDetails.textContent = 'No location selected yet. Search and pick a result, or click the map.';
+                selectedCoords.textContent = '';
+                locationStatus.textContent = 'Location cleared. Use Search or click the map.';
+            }
+
+            map.on('click', function (e) {
+                clearUiError();
+                setLatLng(e.latlng.lat, e.latlng.lng, map.getZoom(), 'Selected by clicking the map.', true);
+            });
+
+            marker.on('dragend', function () {
+                clearUiError();
+                const p = marker.getLatLng();
+                setLatLng(p.lat, p.lng, map.getZoom(), 'Selected by dragging the pin.', true);
+            });
+
+            let reverseTimer = null;
+            function reverseGeocodeDebounced(lat, lng) {
+                if (reverseTimer) clearTimeout(reverseTimer);
+                reverseTimer = setTimeout(() => reverseGeocode(lat, lng), 350);
+            }
+
+            async function reverseGeocode(lat, lng) {
+                try {
+                    selectedDetails.textContent = 'Loading location details...';
+                    locationStatus.textContent = 'Loading address from server...';
+
+                    const url = `@Url.Action("ReverseGeocode", "Factory")?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+
+                    const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                    const data = await res.json();
+                    const display = (data && data.address) ? data.address : 'Unknown place';
+
+                    selectedDetails.textContent = display;
+
+                    if (addressInput && display && display !== 'Unknown place') {
+                        addressInput.value = display.length > 255 ? display.substring(0, 255) : display;
+                    }
+
+                    locationStatus.textContent = 'Address loaded successfully.';
+                } catch (err) {
+                    console.error('ReverseGeocode failed:', err);
+                    selectedDetails.textContent = 'Could not load address details. You can still submit coordinates.';
+                    locationStatus.textContent = 'Saved coordinates, but address lookup failed.';
+                }
+            }
+
+            // Search
+            let searchTimer = null;
+
+            function renderResults(items) {
+                searchResults.innerHTML = '';
+                if (!items || items.length === 0) {
+                    searchResultsWrap.style.display = 'none';
+                    return;
+                }
+                searchResultsWrap.style.display = 'block';
+
+                for (const item of items) {
+                    const lat = parseFloat(item.lat);
+                    const lng = parseFloat(item.lon);
+                    const display = item.display_name || 'Unknown';
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'list-group-item list-group-item-action';
+                    btn.innerHTML = `
+                                <div class="fw-semibold small">${escapeHtml(display)}</div>
+                                <div class="text-muted small">Lat: ${lat.toFixed(5)} , Lng: ${lng.toFixed(5)}</div>
+                            `;
+
+                    btn.addEventListener('click', function () {
+                        clearUiError();
+                        setLatLng(lat, lng, 16, 'Selected from search results.', false);
+                        selectedDetails.textContent = display;
+                        selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+
+                        if (addressInput && !addressInput.value.trim() && display) {
+                            addressInput.value = display.length > 255 ? display.substring(0, 255) : display;
+                        }
+
+                        searchResultsWrap.style.display = 'none';
+                        searchStatus.textContent = 'Location selected. You can refine by dragging the pin or clicking the map.';
+                    });
+
+                    searchResults.appendChild(btn);
+                }
+            }
+
+            async function doSearch(query) {
+                clearUiError();
+
+                const q = (query || '').trim();
+                if (!q) {
+                    searchStatus.textContent = 'Type a place name then click Search.';
+                    searchResultsWrap.style.display = 'none';
+                    return;
+                }
+
+                searchStatus.textContent = 'Searching...';
+                btnPlaceSearch.disabled = true;
+                searchResultsWrap.style.display = 'none';
+                searchResults.innerHTML = '';
+
+                try {
+                    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&limit=8&addressdetails=1`;
+
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json', 'Accept-Language': 'en,ar' }
+                    });
+
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                    const data = await res.json();
+                    if (!Array.isArray(data) || data.length === 0) {
+                        searchStatus.textContent = 'No results. Try a more specific query (e.g., "Nasr City Cairo").';
+                        renderResults([]);
+                        return;
+                    }
+
+                    searchStatus.textContent = `Found ${data.length} results. Click one to select.`;
+                    renderResults(data);
+
+                } catch (err) {
+                    console.error(err);
+                    searchStatus.textContent = 'Search failed.';
+                    renderResults([]);
+
+                    setUiError(
+                        'Search request was blocked (CORS/CSP) or rate-limited. ' +
+                        'If CSP is strict, allow connect-src: https://nominatim.openstreetmap.org ' +
+                        'or route search through your backend.'
+                    );
+                } finally {
+                    btnPlaceSearch.disabled = false;
+                }
+            }
+
+            btnPlaceSearch.addEventListener('click', function () {
+                doSearch(txtPlaceSearch.value);
+            });
+
+            txtPlaceSearch.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); doSearch(txtPlaceSearch.value); }
+            });
+
+            txtPlaceSearch.addEventListener('input', function () {
+                clearUiError();
+                const v = (txtPlaceSearch.value || '').trim();
+
+                if (searchTimer) clearTimeout(searchTimer);
+                if (!v || v.length < 3) {
+                    searchResultsWrap.style.display = 'none';
+                    searchStatus.textContent = 'Type at least 3 characters for suggestions, or press Search.';
+                    return;
+                }
+
+                searchStatus.textContent = 'Loading suggestions...';
+                searchTimer = setTimeout(() => doSearch(v), 500);
+            });
+
+            // GPS
+            btnUseMyLocation.addEventListener('click', function () {
+                clearUiError();
+
+                if (!navigator.geolocation) {
+                    locationStatus.textContent = 'GPS is not supported in this browser. Use Search or click the map.';
+                    return;
+                }
+
+                btnUseMyLocation.disabled = true;
+                locationStatus.textContent = 'Detecting GPS location...';
+                selectedDetails.textContent = 'Waiting for GPS...';
+                selectedCoords.textContent = '';
+
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        try {
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+
+                            marker.setLatLng([lat, lng]);
+                            map.setView([lat, lng], 17);
+
+                            if (latInput) latInput.value = String(lat);
+                            if (lngInput) lngInput.value = String(lng);
+
+                            selectedCoords.textContent = `Lat: ${lat.toFixed(6)} , Lng: ${lng.toFixed(6)}`;
+                            locationStatus.textContent = 'GPS coordinates captured. Loading address...';
+
+                            await reverseGeocode(lat, lng);
+
+                            searchResultsWrap.style.display = 'none';
+                            searchStatus.textContent = 'GPS selected. You can refine by dragging the pin or clicking the map.';
+                        } finally {
+                            btnUseMyLocation.disabled = false;
+                        }
+                    },
+                    (error) => {
+                        btnUseMyLocation.disabled = false;
+
+                        if (error?.code === 1) locationStatus.textContent = 'Permission denied. Please allow location access.';
+                        else if (error?.code === 2) locationStatus.textContent = 'Position unavailable. Try again or use Search.';
+                        else if (error?.code === 3) locationStatus.textContent = 'GPS timed out. Try again or use Search.';
+                        else locationStatus.textContent = 'Could not use GPS. Use Search or click the map.';
+
+                        selectedDetails.textContent = 'No location selected yet. Search and pick a result, or click the map.';
+                        selectedCoords.textContent = '';
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            });
+
+            btnClearLocation.addEventListener('click', function () {
+                clearUiError();
+                clearLocation();
+                searchResultsWrap.style.display = 'none';
+                searchStatus.textContent = 'Type a place name to search.';
+            });
+
+            setTimeout(() => map.invalidateSize(), 350);
+
+            // =========================
+            // Bootstrap validation
+            // =========================
+            const form = document.querySelector('form.needs-validation');
+            if (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
+                    }
+
+                    form.classList.add('was-validated');
+
+                    const submitBtn = document.getElementById('submitBtn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+                    }
+                }, false);
+            }
+        });
+    </script>
+}
+
 <style nonce="@nonce">
-    .card {
-        border-radius: 12px;
+    /* ===================== PREMIUM ADD MATERIAL STYLES ===================== */
+    :root {
+        --eco-green: #16a34a;
+        --eco-teal: #14b8a6;
+        --eco-sky: #38bdf8;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --glass: rgba(255,255,255,.72);
+        --border: rgba(2,132,199,.18);
+        --shadow: 0 22px 60px rgba(2,6,23,.12);
+        --radius: 22px;
+    }
+
+    /* Animated background */
+    body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        min-height: 100vh;
+        animation: gradientShift 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShift {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.22), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.22), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.18), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.18), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.18), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.15), transparent 55%), linear-gradient(180deg, rgba(239,246,255,.92), rgba(240,253,250,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.20), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.15), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.15), transparent 55%), linear-gradient(180deg, rgba(240,253,250,.92), rgba(239,246,255,.92));
+        }
+    }
+
+    /* Dashboard Shell */
+    .dashboard-premium {
+        min-height: calc(100vh - 140px);
+        display: flex;
+        align-items: center;
+        padding: 10px 0 25px;
+    }
+
+    .dashboard-shell {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Full Width Content */
+    .dashboard-content-wrap-full {
+        padding: 26px;
+        background: rgba(255,255,255,.35);
+    }
+
+    .dashboard-card-full {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 45px rgba(2,6,23,.10);
         overflow: hidden;
     }
 
-    .card-header.bg-gradient {
-        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    /* Auth Components */
+    .auth-head {
+        padding: 22px 22px 14px;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(20,184,166,.06));
+        border-bottom: 1px solid rgba(15,23,42,.06);
     }
 
-    .bg-light-subtle {
-        background-color: rgba(248, 249, 250, 0.5) !important;
-        border: 1px solid rgba(0,0,0,0.05);
+    .auth-logo {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--eco-green), var(--eco-teal));
+        box-shadow: 0 12px 25px rgba(20,184,166,.18);
+        font-size: 1.35rem;
     }
 
+    .auth-body {
+        padding: 0 22px 18px;
+    }
+
+    .auth-foot {
+        padding: 14px 22px;
+        text-align: center;
+        background: rgba(255,255,255,.55);
+        border-top: 1px solid rgba(15,23,42,.08);
+    }
+
+    /* Premium Cards */
+    .premium-card {
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.82);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+        .premium-card:hover {
+            box-shadow: 0 15px 35px rgba(2,6,23,.10);
+            transform: translateY(-3px);
+        }
+
+    /* Premium Alerts */
+    .premium-alert {
+        border-radius: 14px;
+        border: 1px solid rgba(15,23,42,.08);
+        background: rgba(255,255,255,.85);
+        backdrop-filter: blur(8px);
+        margin-bottom: 15px;
+    }
+
+    /* Breadcrumb */
     .breadcrumb {
         background-color: transparent;
-        padding: 0;
+        padding: 12px 0;
+        margin-bottom: 0;
     }
 
     .breadcrumb-item a {
         text-decoration: none;
-        color: #6c757d;
+        color: var(--muted);
+        transition: color 0.2s ease;
     }
+
+        .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
 
     .breadcrumb-item.active {
-        color: #0d6efd;
+        color: var(--ink);
         font-weight: 500;
     }
+
+    /* Material Images */
+    .material-img {
+        height: 180px;
+        object-fit: cover;
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(15,23,42,.08);
+    }
+
+    .bg-light-subtle {
+        background: rgba(255,255,255,.75) !important;
+        border: 1px solid rgba(15,23,42,.08);
+        transition: all 0.3s ease;
+    }
+
+        .bg-light-subtle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(2,6,23,.08);
+        }
+
+    /* Premium Inputs */
+    .premium-input {
+        border-radius: 12px !important;
+        border: 1px solid rgba(15,23,42,.10) !important;
+        background: rgba(255,255,255,.88) !important;
+        box-shadow: none !important;
+        transition: all .22s ease;
+    }
+
+        .premium-input:focus {
+            border-color: rgba(34,197,94,.55) !important;
+            box-shadow: 0 0 0 .2rem rgba(34,197,94,.18) !important;
+            background: rgba(255,255,255,.96) !important;
+        }
+
+    /* Buttons */
+    .auth-btn-success {
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(90deg, var(--eco-green), var(--eco-teal)) !important;
+        font-weight: 800;
+        letter-spacing: .2px;
+        box-shadow: 0 12px 26px rgba(22,163,74,.22);
+        transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+        color: white !important;
+        padding: 10px 20px !important;
+    }
+
+        .auth-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(20,184,166,.22);
+            filter: brightness(1.02);
+            color: white !important;
+        }
+
+    /* Map Styles */
+    #map {
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    }
+
+    /* Search Results */
+    #searchResultsWrap .list-group-item {
+        border: 1px solid rgba(15,23,42,.08);
+        margin-bottom: 4px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+        #searchResultsWrap .list-group-item:hover {
+            background: rgba(34,197,94,.05);
+            border-color: rgba(34,197,94,.3);
+            transform: translateY(-1px);
+        }
+
+    /* ===================== DARK MODE TUNING ===================== */
+    [data-bs-theme="dark"] body {
+        background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        animation: gradientShiftDark 20s ease infinite alternate;
+    }
+
+    @@keyframes gradientShiftDark {
+        0% {
+            background: radial-gradient(900px 500px at 18% 18%, rgba(34,197,94,.12), transparent 60%), radial-gradient(900px 500px at 80% 25%, rgba(56,189,248,.12), transparent 55%), radial-gradient(700px 450px at 55% 85%, rgba(20,184,166,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+
+        50% {
+            background: radial-gradient(1000px 600px at 25% 15%, rgba(56,189,248,.10), transparent 60%), radial-gradient(800px 450px at 75% 30%, rgba(34,197,94,.10), transparent 55%), radial-gradient(600px 400px at 45% 90%, rgba(20,184,166,.08), transparent 55%), linear-gradient(180deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+        }
+
+        100% {
+            background: radial-gradient(950px 550px at 15% 22%, rgba(20,184,166,.12), transparent 60%), radial-gradient(850px 500px at 85% 20%, rgba(56,189,248,.10), transparent 55%), radial-gradient(750px 500px at 60% 80%, rgba(34,197,94,.10), transparent 55%), linear-gradient(180deg, rgba(2,6,23,.92), rgba(15,23,42,.92));
+        }
+    }
+
+    [data-bs-theme="dark"] .dashboard-shell {
+        background: rgba(15, 23, 42, .55);
+        border-color: rgba(148, 163, 184, .18);
+        box-shadow: 0 22px 60px rgba(0,0,0,.45);
+    }
+
+    [data-bs-theme="dark"] .dashboard-content-wrap-full {
+        background: rgba(2, 6, 23, .35);
+    }
+
+    [data-bs-theme="dark"] .dashboard-card-full {
+        background: rgba(15, 23, 42, .70);
+        border-color: rgba(148, 163, 184, .16);
+        box-shadow: 0 18px 45px rgba(0,0,0,.35);
+    }
+
+    [data-bs-theme="dark"] .auth-head {
+        background: linear-gradient(135deg, rgba(34,197,94,.10), rgba(20,184,166,.08));
+        border-bottom-color: rgba(148, 163, 184, .16);
+    }
+
+        [data-bs-theme="dark"] .auth-head h3 {
+            color: #e2e8f0;
+        }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: rgba(226, 232, 240, .75) !important;
+    }
+
+    [data-bs-theme="dark"] .premium-card,
+    [data-bs-theme="dark"] .premium-alert,
+    [data-bs-theme="dark"] .premium-input {
+        background: rgba(2, 6, 23, .45);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .bg-light-subtle {
+        background: rgba(2, 6, 23, .35) !important;
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item.active {
+        color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .breadcrumb-item a {
+        color: rgba(226, 232, 240, .65);
+    }
+
+        [data-bs-theme="dark"] .breadcrumb-item a:hover {
+            color: var(--eco-green);
+        }
+
+    [data-bs-theme="dark"] .premium-input:focus {
+        background: rgba(2, 6, 23, .70) !important;
+        border-color: rgba(34,197,94,.45) !important;
+        box-shadow: 0 0 0 .2rem rgba(34,197,94,.16) !important;
+        color: #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] #searchResultsWrap .list-group-item {
+        background: rgba(2, 6, 23, .35);
+        border-color: rgba(148, 163, 184, .16);
+        color: #e2e8f0;
+    }
+
+        [data-bs-theme="dark"] #searchResultsWrap .list-group-item:hover {
+            background: rgba(34,197,94,.08);
+            border-color: rgba(34,197,94,.3);
+        }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .dashboard-premium {
+            min-height: calc(100vh - 120px);
+            padding: 10px 0 20px;
+        }
+
+        .dashboard-content-wrap-full {
+            padding: 18px;
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .material-img {
+            height: 150px;
+        }
+
+        .premium-card {
+            padding: 16px;
+        }
+    }
 </style>
-
-<script nonce="@nonce">
-    document.addEventListener('DOMContentLoaded', function () {
-
-        function bindImagePreview(inputId, previewId) {
-            const input = document.getElementById(inputId);
-            const preview = document.getElementById(previewId);
-            if (!input || !preview) return;
-
-            input.addEventListener('change', function () {
-                const file = this.files && this.files[0];
-                if (!file) return;
-
-                const maxSize = 5 * 1024 * 1024; // 5MB
-                if (file.size > maxSize) {
-                    alert('File size exceeds 5MB limit.');
-                    this.value = '';
-                    return;
-                }
-
-                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!validTypes.includes(file.type)) {
-                    alert('Invalid file type. Please upload JPG, PNG, GIF, or WebP image.');
-                    this.value = '';
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        bindImagePreview('imageInput1', 'preview1');
-        bindImagePreview('imageInput2', 'preview2');
-        bindImagePreview('imageInput3', 'preview3');
-
-        // Bootstrap validation (مرة واحدة)
-        const form = document.querySelector('form.needs-validation');
-        if (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    form.classList.add('was-validated');
-                    return;
-                }
-
-                form.classList.add('was-validated');
-
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
-                }
-            }, false);
-        }
-
-        // Auto focus
-        const productTypeInput = document.getElementById('ProductType');
-        if (productTypeInput) productTypeInput.focus();
-    });
-</script>
